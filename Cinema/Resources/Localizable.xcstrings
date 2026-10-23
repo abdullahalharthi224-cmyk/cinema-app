@@ -1,0 +1,976 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ installed": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم تثبيت %@"
+          }
+        }
+      }
+    },
+    "%lld addons · %lld catalogs ready": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإضافات: %lld · الكتالوجات الجاهزة: %lld"
+          }
+        }
+      }
+    },
+    "%lld desktop-only addons were skipped because they can't work on iPhone.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم تخطي %lld من إضافات الكمبيوتر لأنها لا تعمل على iPhone."
+          }
+        }
+      }
+    },
+    "About": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حول"
+          }
+        }
+      }
+    },
+    "Account": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحساب"
+          }
+        }
+      }
+    },
+    "Add Addon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إضافة إضافة"
+          }
+        }
+      }
+    },
+    "Add by Link": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إضافة عبر رابط"
+          }
+        }
+      }
+    },
+    "Added by link": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أُضيفت عبر رابط"
+          }
+        }
+      }
+    },
+    "Added by link.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أُضيفت عبر رابط."
+          }
+        }
+      }
+    },
+    "Addon Catalogs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كتالوجات الإضافات"
+          }
+        }
+      }
+    },
+    "Addon is up to date": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإضافة محدّثة"
+          }
+        }
+      }
+    },
+    "Addons": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإضافات"
+          }
+        }
+      }
+    },
+    "Addons are where all content comes from. Cinema doesn't host or provide any content itself.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كل المحتوى يأتي من الإضافات. تطبيق Cinema لا يستضيف أي محتوى ولا يوفّره بنفسه."
+          }
+        }
+      }
+    },
+    "All Set": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم بنجاح"
+          }
+        }
+      }
+    },
+    "Anime": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أنمي"
+          }
+        }
+      }
+    },
+    "Available Catalogs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الكتالوجات المتاحة"
+          }
+        }
+      }
+    },
+    "Bring over the addons from your Stremio account, or paste a link to a single addon.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "انقل الإضافات من حسابك في Stremio، أو الصق رابط إضافة واحدة."
+          }
+        }
+      }
+    },
+    "Can't Read This Addon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّرت قراءة هذه الإضافة"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إلغاء"
+          }
+        }
+      }
+    },
+    "Catalogs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الكتالوجات"
+          }
+        }
+      }
+    },
+    "Channels": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "القنوات"
+          }
+        }
+      }
+    },
+    "Check Addon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فحص الإضافة"
+          }
+        }
+      }
+    },
+    "Check for Updates": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "البحث عن تحديثات"
+          }
+        }
+      }
+    },
+    "Cinema plays what your addons provide. Import your Stremio addons or add one by link to get started.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعرض Cinema ما توفّره إضافاتك. استورد إضافاتك من Stremio أو أضف إضافة عبر رابط للبدء."
+          }
+        }
+      }
+    },
+    "Connected": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متصل"
+          }
+        }
+      }
+    },
+    "Copy Link": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نسخ الرابط"
+          }
+        }
+      }
+    },
+    "Couldn't reach Stremio. Check your internet connection and try again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر الوصول إلى Stremio. تحقّق من اتصالك بالإنترنت وحاول مرة أخرى."
+          }
+        }
+      }
+    },
+    "Couldn't reach the addon. Check your internet connection and try again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر الوصول إلى الإضافة. تحقّق من اتصالك بالإنترنت وحاول مرة أخرى."
+          }
+        }
+      }
+    },
+    "Details": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التفاصيل"
+          }
+        }
+      }
+    },
+    "Disabled addons are kept but never asked for content.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإضافات المعطّلة تبقى محفوظة لكن لا يُطلب منها أي محتوى."
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم"
+          }
+        }
+      }
+    },
+    "Email": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "البريد الإلكتروني"
+          }
+        }
+      }
+    },
+    "Enabled": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مفعّلة"
+          }
+        }
+      }
+    },
+    "From Stremio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "من Stremio"
+          }
+        }
+      }
+    },
+    "Home": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الرئيسية"
+          }
+        }
+      }
+    },
+    "Import from Stremio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استيراد من Stremio"
+          }
+        }
+      }
+    },
+    "Imported %lld addons from your Stremio account.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم استيراد %lld إضافة من حسابك في Stremio."
+          }
+        }
+      }
+    },
+    "Imported from your Stremio account.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مستوردة من حسابك في Stremio."
+          }
+        }
+      }
+    },
+    "Install Addon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تثبيت الإضافة"
+          }
+        }
+      }
+    },
+    "Installed": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المثبّتة"
+          }
+        }
+      }
+    },
+    "Library": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المكتبة"
+          }
+        }
+      }
+    },
+    "Link": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الرابط"
+          }
+        }
+      }
+    },
+    "Link copied": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم نسخ الرابط"
+          }
+        }
+      }
+    },
+    "Live TV": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بث مباشر"
+          }
+        }
+      }
+    },
+    "Movies": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفلام"
+          }
+        }
+      }
+    },
+    "No Addons Yet": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد إضافات بعد"
+          }
+        }
+      }
+    },
+    "Not connected": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "غير متصل"
+          }
+        }
+      }
+    },
+    "Nothing was found at this address.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يُعثر على شيء في هذا العنوان."
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حسناً"
+          }
+        }
+      }
+    },
+    "Other": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أخرى"
+          }
+        }
+      }
+    },
+    "Password": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كلمة المرور"
+          }
+        }
+      }
+    },
+    "Paste the link to an addon's manifest. stremio:// links work too.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصق رابط ملف الإضافة (manifest). روابط stremio:// تعمل أيضاً."
+          }
+        }
+      }
+    },
+    "Preview": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "معاينة"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة"
+          }
+        }
+      }
+    },
+    "Remove %@?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة %@؟"
+          }
+        }
+      }
+    },
+    "Remove Addon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة الإضافة"
+          }
+        }
+      }
+    },
+    "Search": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "البحث"
+          }
+        }
+      }
+    },
+    "Search Is Coming": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "البحث قادم قريباً"
+          }
+        }
+      }
+    },
+    "Searchable": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قابل للبحث"
+          }
+        }
+      }
+    },
+    "Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسلسلات"
+          }
+        }
+      }
+    },
+    "Set Up Addons": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعداد الإضافات"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإعدادات"
+          }
+        }
+      }
+    },
+    "Sign In & Import": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تسجيل الدخول والاستيراد"
+          }
+        }
+      }
+    },
+    "Sign Out": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تسجيل الخروج"
+          }
+        }
+      }
+    },
+    "Sign Out of Stremio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تسجيل الخروج من Stremio"
+          }
+        }
+      }
+    },
+    "Sign in to bring over every addon from your Stremio account.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سجّل الدخول لنقل كل الإضافات من حسابك في Stremio."
+          }
+        }
+      }
+    },
+    "Sign out of Stremio?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تسجيل الخروج من Stremio؟"
+          }
+        }
+      }
+    },
+    "Something Went Wrong": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حدث خطأ ما"
+          }
+        }
+      }
+    },
+    "Soon you'll be able to search every addon that supports it, all at once.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قريباً ستتمكن من البحث في كل الإضافات التي تدعم البحث دفعة واحدة."
+          }
+        }
+      }
+    },
+    "Streams": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "روابط التشغيل"
+          }
+        }
+      }
+    },
+    "Stremio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stremio"
+          }
+        }
+      }
+    },
+    "Stremio Account": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حساب Stremio"
+          }
+        }
+      }
+    },
+    "Stremio responded with an error (code %lld).": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ردّ Stremio بخطأ (الرمز %lld)."
+          }
+        }
+      }
+    },
+    "Stremio sent an unexpected response. Please try again later.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أرسل Stremio رداً غير متوقع. حاول لاحقاً."
+          }
+        }
+      }
+    },
+    "Subtitles": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الترجمات"
+          }
+        }
+      }
+    },
+    "Switch Stremio Account": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تبديل حساب Stremio"
+          }
+        }
+      }
+    },
+    "Sync": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مزامنة"
+          }
+        }
+      }
+    },
+    "Synced %lld addons": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تمت مزامنة %lld إضافة"
+          }
+        }
+      }
+    },
+    "Syncing with Stremio…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ المزامنة مع Stremio…"
+          }
+        }
+      }
+    },
+    "Tap Edit to reorder or remove. Addons higher in the list are asked first.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اضغط «تعديل» لإعادة الترتيب أو الحذف. الإضافات الأعلى في القائمة يُطلب منها أولاً."
+          }
+        }
+      }
+    },
+    "That doesn't look like a valid addon link.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا لا يبدو رابط إضافة صحيحاً."
+          }
+        }
+      }
+    },
+    "The addon responded with an error (code %lld).": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ردّت الإضافة بخطأ (الرمز %lld)."
+          }
+        }
+      }
+    },
+    "The addon sent data this app can't read.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أرسلت الإضافة بيانات لا يستطيع التطبيق قراءتها."
+          }
+        }
+      }
+    },
+    "The cinematic Home screen arrives in the next update.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الشاشة الرئيسية السينمائية قادمة في التحديث القادم."
+          }
+        }
+      }
+    },
+    "The email or password is incorrect.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+          }
+        }
+      }
+    },
+    "This addon needs to be configured on its website first.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذه الإضافة تحتاج إلى ضبط من موقعها أولاً."
+          }
+        }
+      }
+    },
+    "Titles you save and the ones you're watching will appear here.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ستظهر هنا الأعمال التي تحفظها وتلك التي تشاهدها."
+          }
+        }
+      }
+    },
+    "Try checking for updates to download its details again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جرّب «البحث عن تحديثات» لتنزيل بياناتها من جديد."
+          }
+        }
+      }
+    },
+    "Version": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإصدار"
+          }
+        }
+      }
+    },
+    "Version %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإصدار %@"
+          }
+        }
+      }
+    },
+    "Welcome to Cinema": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مرحباً بك في Cinema"
+          }
+        }
+      }
+    },
+    "Your Library Is Empty": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مكتبتك فارغة"
+          }
+        }
+      }
+    },
+    "Your Stremio account has no addons that work on iPhone yet.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا يحتوي حسابك في Stremio على إضافات تعمل على iPhone بعد."
+          }
+        }
+      }
+    },
+    "Your Stremio session has expired. Please sign in again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "انتهت جلستك في Stremio. سجّل الدخول مرة أخرى."
+          }
+        }
+      }
+    },
+    "Your addons are connected": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إضافاتك متصلة"
+          }
+        }
+      }
+    },
+    "Your installed addons will stay. You can sign in again any time to re-sync.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ستبقى إضافاتك المثبّتة. يمكنك تسجيل الدخول مجدداً في أي وقت للمزامنة."
+          }
+        }
+      }
+    },
+    "Your password is only used to sign in and is never saved. Cinema keeps a secure session key in the Keychain.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تُستخدم كلمة المرور لتسجيل الدخول فقط ولا تُحفظ أبداً. يحتفظ Cinema بمفتاح جلسة آمن في سلسلة المفاتيح (Keychain)."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

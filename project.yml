@@ -1,0 +1,85 @@
+name: Cinema
+
+options:
+  bundleIdPrefix: com.personal
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Manual
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+
+targets:
+  Cinema:
+    type: application
+    platform: iOS
+    sources:
+      - path: Cinema
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.personal.cinema
+        PRODUCT_NAME: Cinema
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_FILE: Cinema/Resources/Info.plist
+    info:
+      path: Cinema/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Cinema
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, ar]
+        CFBundleAllowMixedLocalizations: true
+        LSRequiresIPhoneOS: true
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIUserInterfaceStyle: Dark
+        # Personal addons are sometimes self-hosted on plain HTTP (e.g. on a home network).
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        NSLocalNetworkUsageDescription: Cinema connects to addons you host on your local network.
+
+  CinemaTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: CinemaTests
+    dependencies:
+      - target: Cinema
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.personal.cinema.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Cinema.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Cinema
+        BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+  Cinema:
+    build:
+      targets:
+        Cinema: all
+        CinemaTests: [test]
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - CinemaTests
+    archive:
+      config: Release
