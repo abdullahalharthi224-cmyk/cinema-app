@@ -17,11 +17,11 @@ actor ImagePipeline {
     private var inFlight: [URL: Task<UIImage?, Never>] = [:]
 
     init() {
-        memory.totalCostLimit = 120 * 1024 * 1024
         let configuration = URLSessionConfiguration.default
         configuration.urlCache = URLCache(memoryCapacity: 16 * 1024 * 1024, diskCapacity: 400 * 1024 * 1024)
         configuration.requestCachePolicy = .returnCacheDataElseLoad
         session = URLSession(configuration: configuration)
+        memoryCache.storage.totalCostLimit = 120 * 1024 * 1024
     }
 
     nonisolated func cachedImage(for url: URL) -> UIImage? {
