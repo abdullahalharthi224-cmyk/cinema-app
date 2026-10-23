@@ -112,13 +112,20 @@ struct AddonStore {
                 continue
             }
 
+            // A legacy addon swapped for its modern version needs that version's manifest.
+            var manifest = descriptor.manifest
+            if AddonURL.modernReplacement(for: descriptor.transportUrl) != nil,
+               let fresh = try? await client.manifest(at: url) {
+                manifest = fresh
+            }
+
             if let addon = existing[url.absoluteString] {
                 // Keep the user's local order and on/off choice; refresh the manifest.
-                addon.update(manifest: descriptor.manifest)
+                addon.update(manifest: manifest)
                 summary.updated += 1
             } else {
                 let addon = InstalledAddon(
-                    manifestURL: url, manifest: descriptor.manifest, source: .stremio, sortIndex: nextIndex
+                    manifestURL: url, manifest: manifest, source: .stremio, sortIndex: nextIndex
                 )
                 context.insert(addon)
                 existing[url.absoluteString] = addon
@@ -128,7 +135,25 @@ struct AddonStore {
         }
 
         try context.save()
+        await migrateLegacyAddons()
         return summary
+    }
+
+    /// Replaces installed old-protocol addons that have a modern equivalent
+    /// (e.g. the original OpenSubtitles) with that equivalent.
+    func migrateLegacyAddons() async {
+        guard let all = try? allAddons() else { return }
+        for addon in all {
+            guard let replacement = AddonURL.modernReplacement(for: addon.transportUrl) else { continue }
+            if all.contains(where: { $0.transportUrl == replacement.absoluteString }) {
+                context.delete(addon)
+                continue
+            }
+            guard let manifest = try? await client.manifest(at: replacement) else { continue }
+            addon.transportUrl = replacement.absoluteString
+            addon.update(manifest: manifest)
+        }
+        try? context.save()
     }
 
     // MARK: Organising

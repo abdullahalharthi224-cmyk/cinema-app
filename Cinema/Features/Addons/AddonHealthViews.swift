@@ -12,7 +12,9 @@ extension AddonHealthReport.Problem {
         case .localOnly: return "Only works with the Stremio desktop app."
         case .needsSetup: return "Needs setup — configure it on its website (debrid or API key)."
         case .torrentOnly: return "Only gives torrent links — needs a debrid service to play here."
-        case .noStreams: return "Works, but returned no streams for a well-known film."
+        case .noStreams: return "Works, but has no streams for the test film — normal for addons with a limited library."
+        case .discontinued: return "Discontinued — its address now opens a web page instead of an addon."
+        case .legacyProtocol: return "Uses Stremio's old protocol, which isn't supported. Install its newer version."
         case .streamsFailed: return "The manifest works, but fetching streams failed."
         }
     }
@@ -57,9 +59,9 @@ struct AddonHealthResultView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Spacing.m) {
-            Image(systemName: report.isHealthy ? "checkmark.circle.fill" : "xmark.circle.fill")
+            Image(systemName: statusSymbol)
                 .font(.title2)
-                .foregroundStyle(report.isHealthy ? .green : .red)
+                .foregroundStyle(statusColor)
                 .symbolRenderingMode(.hierarchical)
 
             VStack(alignment: .leading, spacing: 6) {
@@ -80,13 +82,23 @@ struct AddonHealthResultView: View {
                 if let problem = report.problem {
                     Text(problem.reason)
                         .font(.footnote.weight(.medium))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(report.isWarning ? .orange : .red)
                 }
 
                 facts
             }
         }
         .padding(.vertical, 4)
+    }
+
+    private var statusSymbol: String {
+        if report.isWarning { return "exclamationmark.triangle.fill" }
+        return report.isHealthy ? "checkmark.circle.fill" : "xmark.circle.fill"
+    }
+
+    private var statusColor: Color {
+        if report.isWarning { return .orange }
+        return report.isHealthy ? .green : .red
     }
 
     private var facts: some View {
@@ -144,7 +156,11 @@ struct AddonHealthReportView: View {
 
     private var finished: [AddonHealthReport] { Array(reports.values) }
     private var working: [AddonHealthReport] {
-        finished.filter(\.isHealthy).sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        // Fully working first, then those with a note.
+        finished.filter(\.isHealthy).sorted {
+            if $0.isWarning != $1.isWarning { return !$0.isWarning }
+            return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
     }
     private var failing: [AddonHealthReport] {
         finished.filter { !$0.isHealthy }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }

@@ -152,7 +152,7 @@ final class AddonClientTests: XCTestCase {
     }
 
     func testInvalidJSONIsReported() async {
-        let client = AddonClient(http: MockHTTPClient(json: "<html>oops</html>"))
+        let client = AddonClient(http: MockHTTPClient(json: "{not valid json"))
         do {
             _ = try await client.manifest(at: URL(string: "https://example.com/manifest.json")!)
             XCTFail("Expected an error")

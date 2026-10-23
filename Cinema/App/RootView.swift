@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AppRouter.self) private var router
+    @Environment(\.modelContext) private var context
 
     private var language: AppLanguage { Appearance.shared.language }
 
@@ -33,5 +34,9 @@ struct RootView: View {
         .environment(\.locale, language.locale)
         .environment(\.layoutDirection, language.isRightToLeft ? .rightToLeft : .leftToRight)
         .id(language)
+        .task {
+            // Swap any old-protocol addons (e.g. the original OpenSubtitles) for their modern versions.
+            await AddonStore(context: context).migrateLegacyAddons()
+        }
     }
 }

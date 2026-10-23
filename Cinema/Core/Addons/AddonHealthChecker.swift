@@ -23,8 +23,13 @@ struct AddonHealthReport: Sendable, Identifiable {
         case needsSetup
         /// Only offers raw torrents, which need a debrid service to play here.
         case torrentOnly
-        /// Supports streams but returned none for a well-known film.
+        /// Supports streams but returned none for the test film. Often fine:
+        /// many addons only carry a limited library.
         case noStreams
+        /// The address now opens a web page: the addon has been discontinued.
+        case discontinued
+        /// Built for Stremio's retired v1 protocol.
+        case legacyProtocol
         /// Streams request itself failed.
         case streamsFailed
     }
@@ -43,7 +48,11 @@ struct AddonHealthReport: Sendable, Identifiable {
     var playableStreamCount = 0
     var problem: Problem?
 
-    var isHealthy: Bool { problem == nil }
+    /// Working, possibly with a note.
+    var isHealthy: Bool { problem == nil || isWarning }
+
+    /// Working, but with something worth knowing (e.g. no streams for the test film).
+    var isWarning: Bool { problem == .noStreams }
 }
 
 /// Checks that an addon works: manifest, catalogs, response time, and a real
@@ -64,6 +73,12 @@ struct AddonHealthChecker: Sendable {
         if AddonURL.isLocalOnly(manifestURL) {
             if let storedManifest { fill(&report, from: storedManifest) }
             report.problem = .localOnly
+            return report
+        }
+
+        if AddonURL.isLegacy(manifestURL) {
+            if let storedManifest { fill(&report, from: storedManifest) }
+            report.problem = .legacyProtocol
             return report
         }
 
@@ -125,6 +140,7 @@ struct AddonHealthChecker: Sendable {
         case .httpStatus(let code)?:
             return code == 410 ? .expired : .httpError(code)
         case .invalidResponse?, .invalidURL?: return .invalidManifest
+        case .webPage?: return .discontinued
         case nil: return .noResponse
         }
     }

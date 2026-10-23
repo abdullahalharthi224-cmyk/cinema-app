@@ -11,6 +11,10 @@ enum AddonURL {
         var text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw AddonError.invalidURL(input) }
 
+        if let replacement = modernReplacement(for: text) {
+            return replacement
+        }
+
         if text.lowercased().hasPrefix("stremio://") {
             text = "https://" + text.dropFirst("stremio://".count)
         } else if !text.contains("://") {
@@ -27,7 +31,8 @@ enum AddonURL {
 
         components.scheme = scheme
         var path = components.path
-        if !path.hasSuffix("/" + manifestFileName) {
+        // Old-protocol addons have no manifest.json; keep their address as it is.
+        if !isLegacyPath(path), !path.hasSuffix("/" + manifestFileName) {
             while path.hasSuffix("/") { path.removeLast() }
             path += "/" + manifestFileName
         }
@@ -62,6 +67,30 @@ enum AddonURL {
         set.insert(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.!~*'()")
         return set
     }()
+
+    /// Addons built for Stremio's retired v1 protocol ("…/stremio/v1"), which
+    /// this app (like modern Stremio) can't talk to.
+    static func isLegacy(_ url: URL) -> Bool {
+        isLegacyPath(url.path)
+    }
+
+    private static func isLegacyPath(_ path: String) -> Bool {
+        path.contains("/stremio/v1")
+    }
+
+    /// Official addons whose old-protocol address has a modern equivalent.
+    private static let replacements: [(host: String, manifest: String)] = [
+        ("opensubtitles.strem.io", "https://opensubtitles-v3.strem.io/manifest.json"),
+    ]
+
+    /// The modern address for a known legacy addon, if there is one.
+    static func modernReplacement(for text: String) -> URL? {
+        guard let url = URL(string: text.trimmingCharacters(in: .whitespacesAndNewlines)),
+              let host = url.host?.lowercased(),
+              isLegacyPath(url.path)
+        else { return nil }
+        return replacements.first { $0.host == host }.flatMap { URL(string: $0.manifest) }
+    }
 
     /// Addons that only work with the desktop Stremio streaming server.
     static func isLocalOnly(_ url: URL) -> Bool {
