@@ -19,9 +19,12 @@ enum Theme {
         static let large: CGFloat = 22
     }
 
+    /// The solid page colour that artwork fades into.
+    static let background = Color(red: 0.035, green: 0.03, blue: 0.055)
+
     /// The deep, slightly warm background of the Dark Cinematic theme.
     static let backgroundGradient = LinearGradient(
-        colors: [Color(red: 0.09, green: 0.08, blue: 0.12), .black],
+        colors: [Color(red: 0.09, green: 0.08, blue: 0.12), background],
         startPoint: .top,
         endPoint: .bottom
     )
