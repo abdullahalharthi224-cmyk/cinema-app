@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A soft moving highlight used for skeleton loading states.
+/// A soft, glowing highlight that sweeps across skeleton placeholders.
 struct ShimmerModifier: ViewModifier {
     @State private var phase: CGFloat = -1
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -11,19 +11,26 @@ struct ShimmerModifier: ViewModifier {
                 if !reduceMotion {
                     GeometryReader { proxy in
                         LinearGradient(
-                            colors: [.clear, .white.opacity(0.12), .clear],
+                            stops: [
+                                .init(color: .clear, location: 0),
+                                .init(color: .white.opacity(0.06), location: 0.35),
+                                .init(color: .white.opacity(0.16), location: 0.5),
+                                .init(color: .white.opacity(0.06), location: 0.65),
+                                .init(color: .clear, location: 1),
+                            ],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
-                        .frame(width: proxy.size.width * 0.8)
-                        .offset(x: phase * proxy.size.width * 1.4)
+                        .frame(width: proxy.size.width * 0.9)
+                        .blur(radius: 6)
+                        .offset(x: phase * proxy.size.width * 1.5)
                     }
                     .allowsHitTesting(false)
                 }
             }
             .clipped()
             .onAppear {
-                withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
+                withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: false)) {
                     phase = 1
                 }
             }
@@ -34,11 +41,17 @@ extension View {
     func shimmering() -> some View { modifier(ShimmerModifier()) }
 }
 
-/// A neutral block that shimmers while content loads.
+/// A neutral block that glows while content loads.
 struct ShimmerPlaceholder: View {
     var body: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.07))
+            .fill(
+                LinearGradient(
+                    colors: [Color.white.opacity(0.07), Color.white.opacity(0.04)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
             .shimmering()
     }
 }
@@ -50,7 +63,7 @@ struct SkeletonBar: View {
 
     var body: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.08))
+            .fill(Color.white.opacity(0.07))
             .frame(width: width, height: height)
             .shimmering()
             .clipShape(Capsule())

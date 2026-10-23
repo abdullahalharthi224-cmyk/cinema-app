@@ -27,6 +27,22 @@ struct SettingsView: View {
                     Text("Addons are where all content comes from. Cinema doesn't host or provide any content itself.")
                 }
 
+                Section {
+                    NavigationLink(value: SettingsRoute.appearance) {
+                        LabeledContent {
+                            Circle()
+                                .fill(Theme.accent.gradient)
+                                .frame(width: 18, height: 18)
+                        } label: {
+                            Label {
+                                Text("Appearance")
+                            } icon: {
+                                SettingsIcon(systemName: "paintpalette.fill", color: Theme.accent)
+                            }
+                        }
+                    }
+                }
+
                 Section("Stremio Account") {
                     Label {
                         if stremioEmail.isEmpty {
@@ -62,6 +78,8 @@ struct SettingsView: View {
                 switch route {
                 case .addons:
                     AddonsView()
+                case .appearance:
+                    AppearanceView()
                 case .addon(let addon):
                     AddonDetailView(addon: addon)
                 }

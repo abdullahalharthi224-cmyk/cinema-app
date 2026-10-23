@@ -43,7 +43,11 @@ targets:
         CFBundleAllowMixedLocalizations: true
         LSRequiresIPhoneOS: true
         ITSAppUsesNonExemptEncryption: false
-        UILaunchScreen: {}
+        # A launch screen is what tells iOS the app supports every modern iPhone size.
+        # Without it, iOS runs the app letterboxed in a legacy compatibility mode.
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageRespectsSafeAreaInsets: false
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations:

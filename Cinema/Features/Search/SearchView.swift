@@ -11,6 +11,7 @@ struct SearchView: View {
     @State private var query = ""
     @State private var phase: Phase = .idle
     @AppStorage("search.recent") private var recentStorage = ""
+    @Namespace private var zoom
 
     private enum Phase {
         case idle
@@ -38,6 +39,7 @@ struct SearchView: View {
                 .onSubmit(of: .search) { remember(trimmedQuery) }
                 .contentDestinations()
         }
+        .environment(\.zoomNamespace, zoom)
         .task(id: trimmedQuery) {
             await search(trimmedQuery)
         }

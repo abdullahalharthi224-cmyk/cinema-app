@@ -48,6 +48,55 @@ actor ImagePipeline {
         }
         return image
     }
+
+    private var colors: [URL: UIColor] = [:]
+
+    /// The most characterful colour of an image, used to tint backgrounds.
+    func dominantColor(for url: URL) async -> UIColor? {
+        if let color = colors[url] { return color }
+        guard let image = await image(for: url), let color = image.dominantColor() else { return nil }
+        colors[url] = color
+        return color
+    }
+}
+
+extension UIImage {
+    /// Averages a tiny thumbnail, favouring saturated, mid-bright pixels so the
+    /// result is a rich colour rather than a muddy grey.
+    func dominantColor() -> UIColor? {
+        guard let cgImage else { return nil }
+        let side = 24
+        var pixels = [UInt8](repeating: 0, count: side * side * 4)
+        let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(
+                data: buffer.baseAddress, width: side, height: side, bitsPerComponent: 8, bytesPerRow: side * 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return false }
+            context.interpolationQuality = .medium
+            context.draw(cgImage, in: CGRect(x: 0, y: 0, width: side, height: side))
+            return true
+        }
+        guard drawn else { return nil }
+
+        var red = 0.0, green = 0.0, blue = 0.0, totalWeight = 0.0
+        for index in stride(from: 0, to: pixels.count, by: 4) {
+            let r = Double(pixels[index]) / 255
+            let g = Double(pixels[index + 1]) / 255
+            let b = Double(pixels[index + 2]) / 255
+            let maxValue = max(r, g, b), minValue = min(r, g, b)
+            let saturation = maxValue == 0 ? 0 : (maxValue - minValue) / maxValue
+            // Penalise near-black and blown-out pixels.
+            let brightnessWeight = 1 - abs(maxValue - 0.6) / 0.6
+            let weight = 0.05 + saturation * max(brightnessWeight, 0)
+            red += r * weight
+            green += g * weight
+            blue += b * weight
+            totalWeight += weight
+        }
+        guard totalWeight > 0 else { return nil }
+        return UIColor(red: red / totalWeight, green: green / totalWeight, blue: blue / totalWeight, alpha: 1)
+    }
 }
 
 /// An image loaded from the network with a shimmering placeholder and a fade-in.

@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 
 @MainActor
 @Observable
@@ -9,6 +10,11 @@ final class DetailViewModel {
     private(set) var isLoading = false
     private(set) var errorMessage: String?
     var selectedSeason: Int?
+    /// Streams fetched ahead of time for movies, so quality badges can be
+    /// shown and the stream picker opens instantly.
+    private(set) var prefetchedStreams: [StreamGroup]?
+    /// A colour sampled from the poster, used to tint the page.
+    private(set) var tint: Color?
 
     private let service = ContentService()
 
@@ -18,8 +24,12 @@ final class DetailViewModel {
 
     // Values that fall back to the preview data while full details load.
     var name: String { meta?.name.nonEmpty ?? route.name }
-    var background: String? { meta?.background ?? route.background ?? meta?.poster ?? route.poster }
-    var logo: String? { meta?.logo ?? route.logo }
+    var backgroundURL: URL? {
+        Artwork.background(id: route.id, provided: meta?.background ?? route.background)
+            ?? (meta?.poster ?? route.poster)?.asURL
+    }
+    var logoURL: URL? { Artwork.logo(id: route.id, provided: meta?.logo ?? route.logo) }
+    var poster: String? { meta?.poster ?? route.poster }
     var description: String? { meta?.description ?? route.description }
     var year: String? { meta?.releaseInfo ?? route.releaseInfo }
     var rating: String? { meta?.imdbRating ?? route.imdbRating }
@@ -61,6 +71,51 @@ final class DetailViewModel {
             guard !Task.isCancelled else { return }
             errorMessage = error.localizedDescription
         }
+    }
+
+    /// Loads the poster colour and, for movies, the available streams.
+    func loadExtras(addons: [AddonSource]) async {
+        async let color: Void = loadTint()
+        async let streams: Void = prefetchStreams(addons: addons)
+        _ = await (color, streams)
+    }
+
+    private func loadTint() async {
+        guard tint == nil, let url = (route.poster ?? meta?.poster)?.asURL else { return }
+        if let color = await ImagePipeline.shared.dominantColor(for: url) {
+            withAnimation(Theme.Motion.gentle) { tint = Color(uiColor: color) }
+        }
+    }
+
+    private func prefetchStreams(addons: [AddonSource]) async {
+        guard route.type == "movie", prefetchedStreams == nil else { return }
+        let groups = await service.streams(type: route.type, id: route.id, addons: addons)
+        guard !Task.isCancelled else { return }
+        withAnimation(Theme.Motion.spring) { prefetchedStreams = groups }
+    }
+
+    /// The best qualities on offer across every addon, e.g. ["4K", "Dolby Vision", "HDR"].
+    var availableQualities: [String] {
+        let infos = (prefetchedStreams ?? [])
+            .compactMap { try? $0.result.get() }
+            .flatMap { $0 }
+            .filter(\.stream.isSupported)
+            .map(\.info)
+        guard !infos.isEmpty else { return [] }
+        var badges: [String] = []
+        if let best = infos.compactMap(\.resolution).max() { badges.append(best.label) }
+        if infos.contains(where: \.isDolbyVision) { badges.append("Dolby Vision") }
+        if infos.contains(where: \.isHDR) { badges.append("HDR") }
+        if infos.contains(where: { $0.audio.contains("Atmos") }) { badges.append("Dolby Atmos") }
+        return badges
+    }
+
+    var historyEntryBase: WatchHistoryEntry {
+        WatchHistoryEntry(
+            metaID: route.id, type: route.type, name: name, poster: poster,
+            background: meta?.background ?? route.background, logo: meta?.logo ?? route.logo,
+            videoID: route.id, episodeLabel: nil, addonID: route.addonID
+        )
     }
 
     func retry(addons: [AddonSource]) async {

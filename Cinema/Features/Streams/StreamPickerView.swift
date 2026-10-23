@@ -15,6 +15,7 @@ struct StreamPickerView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    @Environment(\.modelContext) private var context
 
     @State private var results: [String: StreamGroup] = [:]
     @State private var filter: QualityFilter = .all
@@ -62,6 +63,7 @@ struct StreamPickerView: View {
                     Button(player.name) { open(url, in: player) }
                 }
                 Button("Copy Link") {
+                    recordHistory()
                     UIPasteboard.general.url = url
                     toastMessage = String(localized: "Link copied")
                 }
@@ -111,7 +113,7 @@ struct StreamPickerView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .animation(.smooth, value: filter)
+        .animation(Theme.Motion.spring, value: filter)
     }
 
     @ViewBuilder
@@ -161,6 +163,19 @@ struct StreamPickerView: View {
     // MARK: Actions
 
     private func loadAll() async {
+        if let prefetched = request.prefetched {
+            for group in prefetched { results[group.addon.id] = group }
+            // Only addons that failed during prefetch are asked again.
+            let failed = prefetched.filter { if case .failure = $0.result { true } else { false } }
+            let missing = candidates.filter { addon in !prefetched.contains { $0.addon.id == addon.id } }
+            let retry = failed.map(\.addon) + missing
+            await withTaskGroup(of: Void.self) { group in
+                for addon in retry {
+                    group.addTask { await load(addon) }
+                }
+            }
+            return
+        }
         await withTaskGroup(of: Void.self) { group in
             for addon in candidates {
                 group.addTask { await load(addon) }
@@ -172,7 +187,7 @@ struct StreamPickerView: View {
         results[addon.id] = nil
         let groups = await service.streams(type: request.type, id: request.videoID, addons: [addon])
         if let group = groups.first {
-            withAnimation(.smooth) { results[addon.id] = group }
+            withAnimation(Theme.Motion.spring) { results[addon.id] = group }
         }
     }
 
@@ -181,8 +196,10 @@ struct StreamPickerView: View {
         case .direct:
             selected = stream
         case .youtube(let id):
+            recordHistory()
             if let url = URL(string: "https://www.youtube.com/watch?v=\(id)") { openURL(url) }
         case .external(let url):
+            recordHistory()
             openURL(url)
         case .torrent, .unknown:
             break
@@ -192,10 +209,20 @@ struct StreamPickerView: View {
     private func open(_ url: URL, in player: ExternalPlayer) {
         guard let target = player.url(for: url) else { return }
         openURL(target) { accepted in
-            if !accepted {
+            if accepted {
+                recordHistory()
+            } else {
                 errorMessage = String(localized: "Couldn't open \(player.name). Make sure it's installed.")
             }
         }
+    }
+}
+
+extension StreamPickerView {
+    /// Adds the title to Continue Watching.
+    fileprivate func recordHistory() {
+        guard let entry = request.history else { return }
+        WatchHistoryItem.record(entry, in: context)
     }
 }
 
@@ -261,16 +288,11 @@ private struct StreamRow: View {
             VStack(alignment: .leading, spacing: 6) {
                 let tags = featureTags
                 if !tags.isEmpty {
-                    HStack(spacing: 4) {
+                    FlowLayout(spacing: 5) {
                         ForEach(tags, id: \.self) { tag in
-                            Text(verbatim: tag)
-                                .font(.caption2.weight(.bold))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.white.opacity(0.12), in: .continuous(4))
+                            QualityCapsule(text: tag)
                         }
                     }
-                    .foregroundStyle(.primary)
                 }
 
                 ForEach(Array(info.details.prefix(3).enumerated()), id: \.offset) { _, line in
@@ -310,19 +332,22 @@ private struct StreamRow: View {
         let label = info.resolution?.label ?? "—"
         let isPremium = info.resolution == .uhd4k
         return Text(verbatim: label)
-            .font(.system(.footnote, design: .rounded, weight: .heavy))
-            .foregroundStyle(isPremium ? Color.black : Color.primary)
-            .frame(width: 54, height: 30)
-            .background(
-                isPremium ? AnyShapeStyle(LinearGradient(colors: [.yellow, .orange], startPoint: .top, endPoint: .bottom))
-                    : AnyShapeStyle(Color.white.opacity(0.1)),
-                in: .continuous(Theme.Radius.small)
-            )
+            .font(.rounded(.subheadline, weight: .heavy))
+            .foregroundStyle(isPremium ? Color.black : Color.white)
+            .frame(width: 58, height: 34)
+            .background {
+                if isPremium {
+                    Capsule().fill(Theme.accent.gradient)
+                } else {
+                    Capsule().fill(Color.white.opacity(0.08))
+                        .overlay(Capsule().strokeBorder(Color.white.opacity(0.22), lineWidth: 0.75))
+                }
+            }
     }
 
     private var featureTags: [String] {
         var tags: [String] = []
-        if info.isDolbyVision { tags.append("DV") }
+        if info.isDolbyVision { tags.append("Dolby Vision") }
         if info.isHDR { tags.append("HDR") }
         if info.isRemux { tags.append("REMUX") }
         if let source = info.source, !info.isRemux || source != "BluRay" { tags.append(source) }
