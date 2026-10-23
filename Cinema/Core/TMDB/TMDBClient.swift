@@ -95,6 +95,26 @@ struct TMDBClient: Sendable {
         return details
     }
 
+    /// The title's logo artwork in a given language (e.g. "ar"), if TMDB has one.
+    func logo(media: TMDBMediaType, tmdbID: Int, languageCode: String) async throws -> URL? {
+        struct Response: Decodable {
+            struct Image: Decodable {
+                var file_path: String
+                var iso_639_1: String?
+                var vote_average: Double?
+            }
+            var logos: [Image]?
+        }
+        let response: Response = try await get(
+            "\(media.rawValue)/\(tmdbID)/images",
+            query: ["include_image_language": languageCode]
+        )
+        let best = (response.logos ?? [])
+            .filter { $0.iso_639_1 == languageCode }
+            .max { ($0.vote_average ?? 0) < ($1.vote_average ?? 0) }
+        return best.flatMap { Self.imageURL($0.file_path, size: "w500") }
+    }
+
     /// Episode names and synopses for one season, in the requested language
     /// with English filling any gaps.
     func season(tvID: Int, number: Int, language: String) async throws -> [Int: TMDBEpisode] {
@@ -238,8 +258,13 @@ struct TMDBLocalizedDetails: Decodable, Sendable {
     var overview: String?
     var genres: [String]
     var tagline: String?
+    /// Minutes: a movie's runtime, or a series' typical episode length.
+    var runtime: Int?
 
-    enum CodingKeys: String, CodingKey { case title, name, overview, genres, tagline }
+    enum CodingKeys: String, CodingKey {
+        case title, name, overview, genres, tagline, runtime
+        case episodeRunTime = "episode_run_time"
+    }
 
     private struct Genre: Decodable { var name: String }
 
@@ -249,6 +274,8 @@ struct TMDBLocalizedDetails: Decodable, Sendable {
         overview = c.lenient(String.self, forKey: .overview)
         genres = (c.lossyArray(Genre.self, forKey: .genres) ?? []).map(\.name)
         tagline = c.lenient(String.self, forKey: .tagline)
+        let runtime = c.lenient(Int.self, forKey: .runtime) ?? c.lossyArray(Int.self, forKey: .episodeRunTime)?.first
+        self.runtime = (runtime ?? 0) > 0 ? runtime : nil
     }
 }
 

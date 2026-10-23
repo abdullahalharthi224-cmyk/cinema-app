@@ -51,6 +51,16 @@
         }
       }
     },
+    "%lld min": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld دقيقة"
+          }
+        }
+      }
+    },
     "%lld. %@": {
       "localizations": {
         "ar": {

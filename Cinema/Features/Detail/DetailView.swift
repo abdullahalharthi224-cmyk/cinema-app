@@ -95,7 +95,10 @@ struct DetailView: View {
         .animation(Theme.Motion.spring, value: isScrolledPastHeader)
         .zoomDestination(id: model.route.transitionID, in: zoomNamespace)
         .task {
-            await model.load(addons: addons.sources)
+            // The Arabic title is fetched alongside the details so it's ready as early as possible.
+            async let details: Void = model.load(addons: addons.sources)
+            async let translation: Void = model.loadTranslation()
+            _ = await (details, translation)
             await model.loadExtras(addons: addons.sources)
         }
         .sheet(item: $streamRequest) { request in
@@ -169,8 +172,15 @@ struct DetailView: View {
                 }
 
             VStack(spacing: Theme.Spacing.m) {
-                TitleArtwork(name: model.name, logo: model.logoURL, maxHeight: 120)
-                MetadataLine(year: model.year, rating: model.rating, runtime: model.meta?.runtime)
+                if model.isAwaitingTranslation {
+                    // Hold the space while the Arabic title loads, instead of flashing English.
+                    SkeletonBar(width: 220, height: 40)
+                        .padding(.vertical, Theme.Spacing.l)
+                } else {
+                    TitleArtwork(name: model.name, logo: model.logoURL, maxHeight: 120)
+                        .transition(.opacity)
+                }
+                MetadataLine(year: model.year, rating: model.rating, runtime: model.runtimeText)
             }
             .padding(.horizontal, Theme.Spacing.xl)
             .padding(.bottom, Theme.Spacing.s)

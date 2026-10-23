@@ -22,6 +22,12 @@ final class DetailViewModel {
     /// Translated episode names and synopses, by season then episode number.
     private(set) var episodeTexts: [Int: [Int: TMDBEpisode]] = [:]
     private var tmdbShowID: Int?
+    private(set) var localizedLogo: URL?
+    private(set) var localizedRuntime: Int?
+    /// While Arabic details are being fetched, the English logo is held back so
+    /// the title doesn't flash from English to Arabic.
+    private(set) var isTranslating = false
+    private var translationFinished = false
 
     private let service = ContentService()
 
@@ -35,7 +41,30 @@ final class DetailViewModel {
         Artwork.background(id: route.id, provided: meta?.background ?? route.background)
             ?? (meta?.poster ?? route.poster)?.asURL
     }
-    var logoURL: URL? { Artwork.logo(id: route.id, provided: meta?.logo ?? route.logo) }
+    /// In Arabic, only an Arabic logo is shown; otherwise the Arabic title is drawn as text.
+    var logoURL: URL? {
+        if usesArabicTitles { return localizedLogo }
+        return Artwork.logo(id: route.id, provided: meta?.logo ?? route.logo)
+    }
+
+    /// Arabic is on and TMDB can translate this title.
+    var usesArabicTitles: Bool {
+        guard Appearance.shared.language == .arabic, TMDBAccount.shared.isConnected, imdbID != nil else { return false }
+        return !translationFinished || localizedTitle != nil
+    }
+
+    /// The Arabic title hasn't arrived yet, so the title area shows a placeholder.
+    var isAwaitingTranslation: Bool { usesArabicTitles && !translationFinished }
+
+    private var imdbID: String? {
+        let base = route.id.split(separator: ":").first.map(String.init) ?? route.id
+        return base.hasPrefix("tt") ? base : nil
+    }
+
+    var runtimeText: String? {
+        if let localizedRuntime { return localized("%lld min", localizedRuntime) }
+        return meta?.runtime
+    }
     var poster: String? { meta?.poster ?? route.poster }
     var description: String? { localizedOverview?.nonEmpty ?? meta?.description ?? route.description }
     var year: String? { meta?.releaseInfo ?? route.releaseInfo }
@@ -84,29 +113,41 @@ final class DetailViewModel {
     func loadExtras(addons: [AddonSource]) async {
         async let color: Void = loadTint()
         async let streams: Void = prefetchStreams(addons: addons)
-        async let translation: Void = loadTranslation()
-        _ = await (color, streams, translation)
+        _ = await (color, streams)
     }
 
     /// In Arabic, replaces the title, synopsis and genres with TMDB's Arabic
     /// versions (TMDB itself falls back to English when no Arabic synopsis exists).
-    private func loadTranslation() async {
+    func loadTranslation() async {
         guard Appearance.shared.language == .arabic,
-              localizedTitle == nil,
+              !translationFinished, !isTranslating,
               let client = TMDBAccount.shared.client,
-              let imdbID = route.id.split(separator: ":").first.map(String.init),
-              imdbID.hasPrefix("tt"),
-              let found = try? await client.find(imdbID: imdbID)
-        else { return }
+              let imdbID
+        else {
+            translationFinished = true
+            return
+        }
+        isTranslating = true
+        defer {
+            isTranslating = false
+            translationFinished = true
+        }
+        guard let found = try? await client.find(imdbID: imdbID) else { return }
 
-        if let details = try? await client.localizedDetails(
+        async let detailsRequest = try? client.localizedDetails(
             media: found.media, tmdbID: found.id, language: AppLanguage.arabic.tmdbCode
-        ) {
-            withAnimation(Theme.Motion.spring) {
+        )
+        async let logoRequest = try? client.logo(media: found.media, tmdbID: found.id, languageCode: "ar")
+        let (details, logo) = await (detailsRequest, logoRequest)
+
+        withAnimation(Theme.Motion.spring) {
+            if let details {
                 localizedTitle = details.title
                 localizedOverview = details.overview
                 localizedGenres = details.genres
+                localizedRuntime = details.runtime
             }
+            localizedLogo = logo ?? nil
         }
         if found.media == .tv {
             tmdbShowID = found.id

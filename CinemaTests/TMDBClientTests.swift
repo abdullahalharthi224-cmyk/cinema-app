@@ -75,4 +75,21 @@ final class TMDBClientTests: XCTestCase {
         XCTAssertEqual(imdb, "tt0903747")
         XCTAssertEqual(http.lastRequest?.url?.path, "/3/tv/1396/external_ids")
     }
+
+    func testArabicLogoAndRuntime() async throws {
+        let http = MockHTTPClient { request in
+            if request.url!.path.hasSuffix("/images") {
+                XCTAssertTrue(request.url!.absoluteString.contains("include_image_language=ar"))
+                return (200, Data(#"{"logos": [{"file_path": "/en.png", "iso_639_1": "en", "vote_average": 9},{"file_path": "/ar1.png", "iso_639_1": "ar", "vote_average": 3},{"file_path": "/ar2.png", "iso_639_1": "ar", "vote_average": 5}]}"#.utf8))
+            }
+            return (200, Data(#"{"name": "مسلسل", "overview": "ملخص", "genres": [], "episode_run_time": [48]}"#.utf8))
+        }
+        let client = TMDBClient(token: "t", http: http)
+
+        let logo = try await client.logo(media: .movie, tmdbID: 1, languageCode: "ar")
+        XCTAssertEqual(logo?.absoluteString, "https://image.tmdb.org/t/p/w500/ar2.png")
+
+        let details = try await client.localizedDetails(media: .tv, tmdbID: 1, language: "ar-SA")
+        XCTAssertEqual(details.runtime, 48)
+    }
 }
