@@ -26,7 +26,17 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "الإضافات: %lld · الكتالوجات الجاهزة: %lld"
+            "value": "%lld من الإضافات · %lld كتالوج جاهز"
+          }
+        }
+      }
+    },
+    "%lld catalogs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld كتالوج"
           }
         }
       }
@@ -81,6 +91,16 @@
         }
       }
     },
+    "API Read Access Token": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API Read Access Token"
+          }
+        }
+      }
+    },
     "About": {
       "localizations": {
         "ar": {
@@ -116,7 +136,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "إضافة إضافة"
+            "value": "إضافة جديدة"
           }
         }
       }
@@ -127,6 +147,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "إضافة عبر رابط"
+          }
+        }
+      }
+    },
+    "Add your TMDB key": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أضف مفتاح TMDB"
+          }
+        }
+      }
+    },
+    "Add your TMDB key in Settings first.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أضف مفتاح TMDB من الإعدادات أولاً."
           }
         }
       }
@@ -157,6 +197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "كتالوجات الإضافات"
+          }
+        }
+      }
+    },
+    "Addon Check": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فحص الإضافات"
           }
         }
       }
@@ -251,6 +301,26 @@
         }
       }
     },
+    "Browse by streaming service": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تصفّح حسب منصة البث"
+          }
+        }
+      }
+    },
+    "Can't Open This Title": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر فتح هذا العمل"
+          }
+        }
+      }
+    },
     "Can't Read This Addon": {
       "localizations": {
         "ar": {
@@ -311,6 +381,16 @@
         }
       }
     },
+    "Check": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فحص"
+          }
+        }
+      }
+    },
     "Check Addon": {
       "localizations": {
         "ar": {
@@ -321,12 +401,62 @@
         }
       }
     },
+    "Check Again": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعادة الفحص"
+          }
+        }
+      }
+    },
+    "Check All Addons": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فحص كل الإضافات"
+          }
+        }
+      }
+    },
     "Check for Updates": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "البحث عن تحديثات"
+          }
+        }
+      }
+    },
+    "Checking": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قيد الفحص"
+          }
+        }
+      }
+    },
+    "Checking %@…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ فحص %@…"
+          }
+        }
+      }
+    },
+    "Checking…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ الفحص…"
           }
         }
       }
@@ -441,6 +571,16 @@
         }
       }
     },
+    "Couldn't reach TMDB. Check your internet connection and try again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر الوصول إلى TMDB. تحقّق من اتصالك بالإنترنت وحاول مرة أخرى."
+          }
+        }
+      }
+    },
     "Couldn't reach the addon. Check your internet connection and try again.": {
       "localizations": {
         "ar": {
@@ -551,6 +691,26 @@
         }
       }
     },
+    "Featured Movies": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفلام مختارة"
+          }
+        }
+      }
+    },
+    "Featured Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسلسلات مختارة"
+          }
+        }
+      }
+    },
     "Find Something to Watch": {
       "localizations": {
         "ar": {
@@ -571,12 +731,32 @@
         }
       }
     },
+    "Get a free key from TMDB": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "احصل على مفتاح مجاني من TMDB"
+          }
+        }
+      }
+    },
     "Gold": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "ذهبي"
+          }
+        }
+      }
+    },
+    "Health": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الفحص"
           }
         }
       }
@@ -606,7 +786,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تم استيراد %lld إضافة من حسابك في Stremio."
+            "value": "تم استيراد %lld من الإضافات من حسابك في Stremio."
           }
         }
       }
@@ -637,6 +817,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "المثبّتة"
+          }
+        }
+      }
+    },
+    "Key saved": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المفتاح محفوظ"
+          }
+        }
+      }
+    },
+    "Language": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اللغة"
           }
         }
       }
@@ -681,12 +881,22 @@
         }
       }
     },
+    "Link expired — the addon was removed or its address changed. Reinstall it.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الرابط منتهي — حُذفت الإضافة أو تغيّر عنوانها. أعد تثبيتها."
+          }
+        }
+      }
+    },
     "Live TV": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "بث مباشر"
+            "value": "البث المباشر"
           }
         }
       }
@@ -697,6 +907,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "جارٍ البحث عن روابط…"
+          }
+        }
+      }
+    },
+    "Manifest unreachable": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملف الإضافة لا يستجيب"
+          }
+        }
+      }
+    },
+    "Manifest works": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملف الإضافة يعمل"
+          }
+        }
+      }
+    },
+    "Metadata": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بيانات"
           }
         }
       }
@@ -737,6 +977,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "أفلام، مسلسلات والمزيد"
+          }
+        }
+      }
+    },
+    "Needs setup — configure it on its website (debrid or API key).": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحتاج إعداداً — اضبطها من موقعها (debrid أو مفتاح API)."
+          }
+        }
+      }
+    },
+    "New Movies": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفلام جديدة"
+          }
+        }
+      }
+    },
+    "New Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسلسلات جديدة"
           }
         }
       }
@@ -821,12 +1091,52 @@
         }
       }
     },
+    "Not Working": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا تعمل"
+          }
+        }
+      }
+    },
+    "Not Working (%lld)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا تعمل (%lld)"
+          }
+        }
+      }
+    },
+    "Not a valid Stremio addon.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ليست إضافة Stremio صالحة."
+          }
+        }
+      }
+    },
     "Not connected": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "غير متصل"
+          }
+        }
+      }
+    },
+    "Not responding — the server may be down or too slow.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا تستجيب — قد يكون الخادم متوقفاً أو بطيئاً جداً."
           }
         }
       }
@@ -881,6 +1191,26 @@
         }
       }
     },
+    "Only gives torrent links — needs a debrid service to play here.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعطي روابط تورنت فقط — تحتاج خدمة debrid لتعمل هنا."
+          }
+        }
+      }
+    },
+    "Only works with the Stremio desktop app.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعمل مع تطبيق Stremio على الكمبيوتر فقط."
+          }
+        }
+      }
+    },
     "Other": {
       "localizations": {
         "ar": {
@@ -911,6 +1241,16 @@
         }
       }
     },
+    "Platforms": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المنصات"
+          }
+        }
+      }
+    },
     "Play": {
       "localizations": {
         "ar": {
@@ -926,7 +1266,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تشغيل م%lld ح%lld"
+            "value": "تشغيل م%lld · ح%lld"
           }
         }
       }
@@ -937,6 +1277,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تشغيل باستخدام"
+          }
+        }
+      }
+    },
+    "Popular on this service": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأكثر مشاهدة على هذه المنصة"
           }
         }
       }
@@ -1011,12 +1361,42 @@
         }
       }
     },
+    "Remove Key": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة المفتاح"
+          }
+        }
+      }
+    },
+    "Remove TMDB key?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة مفتاح TMDB؟"
+          }
+        }
+      }
+    },
     "Remove from Continue Watching": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "إزالة من متابعة المشاهدة"
+          }
+        }
+      }
+    },
+    "Response time: %lld ms": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "زمن الاستجابة: %lld ملّي ثانية"
           }
         }
       }
@@ -1036,7 +1416,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "م%lld ح%lld"
+            "value": "م%lld · ح%lld"
           }
         }
       }
@@ -1086,7 +1466,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "قابل للبحث"
+            "value": "يدعم البحث"
           }
         }
       }
@@ -1107,6 +1487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الموسم %lld"
+          }
+        }
+      }
+    },
+    "See which addons work and why others don't.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اعرف أي الإضافات تعمل، ولماذا لا تعمل الأخرى."
           }
         }
       }
@@ -1171,6 +1561,16 @@
         }
       }
     },
+    "Sign in at themoviedb.org, open Settings → API, and copy the “API Read Access Token” (the long one). It's stored only in this iPhone's Keychain.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سجّل الدخول في themoviedb.org، وافتح Settings ثم API، وانسخ «API Read Access Token» (المفتاح الطويل). يُحفظ فقط في سلسلة مفاتيح هذا الآيفون."
+          }
+        }
+      }
+    },
     "Sign in to bring over every addon from your Stremio account.": {
       "localizations": {
         "ar": {
@@ -1206,7 +1606,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "حدث خطأ ما"
+            "value": "حدث خطأ"
           }
         }
       }
@@ -1316,7 +1716,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تمت مزامنة %lld إضافة"
+            "value": "تمت مزامنة %lld من الإضافات"
           }
         }
       }
@@ -1331,12 +1731,82 @@
         }
       }
     },
+    "TMDB has no information for this title.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد معلومات عن هذا العمل في TMDB."
+          }
+        }
+      }
+    },
+    "TMDB has no titles listed for this service yet.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد أعمال مسجّلة لهذه المنصة في TMDB بعد."
+          }
+        }
+      }
+    },
+    "TMDB rejected this key. Make sure you copied the API Read Access Token.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رفض TMDB هذا المفتاح. تأكد أنك نسخت «API Read Access Token»."
+          }
+        }
+      }
+    },
+    "TMDB responded with an error (code %lld).": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ردّ TMDB بخطأ (الرمز %lld)."
+          }
+        }
+      }
+    },
+    "TMDB sent data this app can't read.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أرسل TMDB بيانات لا يستطيع التطبيق قراءتها."
+          }
+        }
+      }
+    },
     "Tap Edit to reorder or remove. Addons higher in the list are asked first.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "اضغط «تعديل» لإعادة الترتيب أو الحذف. الإضافات الأعلى في القائمة يُطلب منها أولاً."
+          }
+        }
+      }
+    },
+    "Test film: %lld streams (%lld playable)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فيلم الاختبار: %lld رابط (%lld قابل للتشغيل)"
+          }
+        }
+      }
+    },
+    "Tests the manifest, response time, and a stream lookup for The Shawshank Redemption.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يفحص ملف الإضافة وزمن استجابتها، ويجرّب جلب روابط فيلم The Shawshank Redemption."
           }
         }
       }
@@ -1391,6 +1861,36 @@
         }
       }
     },
+    "The key works.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المفتاح يعمل."
+          }
+        }
+      }
+    },
+    "The manifest works, but fetching streams failed.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملف الإضافة يعمل، لكن جلب الروابط فشل."
+          }
+        }
+      }
+    },
+    "The server returned an error (code %lld).": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ردّ الخادم بخطأ (الرمز %lld)."
+          }
+        }
+      }
+    },
     "This addon needs to be configured on its website first.": {
       "localizations": {
         "ar": {
@@ -1417,6 +1917,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "هذا النوع من الروابط غير مدعوم."
+          }
+        }
+      }
+    },
+    "This title has no IMDb ID, so addons can't find streams for it.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا العمل ليس له معرّف IMDb، لذلك لا تستطيع الإضافات إيجاد روابط له."
           }
         }
       }
@@ -1451,6 +1961,26 @@
         }
       }
     },
+    "Top Rated Movies": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأفلام الأعلى تقييماً"
+          }
+        }
+      }
+    },
+    "Top Rated Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المسلسلات الأعلى تقييماً"
+          }
+        }
+      }
+    },
     "Torrent streams aren't supported. Use a debrid-enabled addon for direct links.": {
       "localizations": {
         "ar": {
@@ -1467,6 +1997,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "الإعلان"
+          }
+        }
+      }
+    },
+    "Trending Movies": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأفلام الرائجة"
+          }
+        }
+      }
+    },
+    "Trending Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المسلسلات الرائجة"
           }
         }
       }
@@ -1491,6 +2041,26 @@
         }
       }
     },
+    "Type": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "النوع"
+          }
+        }
+      }
+    },
+    "Unlocks Netflix, Apple TV+, Shahid and more.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لعرض Netflix وApple TV+ وشاهد وغيرها."
+          }
+        }
+      }
+    },
     "Upcoming": {
       "localizations": {
         "ar": {
@@ -1507,6 +2077,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "يُستخدم للتمييز والتقييمات وشريط التقدّم والأزرار في كل التطبيق."
+          }
+        }
+      }
+    },
+    "Verify": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحقّق"
+          }
+        }
+      }
+    },
+    "Verify & Save": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحقّق واحفظ"
           }
         }
       }
@@ -1561,6 +2151,36 @@
         }
       }
     },
+    "Working": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعمل"
+          }
+        }
+      }
+    },
+    "Working (%lld)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعمل (%lld)"
+          }
+        }
+      }
+    },
+    "Works, but returned no streams for a well-known film.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعمل، لكنها لم تعطِ أي روابط لفيلم معروف."
+          }
+        }
+      }
+    },
     "Your Library Is Empty": {
       "localizations": {
         "ar": {
@@ -1587,6 +2207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "انتهت جلستك في Stremio. سجّل الدخول مرة أخرى."
+          }
+        }
+      }
+    },
+    "Your TMDB key unlocks streaming platforms and Arabic titles and synopses.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مفتاح TMDB يفتح لك المنصات، والعناوين والملخصات بالعربية."
           }
         }
       }

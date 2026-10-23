@@ -15,6 +15,13 @@ final class DetailViewModel {
     private(set) var prefetchedStreams: [StreamGroup]?
     /// A colour sampled from the poster, used to tint the page.
     private(set) var tint: Color?
+    /// Arabic title, synopsis and genres from TMDB when the app is in Arabic.
+    private(set) var localizedTitle: String?
+    private(set) var localizedOverview: String?
+    private(set) var localizedGenres: [String]?
+    /// Translated episode names and synopses, by season then episode number.
+    private(set) var episodeTexts: [Int: [Int: TMDBEpisode]] = [:]
+    private var tmdbShowID: Int?
 
     private let service = ContentService()
 
@@ -23,17 +30,17 @@ final class DetailViewModel {
     }
 
     // Values that fall back to the preview data while full details load.
-    var name: String { meta?.name.nonEmpty ?? route.name }
+    var name: String { localizedTitle?.nonEmpty ?? meta?.name.nonEmpty ?? route.name }
     var backgroundURL: URL? {
         Artwork.background(id: route.id, provided: meta?.background ?? route.background)
             ?? (meta?.poster ?? route.poster)?.asURL
     }
     var logoURL: URL? { Artwork.logo(id: route.id, provided: meta?.logo ?? route.logo) }
     var poster: String? { meta?.poster ?? route.poster }
-    var description: String? { meta?.description ?? route.description }
+    var description: String? { localizedOverview?.nonEmpty ?? meta?.description ?? route.description }
     var year: String? { meta?.releaseInfo ?? route.releaseInfo }
     var rating: String? { meta?.imdbRating ?? route.imdbRating }
-    var genres: [String] { meta.map(\.genres).flatMap(\.nonEmpty) ?? route.genres }
+    var genres: [String] { localizedGenres?.nonEmpty ?? meta.map(\.genres).flatMap(\.nonEmpty) ?? route.genres }
     var isSeries: Bool { route.type == "series" || !(meta?.videos.isEmpty ?? true) && route.type != "movie" }
 
     var trailerURL: URL? {
@@ -77,7 +84,55 @@ final class DetailViewModel {
     func loadExtras(addons: [AddonSource]) async {
         async let color: Void = loadTint()
         async let streams: Void = prefetchStreams(addons: addons)
-        _ = await (color, streams)
+        async let translation: Void = loadTranslation()
+        _ = await (color, streams, translation)
+    }
+
+    /// In Arabic, replaces the title, synopsis and genres with TMDB's Arabic
+    /// versions (TMDB itself falls back to English when no Arabic synopsis exists).
+    private func loadTranslation() async {
+        guard Appearance.shared.language == .arabic,
+              localizedTitle == nil,
+              let client = TMDBAccount.shared.client,
+              let imdbID = route.id.split(separator: ":").first.map(String.init),
+              imdbID.hasPrefix("tt"),
+              let found = try? await client.find(imdbID: imdbID)
+        else { return }
+
+        if let details = try? await client.localizedDetails(
+            media: found.media, tmdbID: found.id, language: AppLanguage.arabic.tmdbCode
+        ) {
+            withAnimation(Theme.Motion.spring) {
+                localizedTitle = details.title
+                localizedOverview = details.overview
+                localizedGenres = details.genres
+            }
+        }
+        if found.media == .tv {
+            tmdbShowID = found.id
+            await loadEpisodeTexts(season: selectedSeason)
+        }
+    }
+
+    func loadEpisodeTexts(season: Int?) async {
+        guard let season, let tmdbShowID, episodeTexts[season] == nil,
+              let client = TMDBAccount.shared.client,
+              let episodes = try? await client.season(tvID: tmdbShowID, number: season, language: AppLanguage.arabic.tmdbCode)
+        else { return }
+        withAnimation(Theme.Motion.spring) { episodeTexts[season] = episodes }
+    }
+
+    func episodeTitle(_ video: MetaVideo) -> String? {
+        translatedEpisode(video)?.name?.nonEmpty ?? video.title
+    }
+
+    func episodeOverview(_ video: MetaVideo) -> String? {
+        translatedEpisode(video)?.overview?.nonEmpty ?? video.overview
+    }
+
+    private func translatedEpisode(_ video: MetaVideo) -> TMDBEpisode? {
+        guard let season = video.season, let episode = video.episode else { return nil }
+        return episodeTexts[season]?[episode]
     }
 
     private func loadTint() async {

@@ -65,7 +65,7 @@ struct StreamPickerView: View {
                 Button("Copy Link") {
                     recordHistory()
                     UIPasteboard.general.url = url
-                    toastMessage = String(localized: "Link copied")
+                    toastMessage = localized("Link copied")
                 }
             }
         } message: { _ in
@@ -212,7 +212,7 @@ struct StreamPickerView: View {
             if accepted {
                 recordHistory()
             } else {
-                errorMessage = String(localized: "Couldn't open \(player.name). Make sure it's installed.")
+                errorMessage = localized("Couldn't open %@. Make sure it's installed.", player.name)
             }
         }
     }

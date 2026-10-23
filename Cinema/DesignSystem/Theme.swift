@@ -94,8 +94,18 @@ final class Appearance {
 
     var accent: Color { Color(hex: accentHex) ?? Color(hex: Self.defaultAccentHex)! }
 
+    /// The app's own language, independent of the iPhone's.
+    var language: AppLanguage {
+        didSet {
+            UserDefaults.standard.set(language.rawValue, forKey: AppLanguage.storageKey)
+            // Also makes system-provided text (alerts, pickers) match after the next launch.
+            UserDefaults.standard.set([language.rawValue], forKey: "AppleLanguages")
+        }
+    }
+
     private init() {
         accentHex = UserDefaults.standard.string(forKey: Self.accentKey) ?? Self.defaultAccentHex
+        language = AppLanguage.current
     }
 }
 

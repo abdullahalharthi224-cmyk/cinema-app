@@ -28,6 +28,33 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Picker(selection: Binding(
+                        get: { Appearance.shared.language },
+                        set: { language in Appearance.shared.language = language }
+                    )) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(verbatim: language.nativeName).tag(language)
+                        }
+                    } label: {
+                        Label {
+                            Text("Language")
+                        } icon: {
+                            SettingsIcon(systemName: "globe", color: .blue)
+                        }
+                    }
+
+                    NavigationLink(value: SettingsRoute.tmdb) {
+                        LabeledContent {
+                            Text(TMDBAccount.shared.isConnected ? LocalizedStringKey("Connected") : "Not connected")
+                        } label: {
+                            Label {
+                                Text(verbatim: "TMDB")
+                            } icon: {
+                                SettingsIcon(systemName: "film.stack.fill", color: .teal)
+                            }
+                        }
+                    }
+
                     NavigationLink(value: SettingsRoute.appearance) {
                         LabeledContent {
                             Circle()
@@ -80,6 +107,8 @@ struct SettingsView: View {
                     AddonsView()
                 case .appearance:
                     AppearanceView()
+                case .tmdb:
+                    TMDBSettingsView()
                 case .addon(let addon):
                     AddonDetailView(addon: addon)
                 }

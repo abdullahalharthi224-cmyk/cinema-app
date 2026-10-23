@@ -3,6 +3,8 @@ import SwiftUI
 struct RootView: View {
     @Environment(AppRouter.self) private var router
 
+    private var language: AppLanguage { Appearance.shared.language }
+
     var body: some View {
         @Bindable var router = router
 
@@ -26,5 +28,10 @@ struct RootView: View {
         .sensoryFeedback(.selection, trigger: router.selectedTab)
         // Reading the accent here re-tints the whole app the moment it changes.
         .tint(Theme.accent)
+        // The in-app language: strings, number/date formats and right-to-left layout
+        // all follow it immediately. Rebuilding the tree makes every screen pick it up.
+        .environment(\.locale, language.locale)
+        .environment(\.layoutDirection, language.isRightToLeft ? .rightToLeft : .leftToRight)
+        .id(language)
     }
 }

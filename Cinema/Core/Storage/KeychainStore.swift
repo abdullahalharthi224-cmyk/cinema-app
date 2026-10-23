@@ -48,4 +48,5 @@ struct KeychainStore: Sendable {
 
 enum KeychainKey {
     static let stremioAuthKey = "stremio.authKey"
+    static let tmdbToken = "tmdb.readAccessToken"
 }

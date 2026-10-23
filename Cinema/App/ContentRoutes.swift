@@ -33,6 +33,20 @@ struct MetaRoute: Hashable {
         self.transitionID = transitionID
     }
 
+    init(
+        type: String, id: String, name: String, poster: String? = nil, background: String? = nil,
+        description: String? = nil, releaseInfo: String? = nil, imdbRating: String? = nil
+    ) {
+        self.type = type
+        self.id = id
+        self.name = name
+        self.poster = poster
+        self.background = background
+        self.description = description
+        self.releaseInfo = releaseInfo
+        self.imdbRating = imdbRating
+    }
+
     init(history item: WatchHistoryItem) {
         type = item.type
         id = item.metaID
@@ -69,6 +83,12 @@ extension View {
         }
         .navigationDestination(for: CatalogRoute.self) { route in
             CatalogGridView(reference: route.reference)
+        }
+        .navigationDestination(for: Platform.self) { platform in
+            PlatformView(platform: platform)
+        }
+        .navigationDestination(for: TMDBTitleRoute.self) { route in
+            TMDBTitleLoaderView(route: route)
         }
     }
 }

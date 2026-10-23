@@ -78,7 +78,7 @@ struct CatalogGridView: View {
             .padding(.bottom, Theme.Spacing.xxl)
         }
         .background(Theme.background.ignoresSafeArea())
-        .navigationTitle(reference.catalog.displayName)
+        .navigationTitle(Text(reference.displayTitle))
         .navigationBarTitleDisplayMode(.large)
         .refreshable { await reload() }
         .task(id: genre) {

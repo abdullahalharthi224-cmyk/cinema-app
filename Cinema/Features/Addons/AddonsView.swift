@@ -25,6 +25,23 @@ struct AddonsView: View {
             }
 
             if !addons.isEmpty {
+                Section {
+                    Button {
+                        sheet = .healthAll
+                    } label: {
+                        HStack(spacing: Theme.Spacing.m) {
+                            SettingsIcon(systemName: "stethoscope", color: .green)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Check All Addons")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                Text("See which addons work and why others don't.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
                 installedSection
             } else if isConnected {
                 Section {
@@ -52,8 +69,12 @@ struct AddonsView: View {
                 StremioImportView()
             case .manual:
                 AddAddonView { addon in
-                    toastMessage = String(localized: "\(addon.name) installed")
+                    toastMessage = localized("%@ installed", addon.name)
                 }
+            case .healthAll:
+                AddonHealthReportView()
+            case .healthOne(let addon):
+                AddonSingleCheckView(addon: addon)
             }
         }
         .confirmationDialog(
@@ -112,6 +133,21 @@ struct AddonsView: View {
                     router.settingsPath.append(.addon(addon))
                 } onToggle: { isOn in
                     perform { try store.setEnabled(addon, isOn) }
+                }
+                .swipeActions(edge: .leading) {
+                    Button {
+                        sheet = .healthOne(addon)
+                    } label: {
+                        Label("Check", systemImage: "stethoscope")
+                    }
+                    .tint(.green)
+                }
+                .contextMenu {
+                    Button {
+                        sheet = .healthOne(addon)
+                    } label: {
+                        Label("Check", systemImage: "stethoscope")
+                    }
                 }
             }
             .onMove { source, destination in
@@ -193,7 +229,7 @@ struct AddonsView: View {
         defer { isSyncing = false }
         do {
             let summary = try await store.resyncStremio()
-            toastMessage = String(localized: "Synced \(summary.imported) addons")
+            toastMessage = localized("Synced %lld addons", summary.imported)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -208,9 +244,18 @@ struct AddonsView: View {
     }
 }
 
-enum AddonsSheet: String, Identifiable {
-    case stremio, manual
-    var id: String { rawValue }
+enum AddonsSheet: Identifiable {
+    case stremio, manual, healthAll
+    case healthOne(InstalledAddon)
+
+    var id: String {
+        switch self {
+        case .stremio: return "stremio"
+        case .manual: return "manual"
+        case .healthAll: return "healthAll"
+        case .healthOne(let addon): return "health:" + addon.transportUrl
+        }
+    }
 }
 
 private struct AddonRow: View {
