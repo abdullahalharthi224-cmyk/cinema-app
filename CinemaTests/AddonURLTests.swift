@@ -53,4 +53,22 @@ final class AddonURLTests: XCTestCase {
         XCTAssertTrue(AddonURL.isLocalOnly(URL(string: "http://127.0.0.1:11470/local-addon/manifest.json")!))
         XCTAssertFalse(AddonURL.isLocalOnly(URL(string: "https://v3-cinemeta.strem.io/manifest.json")!))
     }
+
+    func testLegacyAddons() throws {
+        // The original OpenSubtitles maps to its modern version, before or after old normalisation.
+        for input in [
+            "https://opensubtitles.strem.io/stremioget/stremio/v1",
+            "https://opensubtitles.strem.io/stremioget/stremio/v1/manifest.json",
+        ] {
+            XCTAssertEqual(
+                try AddonURL.normalizedManifestURL(from: input).absoluteString,
+                "https://opensubtitles-v3.strem.io/manifest.json"
+            )
+        }
+        // Other legacy addons keep their address so they can be reported as unsupported.
+        let other = try AddonURL.normalizedManifestURL(from: "https://legacy.example.com/stremioget/stremio/v1")
+        XCTAssertEqual(other.absoluteString, "https://legacy.example.com/stremioget/stremio/v1")
+        XCTAssertTrue(AddonURL.isLegacy(other))
+        XCTAssertFalse(AddonURL.isLegacy(URL(string: "https://x.com/manifest.json")!))
+    }
 }

@@ -87,6 +87,17 @@ struct AddonClient: Sendable {
         return URL(string: path) ?? base
     }
 
+    /// Retired addons often redirect to a website, which answers with HTML instead of JSON.
+    static func looksLikeWebPage(_ data: Data, response: HTTPURLResponse) -> Bool {
+        if let type = response.value(forHTTPHeaderField: "Content-Type"), type.lowercased().contains("text/html") {
+            return true
+        }
+        let start = String(decoding: data.prefix(64), as: UTF8.self)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        return start.hasPrefix("<!doctype html") || start.hasPrefix("<html") || start.hasPrefix("<head")
+    }
+
     private func get<T: Decodable>(_ url: URL, as type: T.Type) async throws -> T {
         var request = URLRequest(url: url, timeoutInterval: timeout)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -107,6 +118,7 @@ struct AddonClient: Sendable {
         do {
             return try JSONDecoder.addon.decode(T.self, from: data)
         } catch {
+            if Self.looksLikeWebPage(data, response: response) { throw AddonError.webPage }
             throw AddonError.invalidResponse
         }
     }
@@ -118,6 +130,8 @@ enum AddonError: Error, Equatable, LocalizedError {
     case httpStatus(Int)
     case notFound
     case invalidResponse
+    /// The address answers with a web page instead of addon data.
+    case webPage
 
     var errorDescription: String? {
         switch self {
@@ -131,6 +145,8 @@ enum AddonError: Error, Equatable, LocalizedError {
             return localized("Nothing was found at this address.")
         case .invalidResponse:
             return localized("The addon sent data this app can't read.")
+        case .webPage:
+            return localized("This address opens a web page instead of an addon. The addon may have been discontinued.")
         }
     }
 }

@@ -651,6 +651,16 @@
         }
       }
     },
+    "Discontinued — its address now opens a web page instead of an addon.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متوقفة — رابطها يفتح الآن صفحة ويب بدل الإضافة. يمكنك حذفها."
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "ar": {
@@ -1911,6 +1921,16 @@
         }
       }
     },
+    "This address opens a web page instead of an addon. The addon may have been discontinued.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا الرابط يفتح صفحة ويب بدل الإضافة. قد تكون الإضافة متوقفة."
+          }
+        }
+      }
+    },
     "This catalog is empty right now.": {
       "localizations": {
         "ar": {
@@ -2091,6 +2111,16 @@
         }
       }
     },
+    "Uses Stremio's old protocol, which isn't supported. Install its newer version.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تستخدم نظام Stremio القديم غير المدعوم. ثبّت نسختها الأحدث."
+          }
+        }
+      }
+    },
     "Verify": {
       "localizations": {
         "ar": {
@@ -2181,12 +2211,12 @@
         }
       }
     },
-    "Works, but returned no streams for a well-known film.": {
+    "Works, but has no streams for the test film — normal for addons with a limited library.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تعمل، لكنها لم تعطِ أي روابط لفيلم معروف."
+            "value": "تعمل، لكن لا تملك روابط لفيلم الاختبار — وهذا طبيعي للإضافات ذات المحتوى المحدود."
           }
         }
       }

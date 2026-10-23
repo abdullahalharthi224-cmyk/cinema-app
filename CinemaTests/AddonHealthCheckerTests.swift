@@ -44,7 +44,7 @@ final class AddonHealthCheckerTests: XCTestCase {
         let offline = await checker { _ in throw URLError(.timedOut) }.check(name: "Down", manifestURL: streamsURL)
         XCTAssertEqual(offline.problem, .noResponse)
 
-        let broken = await checker { _ in (200, Data("<html>".utf8)) }.check(name: "Broken", manifestURL: streamsURL)
+        let broken = await checker { _ in (200, Data("{not valid json".utf8)) }.check(name: "Broken", manifestURL: streamsURL)
         XCTAssertEqual(broken.problem, .invalidManifest)
     }
 
@@ -78,5 +78,33 @@ final class AddonHealthCheckerTests: XCTestCase {
         let manifest = #"{"id": "x", "name": "X", "resources": ["stream"], "types": ["movie"], "behaviorHints": {"configurationRequired": true}}"#
         let report = await checker { _ in (200, Data(manifest.utf8)) }.check(name: "X", manifestURL: streamsURL)
         XCTAssertEqual(report.problem, .needsSetup)
+    }
+
+    func testDiscontinuedAddonRedirectingToWebsite() async {
+        let http = MockHTTPClient { request in
+            let response = "<!doctype html><html><head><title>Archivio has retired</title></head></html>"
+            return (200, Data(response.utf8))
+        }
+        let report = await AddonHealthChecker(http: http).check(name: "Archivio", manifestURL: streamsURL)
+        XCTAssertEqual(report.problem, .discontinued)
+        XCTAssertFalse(report.isHealthy)
+    }
+
+    func testLegacyAddonIsReportedWithoutContactingIt() async {
+        let http = MockHTTPClient(json: "{}")
+        let report = await AddonHealthChecker(http: http)
+            .check(name: "Old", manifestURL: URL(string: "https://legacy.example.com/stremioget/stremio/v1")!)
+        XCTAssertEqual(report.problem, .legacyProtocol)
+        XCTAssertTrue(http.requests.isEmpty)
+    }
+
+    func testNoStreamsForTestFilmIsOnlyAWarning() async {
+        let report = await checker { request in
+            if request.url!.path.hasSuffix("manifest.json") { return (200, Data(Fixtures.streamAddonManifest.utf8)) }
+            return (200, Data(#"{"streams": []}"#.utf8))
+        }.check(name: "Small library", manifestURL: streamsURL)
+        XCTAssertEqual(report.problem, .noStreams)
+        XCTAssertTrue(report.isWarning)
+        XCTAssertTrue(report.isHealthy)
     }
 }
