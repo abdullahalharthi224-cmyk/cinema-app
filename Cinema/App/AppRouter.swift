@@ -7,6 +7,7 @@ enum AppTab: Hashable {
 
 enum SettingsRoute: Hashable {
     case addons
+    case appearance
     case addon(InstalledAddon)
 }
 

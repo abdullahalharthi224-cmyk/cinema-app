@@ -16,7 +16,7 @@ struct RootView: View {
                 .tag(AppTab.search)
 
             LibraryView()
-                .tabItem { Label("Library", systemImage: "rectangle.stack.fill") }
+                .tabItem { Label("Library", systemImage: "square.stack.fill") }
                 .tag(AppTab.library)
 
             SettingsView()
@@ -24,5 +24,7 @@ struct RootView: View {
                 .tag(AppTab.settings)
         }
         .sensoryFeedback(.selection, trigger: router.selectedTab)
+        // Reading the accent here re-tints the whole app the moment it changes.
+        .tint(Theme.accent)
     }
 }

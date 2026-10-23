@@ -15,8 +15,10 @@ struct MetaRoute: Hashable {
     var genres: [String] = []
     /// The addon whose catalog the title came from; asked first for details.
     var addonID: String?
+    /// Identifies the poster this page zooms out of.
+    var transitionID: String?
 
-    init(preview: MetaPreview, addonID: String?) {
+    init(preview: MetaPreview, addonID: String?, transitionID: String? = nil) {
         type = preview.type
         id = preview.id
         name = preview.name
@@ -28,7 +30,30 @@ struct MetaRoute: Hashable {
         imdbRating = preview.imdbRating
         genres = preview.genres
         self.addonID = addonID
+        self.transitionID = transitionID
     }
+
+    init(history item: WatchHistoryItem) {
+        type = item.type
+        id = item.metaID
+        name = item.name
+        poster = item.poster
+        background = item.background
+        logo = item.logo
+        addonID = item.addonID
+    }
+
+    var historyEntryBase: WatchHistoryEntry {
+        WatchHistoryEntry(
+            metaID: id, type: type, name: name, poster: poster, background: background, logo: logo,
+            videoID: id, episodeLabel: nil, addonID: addonID
+        )
+    }
+}
+
+extension MetaPreview {
+    var logoURL: URL? { Artwork.logo(id: id, provided: logo) }
+    var backgroundURL: URL? { Artwork.background(id: id, provided: background) ?? poster?.asURL }
 }
 
 /// Opens the full, paginated grid of one catalog.

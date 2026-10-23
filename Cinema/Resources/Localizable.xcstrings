@@ -91,6 +91,16 @@
         }
       }
     },
+    "Accent Color": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اللون المميز"
+          }
+        }
+      }
+    },
     "Account": {
       "localizations": {
         "ar": {
@@ -211,6 +221,16 @@
         }
       }
     },
+    "Appearance": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المظهر"
+          }
+        }
+      }
+    },
     "Available Catalogs": {
       "localizations": {
         "ar": {
@@ -267,6 +287,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الكتالوجات"
+          }
+        }
+      }
+    },
+    "Champagne": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شمبانيا"
           }
         }
       }
@@ -341,12 +371,32 @@
         }
       }
     },
+    "Continue Watching": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متابعة المشاهدة"
+          }
+        }
+      }
+    },
     "Copy Link": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "نسخ الرابط"
+          }
+        }
+      }
+    },
+    "Coral": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مرجاني"
           }
         }
       }
@@ -401,6 +451,26 @@
         }
       }
     },
+    "Crimson": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قرمزي"
+          }
+        }
+      }
+    },
+    "Custom Color": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لون مخصص"
+          }
+        }
+      }
+    },
     "Details": {
       "localizations": {
         "ar": {
@@ -451,6 +521,16 @@
         }
       }
     },
+    "Emerald": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "زمردي"
+          }
+        }
+      }
+    },
     "Enabled": {
       "localizations": {
         "ar": {
@@ -487,6 +567,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "من Stremio"
+          }
+        }
+      }
+    },
+    "Gold": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ذهبي"
           }
         }
       }
@@ -617,6 +707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "المزيد"
+          }
+        }
+      }
+    },
+    "Most popular on %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأكثر شعبية على %@"
           }
         }
       }
@@ -771,6 +871,16 @@
         }
       }
     },
+    "Ocean": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "محيطي"
+          }
+        }
+      }
+    },
     "Other": {
       "localizations": {
         "ar": {
@@ -861,6 +971,16 @@
         }
       }
     },
+    "Recently Watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شوهد مؤخراً"
+          }
+        }
+      }
+    },
     "Remove": {
       "localizations": {
         "ar": {
@@ -887,6 +1007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "إزالة الإضافة"
+          }
+        }
+      }
+    },
+    "Remove from Continue Watching": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة من متابعة المشاهدة"
           }
         }
       }
@@ -957,6 +1087,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "قابل للبحث"
+          }
+        }
+      }
+    },
+    "Season": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الموسم"
           }
         }
       }
@@ -1047,6 +1187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تسجيل الخروج من Stremio؟"
+          }
+        }
+      }
+    },
+    "Silver": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فضي"
           }
         }
       }
@@ -1281,6 +1431,26 @@
         }
       }
     },
+    "Titles you start watching will appear here.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ستظهر هنا الأعمال التي تبدأ بمشاهدتها."
+          }
+        }
+      }
+    },
+    "Top 10 %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفضل 10 %@"
+          }
+        }
+      }
+    },
     "Torrent streams aren't supported. Use a debrid-enabled addon for direct links.": {
       "localizations": {
         "ar": {
@@ -1331,6 +1501,16 @@
         }
       }
     },
+    "Used for highlights, ratings, progress and buttons throughout the app.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يُستخدم للتمييز والتقييمات وشريط التقدّم والأزرار في كل التطبيق."
+          }
+        }
+      }
+    },
     "Version": {
       "localizations": {
         "ar": {
@@ -1347,6 +1527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الإصدار %@"
+          }
+        }
+      }
+    },
+    "Violet": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بنفسجي"
           }
         }
       }

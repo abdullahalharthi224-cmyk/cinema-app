@@ -1,10 +1,12 @@
 import SwiftUI
 
-/// The large, auto-advancing showcase at the top of Home.
+/// The full-bleed showcase that fills the top two-thirds of Home: large artwork
+/// with a slow zoom, the title's logo, glass buttons, auto-advancing pages.
 struct HeroCarousel: View {
     let items: [MetaPreview]
     let addonID: String
-    var height: CGFloat = 560
+    let height: CGFloat
+    var onPlay: (MetaPreview) -> Void
 
     @State private var currentID: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -13,10 +15,13 @@ struct HeroCarousel: View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
                 ForEach(items) { item in
-                    NavigationLink(value: MetaRoute(preview: item, addonID: addonID)) {
-                        HeroPage(item: item, height: height)
-                    }
-                    .buttonStyle(.plain)
+                    HeroPage(
+                        item: item,
+                        addonID: addonID,
+                        height: height,
+                        isActive: item.id == currentID,
+                        onPlay: { onPlay(item) }
+                    )
                     .containerRelativeFrame(.horizontal)
                     .id(item.id)
                 }
@@ -30,10 +35,10 @@ struct HeroCarousel: View {
         .overlay(alignment: .bottom) { pageIndicator }
         .task(id: currentID) {
             guard !reduceMotion, items.count > 1 else { return }
-            try? await Task.sleep(for: .seconds(7))
+            try? await Task.sleep(for: .seconds(8))
             guard !Task.isCancelled else { return }
             let index = items.firstIndex { $0.id == currentID } ?? 0
-            withAnimation(.smooth(duration: 0.8)) {
+            withAnimation(Theme.Motion.gentle) {
                 currentID = items[(index + 1) % items.count].id
             }
         }
@@ -54,11 +59,11 @@ struct HeroCarousel: View {
         HStack(spacing: 6) {
             ForEach(items) { item in
                 Capsule()
-                    .fill(item.id == currentID ? Color.white : Color.white.opacity(0.35))
-                    .frame(width: item.id == currentID ? 18 : 6, height: 6)
+                    .fill(item.id == currentID ? Color.white : Color.white.opacity(0.3))
+                    .frame(width: item.id == currentID ? 20 : 6, height: 6)
             }
         }
-        .animation(.snappy, value: currentID)
+        .animation(Theme.Motion.spring, value: currentID)
         .padding(.bottom, Theme.Spacing.l)
         .accessibilityHidden(true)
     }
@@ -66,66 +71,103 @@ struct HeroCarousel: View {
 
 private struct HeroPage: View {
     let item: MetaPreview
+    let addonID: String
     let height: CGFloat
+    let isActive: Bool
+    var onPlay: () -> Void
+
+    @State private var zoomed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var route: MetaRoute { MetaRoute(preview: item, addonID: addonID) }
 
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.clear
                 .overlay {
-                    RemoteImage(url: (item.background ?? item.poster)?.asURL)
+                    RemoteImage(url: item.backgroundURL)
+                        // Ken Burns: a very slow push-in while the page is on screen.
+                        .scaleEffect(zoomed ? 1.12 : 1.0)
                 }
                 .clipped()
 
-            // Legibility: a soft top shade for the status bar and a deep fade into the page.
+            // Shade the status bar area, then melt softly into the black page.
             LinearGradient(
                 stops: [
-                    .init(color: .black.opacity(0.45), location: 0),
-                    .init(color: .clear, location: 0.25),
-                    .init(color: .clear, location: 0.45),
-                    .init(color: Theme.background.opacity(0.85), location: 0.8),
+                    .init(color: .black.opacity(0.55), location: 0),
+                    .init(color: .clear, location: 0.22),
+                    .init(color: .clear, location: 0.42),
+                    .init(color: Theme.background.opacity(0.7), location: 0.72),
                     .init(color: Theme.background, location: 1),
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
-            VStack(spacing: Theme.Spacing.m) {
-                TitleArtwork(name: item.name, logo: item.logo, maxHeight: 96)
+            VStack(spacing: Theme.Spacing.l) {
+                NavigationLink(value: route) {
+                    VStack(spacing: Theme.Spacing.m) {
+                        TitleArtwork(name: item.name, logo: item.logoURL, maxHeight: 110)
+                        MetadataLine(
+                            year: item.releaseInfo,
+                            rating: item.imdbRating,
+                            genres: Array(item.genres.prefix(2))
+                        )
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
 
-                MetadataLine(year: item.releaseInfo, rating: item.imdbRating, genres: Array(item.genres.prefix(3)))
+                HStack(spacing: Theme.Spacing.m) {
+                    if item.type == "movie" {
+                        Button(action: onPlay) {
+                            Label("Play", systemImage: "play.fill")
+                        }
+                        .buttonStyle(.glass)
+                    } else {
+                        NavigationLink(value: route) {
+                            Label("Watch Now", systemImage: "play.fill")
+                        }
+                        .buttonStyle(.glass)
+                    }
 
-                Label("Watch Now", systemImage: "play.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, Theme.Spacing.xl)
-                    .padding(.vertical, Theme.Spacing.m)
-                    .background(.white, in: Capsule())
-                    .shadow(color: .black.opacity(0.3), radius: 12, y: 6)
+                    NavigationLink(value: route) {
+                        Image(systemName: "info")
+                    }
+                    .buttonStyle(.glassCircle)
+                    .accessibilityLabel("Details")
+                }
             }
             .padding(.horizontal, Theme.Spacing.xl)
             .padding(.bottom, 52)
         }
         .frame(height: height)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(item.name))
-        .accessibilityAddTraits(.isButton)
+        .onChange(of: isActive, initial: true) { _, active in
+            guard !reduceMotion else { return }
+            if active {
+                withAnimation(.linear(duration: 12)) { zoomed = true }
+            } else {
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) { zoomed = false }
+            }
+        }
     }
 }
 
-/// A title's logo artwork, falling back to its name in large type.
+/// A title's logo artwork, falling back to its name in heavy display type.
 struct TitleArtwork: View {
     let name: String
-    let logo: String?
+    let logo: URL?
     var maxHeight: CGFloat = 90
 
     var body: some View {
-        if let url = logo?.asURL {
-            RemoteImage(url: url, contentMode: .fit) {
+        if let logo {
+            RemoteImage(url: logo, contentMode: .fit) {
                 title
             }
-            .frame(maxWidth: 280, maxHeight: maxHeight)
-            .shadow(color: .black.opacity(0.4), radius: 10)
+            .frame(maxWidth: 290, maxHeight: maxHeight)
+            .shadow(color: .black.opacity(0.5), radius: 16)
         } else {
             title
         }
@@ -133,11 +175,12 @@ struct TitleArtwork: View {
 
     private var title: some View {
         Text(name)
-            .font(.system(.largeTitle, design: .serif, weight: .bold))
+            .font(.system(size: 40, weight: .heavy))
+            .tracking(-0.5)
             .multilineTextAlignment(.center)
             .lineLimit(2)
-            .minimumScaleFactor(0.7)
-            .shadow(color: .black.opacity(0.5), radius: 8)
+            .minimumScaleFactor(0.6)
+            .shadow(color: .black.opacity(0.6), radius: 10)
     }
 }
 
@@ -157,20 +200,25 @@ struct MetadataLine: View {
                 part
             }
         }
-        .font(.footnote.weight(.medium))
-        .foregroundStyle(.secondary)
+        .font(.subheadline.weight(.semibold))
+        .foregroundStyle(.white.opacity(0.75))
         .lineLimit(1)
     }
 
     private var parts: [AnyView] {
         var parts: [AnyView] = []
-        if let year, !year.isEmpty { parts.append(AnyView(Text(verbatim: year))) }
+        if let year, !year.isEmpty {
+            parts.append(AnyView(Text(verbatim: year).font(.rounded(.subheadline, weight: .semibold))))
+        }
         if let runtime, !runtime.isEmpty { parts.append(AnyView(Text(verbatim: runtime))) }
         if let rating, !rating.isEmpty, rating != "0" {
             parts.append(AnyView(
                 HStack(spacing: 3) {
-                    Image(systemName: "star.fill").foregroundStyle(.yellow)
+                    Image(systemName: "star.fill")
+                        .font(.caption)
+                        .foregroundStyle(Theme.accent)
                     Text(verbatim: rating)
+                        .font(.rounded(.subheadline, weight: .bold))
                 }
             ))
         }

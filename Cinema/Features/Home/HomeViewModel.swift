@@ -34,10 +34,22 @@ final class HomeViewModel {
             guard case .loaded(let items) = states[row.id] else { continue }
             let withArt = items.filter { $0.background != nil || $0.poster != nil }
             if withArt.count >= 3 {
-                return (Array(withArt.prefix(8)), row.addon.id)
+                return (Array(withArt.prefix(6)), row.addon.id)
             }
         }
         return nil
+    }
+
+    /// The "Top 10" row: the first popular movie catalog, falling back to any loaded row.
+    var topTen: (reference: CatalogReference, items: [MetaPreview])? {
+        let loaded = rows.compactMap { row -> (CatalogReference, [MetaPreview])? in
+            guard case .loaded(let items) = states[row.id], items.count >= 5 else { return nil }
+            return (row, items)
+        }
+        let pick = loaded.first { $0.0.type == "movie" && $0.0.catalog.id == "top" }
+            ?? loaded.first { $0.0.type == "movie" }
+            ?? loaded.first
+        return pick.map { (reference: $0.0, items: Array($0.1.prefix(10))) }
     }
 
     func content(for row: CatalogReference) -> PosterRow.Content {

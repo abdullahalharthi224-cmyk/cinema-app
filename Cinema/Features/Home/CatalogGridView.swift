@@ -54,8 +54,11 @@ struct CatalogGridView: View {
                 case .loaded:
                     LazyVGrid(columns: columns, spacing: Theme.Spacing.l) {
                         ForEach(items) { item in
-                            NavigationLink(value: MetaRoute(preview: item, addonID: reference.addon.id)) {
-                                PosterCard(item: item)
+                            let transitionID = "grid|" + reference.id + "|" + item.id
+                            NavigationLink(
+                                value: MetaRoute(preview: item, addonID: reference.addon.id, transitionID: transitionID)
+                            ) {
+                                PosterCard(item: item, transitionID: transitionID)
                             }
                             .buttonStyle(.cardPress)
                             .onAppear {
@@ -82,7 +85,7 @@ struct CatalogGridView: View {
             items = []
             await reload()
         }
-        .animation(.smooth, value: phase)
+        .animation(Theme.Motion.spring, value: phase)
     }
 
     private var genreChips: some View {

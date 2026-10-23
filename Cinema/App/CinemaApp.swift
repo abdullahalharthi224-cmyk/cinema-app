@@ -14,9 +14,8 @@ struct CinemaApp: App {
         WindowGroup {
             RootView()
                 .environment(router)
-                .tint(Theme.accent)
                 .preferredColorScheme(.dark)
         }
-        .modelContainer(for: InstalledAddon.self)
+        .modelContainer(for: [InstalledAddon.self, WatchHistoryItem.self])
     }
 }

@@ -86,6 +86,12 @@ jobs:
           zip -qry Cinema.ipa Payload
           ls -lh Cinema.ipa
 
+      - name: Verify full-screen support
+        # Without UILaunchScreen iOS letterboxes the app, so fail loudly if it's missing.
+        run: |
+          plutil -extract UILaunchScreen xml1 -o - Payload/Cinema.app/Info.plist
+          plutil -extract UIDeviceFamily xml1 -o - Payload/Cinema.app/Info.plist
+
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:

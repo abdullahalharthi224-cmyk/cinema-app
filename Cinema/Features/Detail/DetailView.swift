@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// A title's page: backdrop, artwork, information, seasons and episodes.
+/// A title's page: artwork, information, quality, seasons and episodes.
 struct DetailView: View {
     @Query(
         filter: #Predicate<InstalledAddon> { $0.isEnabled },
@@ -11,21 +11,36 @@ struct DetailView: View {
     @State private var model: DetailViewModel
     @State private var streamRequest: StreamRequest?
     @State private var isDescriptionExpanded = false
+    @State private var scrollOffset: CGFloat = 0
     @Environment(\.openURL) private var openURL
+    @Environment(\.zoomNamespace) private var zoomNamespace
 
-    private let backdropHeight: CGFloat = 470
+    private let backdropHeight: CGFloat = 520
 
     init(route: MetaRoute) {
         _model = State(initialValue: DetailViewModel(route: route))
     }
 
+    /// The navigation bar frosts over once the backdrop has scrolled away.
+    private var isScrolledPastHeader: Bool { scrollOffset > backdropHeight - 140 }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 header
+                    .onGeometryChange(for: CGFloat.self) { geometry in
+                        geometry.frame(in: .scrollView(axis: .vertical)).minY
+                    } action: { minY in
+                        scrollOffset = -minY
+                    }
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                     actions
+
+                    if !model.availableQualities.isEmpty {
+                        qualityBadges
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
 
                     if let message = model.errorMessage {
                         errorBanner(message)
@@ -44,34 +59,64 @@ struct DetailView: View {
                     if !model.genres.isEmpty {
                         FlowLayout(spacing: Theme.Spacing.s) {
                             ForEach(model.genres, id: \.self) { genre in
-                                TagChip(text: LocalizedStringKey(genre))
+                                Text(LocalizedStringKey(genre))
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(.white.opacity(0.85))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(.white.opacity(0.08), in: Capsule())
                             }
                         }
-                    }
-
-                    if model.isSeries, !model.episodes.isEmpty {
-                        episodesSection
-                    }
-
-                    if let meta = model.meta {
-                        creditsSection(meta)
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.l)
                 .padding(.top, Theme.Spacing.l)
-                .padding(.bottom, Theme.Spacing.xxl)
+
+                if model.isSeries, !model.episodes.isEmpty {
+                    episodesSection
+                        .padding(.top, Theme.Spacing.xxl)
+                }
+
+                if let meta = model.meta {
+                    creditsSection(meta)
+                        .padding(.top, Theme.Spacing.xxl)
+                }
             }
+            .padding(.bottom, Theme.Spacing.xxxl)
         }
         .scrollIndicators(.hidden)
         .ignoresSafeArea(edges: .top)
-        .background(Theme.background.ignoresSafeArea())
+        .background(pageBackground)
+        .navigationTitle(isScrolledPastHeader ? model.name : "")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .task { await model.load(addons: addons.sources) }
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+        .toolbarBackground(isScrolledPastHeader ? .visible : .hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .animation(Theme.Motion.spring, value: isScrolledPastHeader)
+        .zoomDestination(id: model.route.transitionID, in: zoomNamespace)
+        .task {
+            await model.load(addons: addons.sources)
+            await model.loadExtras(addons: addons.sources)
+        }
         .sheet(item: $streamRequest) { request in
             StreamPickerView(request: request)
         }
-        .animation(.smooth, value: model.meta?.id)
+        .animation(Theme.Motion.spring, value: model.meta?.id)
+        .animation(Theme.Motion.spring, value: model.availableQualities)
+    }
+
+    /// Black, warmed by a wash of the poster's own colour near the top.
+    private var pageBackground: some View {
+        ZStack(alignment: .top) {
+            Theme.background
+            LinearGradient(
+                colors: [(model.tint ?? .clear).opacity(0.55), (model.tint ?? .clear).opacity(0.18), .clear],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 1100)
+        }
+        .ignoresSafeArea()
     }
 
     // MARK: Header
@@ -80,33 +125,42 @@ struct DetailView: View {
         ZStack(alignment: .bottom) {
             Color.clear
                 .overlay {
-                    RemoteImage(url: model.background?.asURL)
+                    RemoteImage(url: model.backgroundURL)
                 }
                 .clipped()
                 .overlay {
-                    // A blur that fades in towards the bottom, then a fade into the page colour.
+                    // A blur that grows towards the bottom edge…
                     Rectangle()
                         .fill(.ultraThinMaterial)
                         .mask(
                             LinearGradient(
-                                stops: [.init(color: .clear, location: 0.5), .init(color: .black, location: 0.95)],
+                                stops: [.init(color: .clear, location: 0.55), .init(color: .black, location: 0.95)],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
+                        .environment(\.colorScheme, .dark)
                 }
                 .overlay {
+                    // …then a fade into the tinted page.
                     LinearGradient(
                         stops: [
-                            .init(color: .black.opacity(0.4), location: 0),
-                            .init(color: .clear, location: 0.25),
-                            .init(color: Theme.background.opacity(0.6), location: 0.7),
-                            .init(color: Theme.background, location: 1),
+                            .init(color: .black.opacity(0.5), location: 0),
+                            .init(color: .clear, location: 0.22),
+                            .init(color: .black.opacity(0.35), location: 0.65),
+                            .init(color: .black.opacity(0.0), location: 1),
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 }
+                .mask(
+                    LinearGradient(
+                        stops: [.init(color: .black, location: 0.7), .init(color: .clear, location: 1)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .visualEffect { [backdropHeight] content, proxy in
                     let minY = proxy.frame(in: .scrollView(axis: .vertical)).minY
                     return content
@@ -115,7 +169,7 @@ struct DetailView: View {
                 }
 
             VStack(spacing: Theme.Spacing.m) {
-                TitleArtwork(name: model.name, logo: model.logo, maxHeight: 110)
+                TitleArtwork(name: model.name, logo: model.logoURL, maxHeight: 120)
                 MetadataLine(year: model.year, rating: model.rating, runtime: model.meta?.runtime)
             }
             .padding(.horizontal, Theme.Spacing.xl)
@@ -134,15 +188,9 @@ struct DetailView: View {
                 playMainTarget()
             } label: {
                 Label(playTitle, systemImage: "play.fill")
-                    .font(.headline)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.white)
-            .foregroundStyle(.black)
-            .buttonBorderShape(.capsule)
-            .controlSize(.large)
+            .buttonStyle(.glassProminent)
             .disabled(model.isSeries && model.episodes.isEmpty)
 
             if let trailer = model.trailerURL {
@@ -150,24 +198,25 @@ struct DetailView: View {
                     openURL(trailer)
                 } label: {
                     Image(systemName: "film")
-                        .font(.headline)
-                        .frame(width: 30, height: 30)
                 }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.circle)
-                .controlSize(.large)
+                .buttonStyle(.glassCircle)
                 .accessibilityLabel("Trailer")
             }
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: streamRequest?.id)
+    }
+
+    private var qualityBadges: some View {
+        HStack(spacing: 6) {
+            ForEach(Array(model.availableQualities.enumerated()), id: \.element) { index, badge in
+                QualityCapsule(text: badge, highlighted: index == 0 && badge == "4K")
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private var playTitle: LocalizedStringKey {
-        if model.isSeries, let first = model.episodes.first {
-            if let season = first.season, let episode = first.episode {
-                return "Play S\(season) E\(episode)"
-            }
-            return "Play"
+        if model.isSeries, let first = model.episodes.first, let season = first.season, let episode = first.episode {
+            return "Play S\(season) E\(episode)"
         }
         return "Play"
     }
@@ -176,7 +225,10 @@ struct DetailView: View {
         if model.isSeries {
             if let first = model.episodes.first { play(first) }
         } else {
-            streamRequest = StreamRequest(type: model.route.type, videoID: model.route.id, title: model.name, subtitle: nil)
+            streamRequest = StreamRequest(
+                type: model.route.type, videoID: model.route.id, title: model.name, subtitle: nil,
+                history: model.historyEntryBase, prefetched: model.prefetchedStreams
+            )
         }
     }
 
@@ -188,7 +240,12 @@ struct DetailView: View {
         } else {
             subtitle = video.title
         }
-        streamRequest = StreamRequest(type: model.route.type, videoID: video.id, title: model.name, subtitle: subtitle)
+        var history = model.historyEntryBase
+        history.videoID = video.id
+        history.episodeLabel = subtitle
+        streamRequest = StreamRequest(
+            type: model.route.type, videoID: video.id, title: model.name, subtitle: subtitle, history: history
+        )
     }
 
     // MARK: Sections
@@ -197,66 +254,81 @@ struct DetailView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             Text(text)
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.75))
+                .lineSpacing(2)
                 .lineLimit(isDescriptionExpanded ? nil : 4)
             if text.count > 220 {
                 Button(isDescriptionExpanded ? LocalizedStringKey("Less") : "More") {
-                    withAnimation(.smooth) { isDescriptionExpanded.toggle() }
+                    withAnimation(Theme.Motion.spring) { isDescriptionExpanded.toggle() }
                 }
-                .font(.subheadline.weight(.semibold))
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(Theme.accent)
             }
         }
     }
 
     private var episodesSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Episodes")
-                .font(.title3.weight(.bold))
+            HStack(alignment: .firstTextBaseline) {
+                Text("Episodes")
+                    .font(.display(.title2))
+                Spacer()
+                if model.seasons.count > 1 {
+                    seasonMenu
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.l)
 
-            if model.seasons.count > 1 {
-                ScrollView(.horizontal) {
-                    HStack(spacing: Theme.Spacing.s) {
-                        ForEach(model.seasons, id: \.self) { season in
-                            seasonChip(season)
+            ScrollView(.horizontal) {
+                LazyHStack(alignment: .top, spacing: Theme.Spacing.m) {
+                    ForEach(model.episodes) { video in
+                        Button {
+                            play(video)
+                        } label: {
+                            EpisodeCard(video: video)
                         }
+                        .buttonStyle(.cardPress)
                     }
                 }
-                .scrollIndicators(.hidden)
-                .sensoryFeedback(.selection, trigger: model.selectedSeason)
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.bottom, Theme.Spacing.m)
+                .scrollTargetLayout()
             }
-
-            LazyVStack(spacing: Theme.Spacing.m) {
-                ForEach(model.episodes) { video in
-                    Button {
-                        play(video)
-                    } label: {
-                        EpisodeRow(video: video)
-                    }
-                    .buttonStyle(.cardPress)
-                }
-            }
+            .scrollIndicators(.hidden)
+            .scrollTargetBehavior(.viewAligned)
+            .id(model.selectedSeason)
+            .transition(.opacity)
         }
     }
 
-    private func seasonChip(_ season: Int) -> some View {
-        let isSelected = model.selectedSeason == season
-        return Button {
-            withAnimation(.smooth) { model.selectedSeason = season }
-        } label: {
-            Group {
-                if season == 0 {
-                    Text("Specials")
-                } else {
-                    Text("Season \(season)")
+    private var seasonMenu: some View {
+        Menu {
+            Picker("Season", selection: Binding(
+                get: { model.selectedSeason ?? model.seasons.first ?? 1 },
+                set: { season in withAnimation(Theme.Motion.spring) { model.selectedSeason = season } }
+            )) {
+                ForEach(model.seasons, id: \.self) { season in
+                    seasonLabel(season).tag(season)
                 }
             }
+        } label: {
+            HStack(spacing: 4) {
+                seasonLabel(model.selectedSeason ?? model.seasons.first ?? 1)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption.weight(.bold))
+            }
             .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.white)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .foregroundStyle(isSelected ? Color.black : Color.primary)
-            .background(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(.ultraThinMaterial), in: Capsule())
+            .background(.ultraThinMaterial, in: Capsule())
+            .environment(\.colorScheme, .dark)
         }
-        .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: model.selectedSeason)
+    }
+
+    private func seasonLabel(_ season: Int) -> Text {
+        season == 0 ? Text("Specials") : Text("Season \(season)")
     }
 
     @ViewBuilder
@@ -265,13 +337,15 @@ struct DetailView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.m) {
                 if !meta.cast.isEmpty {
                     Text("Cast")
-                        .font(.title3.weight(.bold))
+                        .font(.display(.title2))
+                        .padding(.horizontal, Theme.Spacing.l)
                     ScrollView(.horizontal) {
-                        HStack(spacing: Theme.Spacing.m) {
+                        HStack(alignment: .top, spacing: Theme.Spacing.l) {
                             ForEach(meta.cast.prefix(15), id: \.self) { name in
                                 CastBadge(name: name)
                             }
                         }
+                        .padding(.horizontal, Theme.Spacing.l)
                     }
                     .scrollIndicators(.hidden)
                 }
@@ -284,6 +358,7 @@ struct DetailView: View {
                             .foregroundStyle(.secondary)
                     }
                     .font(.subheadline)
+                    .padding(.horizontal, Theme.Spacing.l)
                 }
             }
         }
@@ -310,50 +385,66 @@ struct DetailView: View {
         }
         .padding(Theme.Spacing.m)
         .background(.ultraThinMaterial, in: .continuous(Theme.Radius.medium))
+        .environment(\.colorScheme, .dark)
     }
 }
 
 /// What the stream picker should look up.
-struct StreamRequest: Identifiable, Hashable {
+struct StreamRequest: Identifiable {
     var type: String
     var videoID: String
     var title: String
     var subtitle: String?
+    /// Recorded in Continue Watching once a stream is chosen.
+    var history: WatchHistoryEntry?
+    /// Streams already fetched, to show instantly.
+    var prefetched: [StreamGroup]?
 
     var id: String { videoID }
 }
 
-private struct EpisodeRow: View {
+/// A wide episode card: still image, number badge, title and synopsis.
+private struct EpisodeCard: View {
     let video: MetaVideo
 
     var body: some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.m) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             Color.clear
                 .overlay {
                     RemoteImage(url: video.thumbnail?.asURL) {
                         ZStack {
-                            Color.white.opacity(0.06)
+                            ShimmerPlaceholder()
                             Image(systemName: "play.rectangle")
-                                .font(.title2)
+                                .font(.title)
                                 .foregroundStyle(.tertiary)
                         }
                     }
                 }
                 .aspectRatio(16 / 9, contentMode: .fit)
-                .frame(width: 140)
-                .clipShape(.continuous(Theme.Radius.small))
-
-            VStack(alignment: .leading, spacing: 4) {
-                Group {
+                .clipShape(.continuous(Theme.Radius.poster))
+                .overlay(alignment: .bottomLeading) {
                     if let episode = video.episode {
-                        Text("\(episode). \(video.title ?? "")")
-                    } else {
-                        Text(video.title ?? "")
+                        Text(verbatim: "\(episode)")
+                            .font(.rounded(.caption, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(.ultraThinMaterial, in: Capsule())
+                            .environment(\.colorScheme, .dark)
+                            .padding(Theme.Spacing.s)
                     }
                 }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(2)
+                .overlay {
+                    RoundedRectangle(cornerRadius: Theme.Radius.poster, style: .continuous)
+                        .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
+                }
+                .shadow(color: .black.opacity(0.45), radius: 12, y: 6)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(video.title ?? "")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
 
                 if let date = video.releaseDate {
                     HStack(spacing: 4) {
@@ -363,7 +454,7 @@ private struct EpisodeRow: View {
                             Text("Upcoming")
                         }
                     }
-                    .font(.caption)
+                    .font(.rounded(.caption, weight: .semibold))
                     .foregroundStyle(video.isUpcoming ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.secondary))
                 }
 
@@ -375,11 +466,10 @@ private struct EpisodeRow: View {
                 }
             }
             .multilineTextAlignment(.leading)
-
-            Spacer(minLength: 0)
         }
+        .frame(width: 264, alignment: .topLeading)
         .contentShape(Rectangle())
-        .opacity(video.isUpcoming ? 0.6 : 1)
+        .opacity(video.isUpcoming ? 0.55 : 1)
     }
 }
 
@@ -391,21 +481,28 @@ private struct CastBadge: View {
     }
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             Circle()
-                .fill(.ultraThinMaterial)
-                .frame(width: 64, height: 64)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.14), Color.white.opacity(0.04)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(Circle().strokeBorder(.white.opacity(0.1), lineWidth: 0.5))
+                .frame(width: 68, height: 68)
                 .overlay {
                     Text(initials)
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                        .font(.rounded(.title3, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.7))
                 }
             Text(name)
-                .font(.caption2)
+                .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .frame(width: 76)
+                .frame(width: 80)
         }
     }
 }
