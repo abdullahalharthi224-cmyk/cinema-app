@@ -11,6 +11,8 @@ struct AddonDetailView: View {
     @Environment(AppRouter.self) private var router
 
     @State private var isRefreshing = false
+    @State private var isChecking = false
+    @State private var healthReport: AddonHealthReport?
     @State private var isConfirmingRemoval = false
     @State private var errorMessage: String?
     @State private var toastMessage: String?
@@ -69,7 +71,7 @@ struct AddonDetailView: View {
                     .environment(\.layoutDirection, .leftToRight)
                 Button {
                     UIPasteboard.general.string = addon.transportUrl
-                    toastMessage = String(localized: "Link copied")
+                    toastMessage = localized("Link copied")
                 } label: {
                     Label("Copy Link", systemImage: "doc.on.doc")
                 }
@@ -77,6 +79,27 @@ struct AddonDetailView: View {
                 Text("Link")
             } footer: {
                 Text(addon.source == .stremio ? LocalizedStringKey("Imported from your Stremio account.") : "Added by link.")
+            }
+
+            Section {
+                Button {
+                    Task { await runCheck() }
+                } label: {
+                    HStack {
+                        Label("Check", systemImage: "stethoscope")
+                        Spacer()
+                        if isChecking { ProgressView() }
+                    }
+                }
+                .disabled(isChecking)
+
+                if let healthReport {
+                    AddonHealthResultView(report: healthReport, showsName: false)
+                }
+            } header: {
+                Text("Health")
+            } footer: {
+                Text("Tests the manifest, response time, and a stream lookup for The Shawshank Redemption.")
             }
 
             Section {
@@ -113,12 +136,19 @@ struct AddonDetailView: View {
         .errorAlert($errorMessage)
     }
 
+    private func runCheck() async {
+        isChecking = true
+        defer { isChecking = false }
+        let report = await AddonHealthChecker().check(addon)
+        withAnimation(Theme.Motion.spring) { healthReport = report }
+    }
+
     private func refresh() async {
         isRefreshing = true
         defer { isRefreshing = false }
         do {
             try await store.refreshManifest(of: addon)
-            toastMessage = String(localized: "Addon is up to date")
+            toastMessage = localized("Addon is up to date")
         } catch {
             errorMessage = error.localizedDescription
         }

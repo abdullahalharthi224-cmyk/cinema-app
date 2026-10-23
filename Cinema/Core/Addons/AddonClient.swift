@@ -122,15 +122,15 @@ enum AddonError: Error, Equatable, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return NSLocalizedString("That doesn't look like a valid addon link.", comment: "Addon error")
+            return localized("That doesn't look like a valid addon link.")
         case .network:
-            return NSLocalizedString("Couldn't reach the addon. Check your internet connection and try again.", comment: "Addon error")
+            return localized("Couldn't reach the addon. Check your internet connection and try again.")
         case .httpStatus(let code):
-            return String(format: NSLocalizedString("The addon responded with an error (code %lld).", comment: "Addon error"), code)
+            return localized("The addon responded with an error (code %lld).", code)
         case .notFound:
-            return NSLocalizedString("Nothing was found at this address.", comment: "Addon error")
+            return localized("Nothing was found at this address.")
         case .invalidResponse:
-            return NSLocalizedString("The addon sent data this app can't read.", comment: "Addon error")
+            return localized("The addon sent data this app can't read.")
         }
     }
 }

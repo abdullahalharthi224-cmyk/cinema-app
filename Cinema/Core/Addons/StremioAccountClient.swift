@@ -150,17 +150,17 @@ enum StremioAccountError: Error, Equatable, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .wrongCredentials:
-            return NSLocalizedString("The email or password is incorrect.", comment: "Stremio error")
+            return localized("The email or password is incorrect.")
         case .sessionExpired:
-            return NSLocalizedString("Your Stremio session has expired. Please sign in again.", comment: "Stremio error")
+            return localized("Your Stremio session has expired. Please sign in again.")
         case .server(let message) where !message.isEmpty:
             return message
         case .server, .invalidResponse, .missingAuthKey:
-            return NSLocalizedString("Stremio sent an unexpected response. Please try again later.", comment: "Stremio error")
+            return localized("Stremio sent an unexpected response. Please try again later.")
         case .network:
-            return NSLocalizedString("Couldn't reach Stremio. Check your internet connection and try again.", comment: "Stremio error")
+            return localized("Couldn't reach Stremio. Check your internet connection and try again.")
         case .httpStatus(let code):
-            return String(format: NSLocalizedString("Stremio responded with an error (code %lld).", comment: "Stremio error"), code)
+            return localized("Stremio responded with an error (code %lld).", code)
         }
     }
 }

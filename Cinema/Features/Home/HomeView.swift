@@ -82,6 +82,8 @@ struct HomeView: View {
                             TopTenRow(reference: topTen.reference, items: topTen.items)
                         }
 
+                        PlatformsRow()
+
                         ForEach(model.visibleRows) { row in
                             PosterRow(reference: row, content: model.content(for: row)) {
                                 Task { await model.retry(row) }

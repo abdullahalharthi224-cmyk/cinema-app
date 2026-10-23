@@ -235,8 +235,8 @@ struct DetailView: View {
     private func play(_ video: MetaVideo) {
         var subtitle: String?
         if let season = video.season, let episode = video.episode {
-            subtitle = String(localized: "S\(season) E\(episode)")
-            if let title = video.title, !title.isEmpty { subtitle! += " · " + title }
+            subtitle = localized("S%lld E%lld", season, episode)
+            if let title = model.episodeTitle(video), !title.isEmpty { subtitle! += " · " + title }
         } else {
             subtitle = video.title
         }
@@ -285,7 +285,11 @@ struct DetailView: View {
                         Button {
                             play(video)
                         } label: {
-                            EpisodeCard(video: video)
+                            EpisodeCard(
+                                video: video,
+                                title: model.episodeTitle(video),
+                                overview: model.episodeOverview(video)
+                            )
                         }
                         .buttonStyle(.cardPress)
                     }
@@ -298,6 +302,9 @@ struct DetailView: View {
             .scrollTargetBehavior(.viewAligned)
             .id(model.selectedSeason)
             .transition(.opacity)
+            .task(id: model.selectedSeason) {
+                await model.loadEpisodeTexts(season: model.selectedSeason)
+            }
         }
     }
 
@@ -406,6 +413,8 @@ struct StreamRequest: Identifiable {
 /// A wide episode card: still image, number badge, title and synopsis.
 private struct EpisodeCard: View {
     let video: MetaVideo
+    var title: String?
+    var overview: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
@@ -441,7 +450,7 @@ private struct EpisodeCard: View {
                 .shadow(color: .black.opacity(0.45), radius: 12, y: 6)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(video.title ?? "")
+                Text(title ?? "")
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
@@ -458,7 +467,7 @@ private struct EpisodeCard: View {
                     .foregroundStyle(video.isUpcoming ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.secondary))
                 }
 
-                if let overview = video.overview, !overview.isEmpty {
+                if let overview, !overview.isEmpty {
                     Text(overview)
                         .font(.caption)
                         .foregroundStyle(.secondary)

@@ -8,6 +8,7 @@ enum AppTab: Hashable {
 enum SettingsRoute: Hashable {
     case addons
     case appearance
+    case tmdb
     case addon(InstalledAddon)
 }
 

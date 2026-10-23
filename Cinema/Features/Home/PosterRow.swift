@@ -101,8 +101,8 @@ struct PosterRow: View {
 
     @ViewBuilder
     private var header: some View {
-        let title = RowHeader(title: Text(reference.catalog.displayName), showsChevron: showsSeeAll) {
-            Text("\(Text(reference.type.localizedContentType)) · \(reference.addon.name)")
+        let title = RowHeader(title: Text(reference.displayTitle), showsChevron: showsSeeAll) {
+            Text(verbatim: reference.addon.name)
         }
 
         if showsSeeAll {
@@ -333,5 +333,32 @@ private struct ContinueWatchingCard: View {
                 .background(.ultraThinMaterial, in: Circle())
                 .environment(\.colorScheme, .dark)
         }
+    }
+}
+
+extension CatalogReference {
+    /// A clear row title. Generic catalog names like "Popular" appear for both
+    /// movies and series, so they're expanded to "Trending Movies" / "Trending Series".
+    var displayTitle: LocalizedStringKey {
+        let name = (catalog.name ?? catalog.id).trimmingCharacters(in: .whitespaces).lowercased()
+        let isMovie = type == "movie"
+        let isSeries = type == "series"
+        switch name {
+        case "popular", "top", "trending":
+            if isMovie { return "Trending Movies" }
+            if isSeries { return "Trending Series" }
+        case "new", "latest", "new releases":
+            if isMovie { return "New Movies" }
+            if isSeries { return "New Series" }
+        case "featured":
+            if isMovie { return "Featured Movies" }
+            if isSeries { return "Featured Series" }
+        case "top rated", "imdb rating", "rating":
+            if isMovie { return "Top Rated Movies" }
+            if isSeries { return "Top Rated Series" }
+        default:
+            break
+        }
+        return LocalizedStringKey(catalog.displayName)
     }
 }
