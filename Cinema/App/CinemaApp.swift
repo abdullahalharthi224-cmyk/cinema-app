@@ -1,0 +1,22 @@
+import SwiftData
+import SwiftUI
+
+@main
+struct CinemaApp: App {
+    @State private var router = AppRouter()
+
+    init() {
+        // A roomier shared cache so posters and logos load instantly the second time.
+        URLCache.shared = URLCache(memoryCapacity: 64 * 1024 * 1024, diskCapacity: 512 * 1024 * 1024)
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                .environment(router)
+                .tint(Theme.accent)
+                .preferredColorScheme(.dark)
+        }
+        .modelContainer(for: InstalledAddon.self)
+    }
+}
