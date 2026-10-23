@@ -8,21 +8,82 @@ struct HomeView: View {
         sort: \InstalledAddon.sortIndex
     ) private var addons: [InstalledAddon]
 
+    @State private var model = HomeViewModel()
+
+    private var sources: [AddonSource] { addons.sources }
+
     var body: some View {
         NavigationStack {
             Group {
                 if addons.isEmpty {
                     welcome
+                } else if sources.allSatisfy({ $0.browsableCatalogs.isEmpty }) {
+                    noCatalogs
                 } else {
-                    overview
+                    feed
                 }
             }
-            .background(Theme.backgroundGradient.ignoresSafeArea())
-            .navigationTitle("Home")
+            .background(Theme.background.ignoresSafeArea())
+            .contentDestinations()
+        }
+        .task(id: sources.map(\.id)) {
+            await model.load(addons: sources)
         }
     }
 
-    // MARK: Empty state
+    // MARK: Feed
+
+    private var feed: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
+                if let hero = model.hero {
+                    HeroCarousel(items: hero.items, addonID: hero.addonID)
+                        .transition(.opacity)
+                } else if model.isLoadingFirstRows {
+                    heroSkeleton
+                } else {
+                    Text("Home")
+                        .font(.largeTitle.weight(.bold))
+                        .padding(.horizontal, Theme.Spacing.l)
+                        .padding(.top, 72)
+                }
+
+                LazyVStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
+                    ForEach(model.visibleRows) { row in
+                        PosterRow(reference: row, content: model.content(for: row)) {
+                            Task { await model.retry(row) }
+                        }
+                    }
+                }
+                .padding(.bottom, Theme.Spacing.xxl)
+                // Solid backing so the hero's parallax slides underneath the rows.
+                .background(Theme.background)
+            }
+        }
+        .scrollIndicators(.hidden)
+        .ignoresSafeArea(edges: .top)
+        .toolbar(.hidden, for: .navigationBar)
+        .refreshable {
+            await model.load(addons: sources, force: true)
+        }
+    }
+
+    private var heroSkeleton: some View {
+        ZStack(alignment: .bottom) {
+            ShimmerPlaceholder()
+            LinearGradient(colors: [.clear, Theme.background], startPoint: .center, endPoint: .bottom)
+            VStack(spacing: Theme.Spacing.m) {
+                SkeletonBar(width: 220, height: 34)
+                SkeletonBar(width: 160, height: 12)
+                SkeletonBar(width: 140, height: 40)
+            }
+            .padding(.bottom, 52)
+        }
+        .frame(height: 560)
+        .accessibilityHidden(true)
+    }
+
+    // MARK: Empty states
 
     private var welcome: some View {
         ContentUnavailableView {
@@ -30,119 +91,31 @@ struct HomeView: View {
         } description: {
             Text("Cinema plays what your addons provide. Import your Stremio addons or add one by link to get started.")
         } actions: {
-            Button {
-                router.openAddons()
-            } label: {
-                Text("Set Up Addons")
-                    .padding(.horizontal, Theme.Spacing.s)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .buttonBorderShape(.capsule)
+            setUpButton
         }
+        .navigationTitle("Home")
     }
 
-    // MARK: Overview
-
-    private var catalogs: [HomeCatalogEntry] {
-        addons.flatMap { addon in
-            (addon.manifest?.catalogs ?? [])
-                .filter(\.isBrowsable)
-                .map { HomeCatalogEntry(addon: addon, catalog: $0) }
+    private var noCatalogs: some View {
+        ContentUnavailableView {
+            Label("Nothing to Browse Yet", systemImage: "square.grid.2x2")
+        } description: {
+            Text("None of your enabled addons provide catalogs. Add or enable a catalog addon such as Cinemeta.")
+        } actions: {
+            setUpButton
         }
+        .navigationTitle("Home")
     }
 
-    private var overview: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-                summaryCard
-
-                if !catalogs.isEmpty {
-                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                        Text("Available Catalogs")
-                            .font(.title3.weight(.bold))
-
-                        LazyVStack(spacing: Theme.Spacing.s) {
-                            ForEach(catalogs) { entry in
-                                CatalogRow(entry: entry)
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, Theme.Spacing.l)
-            .padding(.bottom, Theme.Spacing.xxl)
+    private var setUpButton: some View {
+        Button {
+            router.openAddons()
+        } label: {
+            Text("Set Up Addons")
+                .padding(.horizontal, Theme.Spacing.s)
         }
-    }
-
-    private var summaryCard: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Image(systemName: "sparkles.tv.fill")
-                .font(.system(size: 34, weight: .semibold))
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(Theme.accent)
-
-            Text("Your addons are connected")
-                .font(.title2.weight(.bold))
-
-            Text("\(addons.count) addons · \(catalogs.count) catalogs ready")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
-
-            Text("The cinematic Home screen arrives in the next update.")
-                .font(.footnote)
-                .foregroundStyle(.tertiary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Theme.Spacing.xl)
-        .background {
-            ZStack {
-                LinearGradient(
-                    colors: [Theme.accent.opacity(0.45), Theme.accent.opacity(0.08)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                Rectangle().fill(.ultraThinMaterial).opacity(0.4)
-            }
-            .clipShape(.continuous(Theme.Radius.large))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
-                .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
-        }
-        .shadow(color: Theme.accent.opacity(0.25), radius: 24, y: 10)
-    }
-}
-
-private struct HomeCatalogEntry: Identifiable {
-    let addon: InstalledAddon
-    let catalog: CatalogDescriptor
-
-    var id: String { addon.transportUrl + "|" + catalog.identity }
-}
-
-private struct CatalogRow: View {
-    let entry: HomeCatalogEntry
-
-    var body: some View {
-        HStack(spacing: Theme.Spacing.m) {
-            AddonLogoView(url: entry.addon.manifest?.logoURL, name: entry.addon.name, size: 40)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.catalog.displayName)
-                    .font(.body.weight(.semibold))
-                    .lineLimit(1)
-                Text(entry.addon.name)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-
-            Spacer(minLength: Theme.Spacing.s)
-
-            TagChip(text: entry.catalog.type.localizedContentType)
-        }
-        .padding(Theme.Spacing.m)
-        .background(.ultraThinMaterial, in: .continuous(Theme.Radius.medium))
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .buttonBorderShape(.capsule)
     }
 }

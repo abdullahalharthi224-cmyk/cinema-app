@@ -52,3 +52,15 @@ final class InstalledAddon {
         updatedAt = .now
     }
 }
+
+extension InstalledAddon {
+    /// A thread-safe copy for the content services, or `nil` if the stored data is unreadable.
+    var snapshot: AddonSource? {
+        guard let manifestURL, let manifest else { return nil }
+        return AddonSource(manifestURL: manifestURL, manifest: manifest)
+    }
+}
+
+extension Array where Element == InstalledAddon {
+    var sources: [AddonSource] { compactMap(\.snapshot) }
+}

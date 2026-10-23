@@ -11,6 +11,16 @@
         }
       }
     },
+    "%@ · %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@"
+          }
+        }
+      }
+    },
     "%lld addons · %lld catalogs ready": {
       "localizations": {
         "ar": {
@@ -27,6 +37,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "تم تخطي %lld من إضافات الكمبيوتر لأنها لا تعمل على iPhone."
+          }
+        }
+      }
+    },
+    "%lld. %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld. %@"
+          }
+        }
+      }
+    },
+    "1080p": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1080p"
+          }
+        }
+      }
+    },
+    "4K": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4K"
+          }
+        }
+      }
+    },
+    "720p & Lower": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "720p وأقل"
           }
         }
       }
@@ -131,6 +181,16 @@
         }
       }
     },
+    "All": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الكل"
+          }
+        }
+      }
+    },
     "All Set": {
       "localizations": {
         "ar": {
@@ -191,6 +251,16 @@
         }
       }
     },
+    "Cast": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "طاقم التمثيل"
+          }
+        }
+      }
+    },
     "Catalogs": {
       "localizations": {
         "ar": {
@@ -241,6 +311,26 @@
         }
       }
     },
+    "Cinema's own player arrives in the next update. For now, you can open this stream in another player app.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مشغّل Cinema الخاص قادم في التحديث القادم. حالياً يمكنك فتح هذا الرابط في تطبيق مشغّل آخر."
+          }
+        }
+      }
+    },
+    "Clear": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسح"
+          }
+        }
+      }
+    },
     "Connected": {
       "localizations": {
         "ar": {
@@ -257,6 +347,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "نسخ الرابط"
+          }
+        }
+      }
+    },
+    "Couldn't Load": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر التحميل"
+          }
+        }
+      }
+    },
+    "Couldn't load full details": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر تحميل التفاصيل الكاملة"
+          }
+        }
+      }
+    },
+    "Couldn't open %@. Make sure it's installed.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر فتح %@. تأكد أنه مثبّت."
           }
         }
       }
@@ -287,6 +407,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "التفاصيل"
+          }
+        }
+      }
+    },
+    "Director": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإخراج"
           }
         }
       }
@@ -327,6 +457,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "مفعّلة"
+          }
+        }
+      }
+    },
+    "Episodes": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحلقات"
+          }
+        }
+      }
+    },
+    "Find Something to Watch": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابحث عن شيء لمشاهدته"
           }
         }
       }
@@ -401,6 +551,16 @@
         }
       }
     },
+    "Less": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أقل"
+          }
+        }
+      }
+    },
     "Library": {
       "localizations": {
         "ar": {
@@ -441,12 +601,42 @@
         }
       }
     },
+    "Looking for streams…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ البحث عن روابط…"
+          }
+        }
+      }
+    },
+    "More": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المزيد"
+          }
+        }
+      }
+    },
     "Movies": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "أفلام"
+          }
+        }
+      }
+    },
+    "Movies, series and more": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفلام، مسلسلات والمزيد"
           }
         }
       }
@@ -461,12 +651,102 @@
         }
       }
     },
+    "No Searchable Addons": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد إضافات تدعم البحث"
+          }
+        }
+      }
+    },
+    "No Stream Addons": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد إضافات روابط تشغيل"
+          }
+        }
+      }
+    },
+    "No streams found.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يُعثر على روابط."
+          }
+        }
+      }
+    },
+    "No streams match this quality.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد روابط بهذه الجودة."
+          }
+        }
+      }
+    },
+    "None of your enabled addons provide catalogs. Add or enable a catalog addon such as Cinemeta.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد بين إضافاتك المفعّلة إضافة توفّر كتالوجات. أضف أو فعّل إضافة كتالوجات مثل Cinemeta."
+          }
+        }
+      }
+    },
+    "None of your enabled addons provide streams for this title.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد بين إضافاتك المفعّلة إضافة توفّر روابط تشغيل لهذا العمل."
+          }
+        }
+      }
+    },
+    "None of your enabled addons support search. A catalog addon such as Cinemeta adds search.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد بين إضافاتك المفعّلة إضافة تدعم البحث. إضافة كتالوجات مثل Cinemeta توفّر البحث."
+          }
+        }
+      }
+    },
     "Not connected": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "غير متصل"
+          }
+        }
+      }
+    },
+    "Nothing Here": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا يوجد شيء هنا"
+          }
+        }
+      }
+    },
+    "Nothing to Browse Yet": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا يوجد ما يُتصفّح بعد"
           }
         }
       }
@@ -521,12 +801,62 @@
         }
       }
     },
+    "Play": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تشغيل"
+          }
+        }
+      }
+    },
+    "Play S%lld E%lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تشغيل م%lld ح%lld"
+          }
+        }
+      }
+    },
+    "Play With": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تشغيل باستخدام"
+          }
+        }
+      }
+    },
     "Preview": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "معاينة"
+          }
+        }
+      }
+    },
+    "Quality": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الجودة"
+          }
+        }
+      }
+    },
+    "Recent Searches": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عمليات البحث الأخيرة"
           }
         }
       }
@@ -561,12 +891,42 @@
         }
       }
     },
+    "Retry": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعادة المحاولة"
+          }
+        }
+      }
+    },
+    "S%lld E%lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "م%lld ح%lld"
+          }
+        }
+      }
+    },
     "Search": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "البحث"
+          }
+        }
+      }
+    },
+    "Search Failed": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فشل البحث"
           }
         }
       }
@@ -581,12 +941,32 @@
         }
       }
     },
+    "Search across all of your addons at once.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابحث في كل إضافاتك دفعة واحدة."
+          }
+        }
+      }
+    },
     "Searchable": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "قابل للبحث"
+          }
+        }
+      }
+    },
+    "Season %lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الموسم %lld"
           }
         }
       }
@@ -687,6 +1067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "قريباً ستتمكن من البحث في كل الإضافات التي تدعم البحث دفعة واحدة."
+          }
+        }
+      }
+    },
+    "Specials": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حلقات خاصة"
           }
         }
       }
@@ -861,6 +1251,26 @@
         }
       }
     },
+    "This catalog is empty right now.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا الكتالوج فارغ حالياً."
+          }
+        }
+      }
+    },
+    "This stream type isn't supported.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا النوع من الروابط غير مدعوم."
+          }
+        }
+      }
+    },
     "Titles you save and the ones you're watching will appear here.": {
       "localizations": {
         "ar": {
@@ -871,12 +1281,52 @@
         }
       }
     },
+    "Torrent streams aren't supported. Use a debrid-enabled addon for direct links.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "روابط التورنت غير مدعومة. استخدم إضافة تدعم خدمات Debrid للحصول على روابط مباشرة."
+          }
+        }
+      }
+    },
+    "Trailer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإعلان"
+          }
+        }
+      }
+    },
+    "Try Again": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حاول مرة أخرى"
+          }
+        }
+      }
+    },
     "Try checking for updates to download its details again.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "جرّب «البحث عن تحديثات» لتنزيل بياناتها من جديد."
+          }
+        }
+      }
+    },
+    "Upcoming": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قريباً"
           }
         }
       }
@@ -897,6 +1347,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الإصدار %@"
+          }
+        }
+      }
+    },
+    "Watch Now": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شاهد الآن"
           }
         }
       }
