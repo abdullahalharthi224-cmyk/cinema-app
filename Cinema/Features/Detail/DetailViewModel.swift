@@ -65,7 +65,13 @@ final class DetailViewModel {
 
     var runtimeText: String? {
         if let localizedRuntime { return localized("%lld min", localizedRuntime) }
-        return meta?.runtime
+        // Addons send "54 min"; show it in the app's language.
+        guard let runtime = meta?.runtime else { return nil }
+        let digits = runtime.prefix { $0.isNumber }
+        if let minutes = Int(digits), runtime.dropFirst(digits.count).trimmingCharacters(in: .whitespaces).lowercased().hasPrefix("min") {
+            return localized("%lld min", minutes)
+        }
+        return runtime
     }
     var poster: String? { meta?.poster ?? route.poster }
     var description: String? { localizedOverview?.nonEmpty ?? meta?.description ?? route.description }
