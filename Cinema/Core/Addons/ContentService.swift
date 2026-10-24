@@ -120,6 +120,37 @@ struct ContentService: Sendable {
             .map(\.element)
     }
 
+    /// Subtitles grouped by the addon that offers them, preferred languages first
+    /// within each addon, so the viewer can pick by source.
+    func subtitleSources(type: String, id: String, addons: [AddonSource], preferredLanguages: [String]) async -> [SubtitleSource] {
+        let candidates = addons.filter { $0.supports(.subtitles, type: type, id: id) }
+        let sources = await withTaskGroup(of: (Int, SubtitleSource).self) { group in
+            for (offset, addon) in candidates.enumerated() {
+                group.addTask {
+                    let items = (try? await client.subtitles(base: addon.baseURL, type: type, id: id)) ?? []
+                    return (offset, SubtitleSource(addon: addon, items: items))
+                }
+            }
+            var results: [(Int, SubtitleSource)] = []
+            for await result in group { results.append(result) }
+            return results.sorted { $0.0 < $1.0 }.map(\.1)
+        }
+        func rank(_ item: SubtitleItem) -> Int {
+            preferredLanguages.firstIndex(of: SubtitleLanguage.code(for: item.lang) ?? "") ?? preferredLanguages.count
+        }
+        return sources.compactMap { source in
+            guard !source.items.isEmpty else { return nil }
+            var sorted = source
+            sorted.items = source.items.enumerated()
+                .sorted { lhs, rhs in
+                    let left = rank(lhs.element), right = rank(rhs.element)
+                    return left == right ? lhs.offset < rhs.offset : left < right
+                }
+                .map(\.element)
+            return sorted
+        }
+    }
+
     /// Searches every catalog that supports search, in parallel.
     /// Throws only when every single addon failed.
     func search(_ query: String, addons: [AddonSource]) async throws -> [SearchSection] {
@@ -191,4 +222,12 @@ enum SubtitleLanguage {
         if raw.hasPrefix("engl") { return "en" }
         return nil
     }
+}
+
+/// The subtitles one addon offers for a video.
+struct SubtitleSource: Sendable, Identifiable {
+    var addon: AddonSource
+    var items: [SubtitleItem]
+
+    var id: String { addon.id }
 }

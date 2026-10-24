@@ -291,6 +291,16 @@
         }
       }
     },
+    "Adjust": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ضبط"
+          }
+        }
+      }
+    },
     "All": {
       "localizations": {
         "ar": {
@@ -1041,6 +1051,26 @@
         }
       }
     },
+    "In sync with the video": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متزامنة مع الفيديو"
+          }
+        }
+      }
+    },
+    "In the Video": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "داخل الفيديو"
+          }
+        }
+      }
+    },
     "Install Addon": {
       "localizations": {
         "ar": {
@@ -1177,6 +1207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "جارٍ البحث عن روابط…"
+          }
+        }
+      }
+    },
+    "Looking for subtitles…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ البحث عن ترجمات…"
           }
         }
       }
@@ -1431,6 +1471,16 @@
         }
       }
     },
+    "No subtitles were found. Add a subtitles addon such as OpenSubtitles to get more.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يُعثر على ترجمات. أضف إضافة ترجمات مثل OpenSubtitles لتحصل على المزيد."
+          }
+        }
+      }
+    },
     "None of your enabled addons provide catalogs. Add or enable a catalog addon such as Cinemeta.": {
       "localizations": {
         "ar": {
@@ -1621,6 +1671,16 @@
         }
       }
     },
+    "Option %lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خيار %lld"
+          }
+        }
+      }
+    },
     "Other": {
       "localizations": {
         "ar": {
@@ -1747,6 +1807,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الأكثر مشاهدة على هذه المنصة"
+          }
+        }
+      }
+    },
+    "Position": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الموضع"
           }
         }
       }
@@ -1891,6 +1961,16 @@
         }
       }
     },
+    "Reset": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعادة ضبط"
+          }
+        }
+      }
+    },
     "Response time: %lld ms": {
       "localizations": {
         "ar": {
@@ -2017,6 +2097,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الموسم %lld"
+          }
+        }
+      }
+    },
+    "Section": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "القسم"
           }
         }
       }
@@ -2277,6 +2367,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "الترجمة"
+          }
+        }
+      }
+    },
+    "Subtitles appear earlier": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الترجمة تظهر مبكرة"
+          }
+        }
+      }
+    },
+    "Subtitles appear later": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الترجمة تظهر متأخرة"
           }
         }
       }
@@ -2581,6 +2691,16 @@
         }
       }
     },
+    "Timing": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "توقيت الترجمة"
+          }
+        }
+      }
+    },
     "Titles you save and the ones you're watching will appear here.": {
       "localizations": {
         "ar": {
@@ -2707,6 +2827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "النوع"
+          }
+        }
+      }
+    },
+    "Unknown": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "غير معروف"
           }
         }
       }

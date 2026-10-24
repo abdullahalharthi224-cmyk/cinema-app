@@ -17,6 +17,11 @@ final class PlayerViewModel {
     private(set) var subtitleTracks: [MPVTrack] = []
     private(set) var speed: Double = 1
     private(set) var isLoadingNext = false
+    private(set) var subtitleSources: [SubtitleSource] = []
+    private(set) var isLoadingSubtitles = false
+    private(set) var subtitleDelay: Double = 0
+    private(set) var subtitleRaise: Double = 40
+    private var controlsVisible = true
     var isScrubbing = false
     var scrubPosition: Double = 0
 
@@ -77,10 +82,13 @@ final class PlayerViewModel {
         hasLoaded = false
         isBuffering = true
         addedSubtitles = false
+        subtitleSources = []
+        subtitleDelay = 0
         position = session.startPosition
         duration = 0
         lastSavedPosition = session.startPosition
         handle?.setString("start", session.startPosition > 0 ? String(Int(session.startPosition)) : "none")
+        handle?.setDouble("sub-delay", 0)
         handle?.command(["loadfile", session.url.absoluteString, "replace"])
         handle?.setFlag("pause", false)
     }
@@ -123,7 +131,13 @@ final class PlayerViewModel {
 
     /// Lifts subtitles above the controls while they're on screen.
     func controlsVisibilityChanged(_ visible: Bool) {
-        handle?.setString("sub-margin-y", visible ? "150" : "40")
+        controlsVisible = visible
+        applySubtitleMargin()
+    }
+
+    private func applySubtitleMargin() {
+        let margin = subtitleRaise + (controlsVisible ? 110 : 0)
+        handle?.setString("sub-margin-y", String(Int(margin)))
     }
 
     func setSubtitleSize(_ size: PlaybackSettings.SubtitleSize) {
@@ -131,12 +145,29 @@ final class PlayerViewModel {
         handle?.setString("sub-font-size", String(size.fontSize))
     }
 
+    /// Positive shows subtitles later, negative earlier (seconds).
+    func adjustSubtitleDelay(by step: Double) {
+        setSubtitleDelay(((subtitleDelay + step) * 10).rounded() / 10)
+    }
+
+    func setSubtitleDelay(_ seconds: Double) {
+        subtitleDelay = seconds
+        handle?.setDouble("sub-delay", seconds)
+    }
+
+    /// How high subtitles sit above the bottom of the picture.
+    func setSubtitleRaise(_ value: Double) {
+        subtitleRaise = value
+        applySubtitleMargin()
+    }
+
     // MARK: Events
 
     private func process(_ event: MPVEvent) {
         switch event {
         case .position(let value):
-            position = value
+            // libmpv reports every frame; a few updates a second is plenty for the UI.
+            if abs(value - position) >= 0.25 || value < position { position = value }
             if abs(value - lastSavedPosition) >= 10 { saveProgress() }
         case .duration(let value):
             duration = value
@@ -153,8 +184,9 @@ final class PlayerViewModel {
         case .fileLoaded:
             hasLoaded = true
             isBuffering = false
-            refreshTracks()
-            Task { await addExternalSubtitles() }
+            refreshTracks { [weak self] in
+                Task { await self?.loadSubtitleSources() }
+            }
         case .tracksChanged:
             refreshTracks()
         case .loadFailed(let reason):
@@ -162,42 +194,62 @@ final class PlayerViewModel {
         }
     }
 
-    private func refreshTracks() {
-        let tracks = handle?.tracks() ?? []
-        audioTracks = tracks.filter { $0.kind == .audio }
-        subtitleTracks = tracks.filter { $0.kind == .sub }
+    private func refreshTracks(then completion: (() -> Void)? = nil) {
+        guard let handle else { return }
+        handle.fetchTracks { [weak self] tracks in
+            guard let self else { return }
+            audioTracks = tracks.filter { $0.kind == .audio }
+            subtitleTracks = tracks.filter { $0.kind == .sub }
+            completion?()
+        }
     }
 
-    /// Adds subtitles from subtitle addons (e.g. OpenSubtitles), preferred language first,
-    /// and turns on the best one if the file has none in that language.
-    private func addExternalSubtitles() async {
+    // MARK: Subtitles
+
+    /// Subtitles inside the video file.
+    var embeddedSubtitles: [MPVTrack] { subtitleTracks.filter { !$0.isExternal } }
+
+    var isSubtitleOff: Bool { subtitleTracks.allSatisfy { !$0.isSelected } }
+
+    /// The addon subtitle currently showing, by URL.
+    var selectedSubtitleURL: String? {
+        subtitleTracks.first { $0.isSelected && $0.isExternal }?.externalFilename
+    }
+
+    /// Fetches what every subtitle addon offers. If the file has nothing in the
+    /// preferred language, the best match is turned on automatically.
+    private func loadSubtitleSources() async {
         guard !addedSubtitles, let context else { return }
         addedSubtitles = true
+        isLoadingSubtitles = true
+        defer { isLoadingSubtitles = false }
+
         let languages = PlaybackSettings.shared.subtitleLanguages
-        let addons = PlaybackLauncher.enabledAddons(in: context)
-        let items = await ContentService().subtitles(
-            type: session.type, id: session.videoID, addons: addons, preferredLanguages: languages
+        let sources = await ContentService().subtitleSources(
+            type: session.type, id: session.videoID,
+            addons: PlaybackLauncher.enabledAddons(in: context),
+            preferredLanguages: languages.isEmpty ? ["ar", "en"] : languages
         )
-        guard handle != nil, !items.isEmpty else { return }
+        guard handle != nil else { return }
+        subtitleSources = sources
 
-        // A few per language keeps the menu tidy.
-        var perLanguage: [String: Int] = [:]
-        let picked = items.filter { item in
-            let code = SubtitleLanguage.code(for: item.lang) ?? "other"
-            perLanguage[code, default: 0] += 1
-            return perLanguage[code]! <= 3
+        guard let preferred = languages.first else { return }
+        let embeddedPreferred = embeddedSubtitles.contains { SubtitleLanguage.code(for: $0.language) == preferred }
+        if !embeddedPreferred,
+           let best = sources.lazy.flatMap(\.items).first(where: { SubtitleLanguage.code(for: $0.lang) == preferred }) {
+            selectExternalSubtitle(best)
         }
+    }
 
-        let embeddedPreferred = subtitleTracks.contains { track in
-            guard let first = languages.first else { return false }
-            return SubtitleLanguage.code(for: track.language) == first && track.isSelected
+    /// Shows a subtitle from an addon, loading it the first time it's picked.
+    func selectExternalSubtitle(_ item: SubtitleItem) {
+        if let loaded = subtitleTracks.first(where: { $0.externalFilename == item.url }) {
+            selectSubtitle(loaded)
+            return
         }
-        for (index, item) in picked.prefix(12).enumerated() {
-            let code = SubtitleLanguage.code(for: item.lang)
-            let name = Self.languageName(code) ?? item.lang ?? localized("Subtitles")
-            let shouldSelect = index == 0 && !embeddedPreferred && code == languages.first
-            handle?.command(["sub-add", item.url, shouldSelect ? "select" : "auto", name, code ?? ""])
-        }
+        let code = SubtitleLanguage.code(for: item.lang)
+        let name = Self.languageName(code) ?? item.lang ?? localized("Subtitles")
+        handle?.command(["sub-add", item.url, "select", name, code ?? ""])
         refreshTracks()
     }
 

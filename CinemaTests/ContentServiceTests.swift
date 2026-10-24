@@ -121,4 +121,27 @@ final class ContentServiceTests: XCTestCase {
         XCTAssertEqual(SubtitleLanguage.code(for: "pob"), "pt")
         XCTAssertEqual(SubtitleLanguage.code(for: "Arabic"), "ar")
     }
+
+    func testSubtitleSourcesAreGroupedByAddon() async throws {
+        let subsManifest = #"{"id": "subs", "name": "Subs", "types": ["movie"], "resources": ["subtitles"], "idPrefixes": ["tt"]}"#
+        let first = try addon("one.example.com", subsManifest)
+        let second = try addon("two.example.com", subsManifest)
+        let empty = try addon("three.example.com", subsManifest)
+        let http = MockHTTPClient { request in
+            switch request.url!.host! {
+            case "one.example.com":
+                return (200, Data(#"{"subtitles": [{"id": "e", "url": "https://s/e.srt", "lang": "eng"}, {"id": "a", "url": "https://s/a.srt", "lang": "ara"}]}"#.utf8))
+            case "two.example.com":
+                return (200, Data(#"{"subtitles": [{"id": "f", "url": "https://s/f.srt", "lang": "fre"}]}"#.utf8))
+            default:
+                return (200, Data(#"{"subtitles": []}"#.utf8))
+            }
+        }
+        let service = ContentService(client: AddonClient(http: http))
+
+        let sources = await service.subtitleSources(type: "movie", id: "tt1", addons: [first, second, empty], preferredLanguages: ["ar"])
+
+        XCTAssertEqual(sources.map(\.addon.id), [first.id, second.id])
+        XCTAssertEqual(sources[0].items.map(\.id), ["a", "e"])
+    }
 }
