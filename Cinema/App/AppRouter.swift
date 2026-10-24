@@ -18,6 +18,7 @@ enum SettingsRoute: Hashable {
     case homeScreen
     case ratings
     case downloads
+    case backup
     case addon(InstalledAddon)
 }
 

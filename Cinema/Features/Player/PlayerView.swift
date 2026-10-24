@@ -360,6 +360,7 @@ struct PlayerView: View {
                 .overlay(Circle().strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
                 .accessibilityLabel("AirPlay")
             audioAndSubtitlesButton
+            sleepTimerMenu
             speedMenu
         }
     }
@@ -428,6 +429,33 @@ struct PlayerView: View {
         }
         .buttonStyle(GlassCircleButtonStyle(size: 40))
         .accessibilityLabel("Audio & Subtitles")
+    }
+
+    /// Stops playback after a while, fading the sound out.
+    private var sleepTimerMenu: some View {
+        Menu {
+            Picker("Sleep Timer", selection: Binding(
+                get: { model.sleepTimer },
+                set: { model.setSleepTimer($0) }
+            )) {
+                Text("Off").tag(PlayerViewModel.SleepTimer?.none)
+                ForEach([15, 30, 45, 60, 90], id: \.self) { minutes in
+                    Text("\(minutes) min").tag(PlayerViewModel.SleepTimer?.some(.minutes(minutes)))
+                }
+                Text("End of Episode").tag(PlayerViewModel.SleepTimer?.some(.endOfEpisode))
+            }
+        } label: {
+            if let remaining = model.sleepRemaining, model.sleepTimer != nil {
+                Text(verbatim: PlayerViewModel.format(Double(remaining)))
+                    .font(.rounded(.caption2, weight: .bold))
+                    .monospacedDigit()
+            } else {
+                Image(systemName: model.sleepTimer == nil ? "moon.zzz" : "moon.zzz.fill")
+            }
+        }
+        .menuStyle(.button)
+        .buttonStyle(GlassCircleButtonStyle(size: 40))
+        .accessibilityLabel("Sleep Timer")
     }
 
     private var speedMenu: some View {
@@ -879,6 +907,13 @@ private struct NoticeCapsule: View {
             case .skippedRecap:
                 Image(systemName: "forward.fill")
                 Text("Skipped recap")
+            case .airPlayAudioOnly:
+                Image(systemName: "airplayvideo")
+                Text("AirPlay sends the sound only for this format. Use Screen Mirroring for the picture.")
+                    .lineLimit(2)
+            case .sleepTimerSet:
+                Image(systemName: "moon.zzz.fill")
+                Text("Sleep timer set")
             }
         }
         .font(.subheadline.weight(.semibold))

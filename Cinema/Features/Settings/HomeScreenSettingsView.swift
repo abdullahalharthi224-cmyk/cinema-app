@@ -77,6 +77,9 @@ struct HomeScreenSettingsView: View {
         case HomeLayout.myList: Text("My List")
         case HomeLayout.topTen: Text("Top 10")
         case HomeLayout.platforms: Text("Platforms")
+        case HomeLayout.newEpisodes: Text("New Episodes")
+        case HomeLayout.becauseYouWatched: Text("Because You Watched")
+        case HomeLayout.comingSoon: Text("Coming Soon")
         default:
             if let catalog = catalogs.first(where: { $0.id == id }) {
                 Text(catalog.displayTitle)
@@ -92,6 +95,9 @@ struct HomeScreenSettingsView: View {
         case HomeLayout.myList: ("bookmark.fill", .blue)
         case HomeLayout.topTen: ("trophy.fill", .yellow)
         case HomeLayout.platforms: ("tv.fill", .purple)
+        case HomeLayout.newEpisodes: ("sparkles.tv.fill", .red)
+        case HomeLayout.becauseYouWatched: ("heart.text.square.fill", .pink)
+        case HomeLayout.comingSoon: ("calendar", .teal)
         default: ("rectangle.stack.fill", .gray)
         }
         return SettingsIcon(systemName: style.symbol, color: style.color)

@@ -134,6 +134,26 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink(value: SettingsRoute.backup) {
+                        Label {
+                            Text("Backup & Restore")
+                        } icon: {
+                            SettingsIcon(systemName: "externaldrive.fill", color: .indigo)
+                        }
+                    }
+                    Toggle(isOn: Binding(
+                        get: { NotificationPreferences.shared.newEpisodes },
+                        set: { NotificationPreferences.shared.newEpisodes = $0 }
+                    )) {
+                        Label {
+                            Text("New Episode Alerts")
+                        } icon: {
+                            SettingsIcon(systemName: "bell.badge.fill", color: .red)
+                        }
+                    }
+                }
+
+                Section {
                     Toggle(isOn: Binding(
                         get: { PrivacySettings.shared.privateMode },
                         set: { PrivacySettings.shared.privateMode = $0 }
@@ -198,6 +218,8 @@ struct SettingsView: View {
                     MDBListSettingsView()
                 case .downloads:
                     DownloadSettingsView()
+                case .backup:
+                    BackupSettingsView()
                 case .addon(let addon):
                     AddonDetailView(addon: addon)
                 }

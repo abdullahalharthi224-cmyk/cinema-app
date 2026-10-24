@@ -278,6 +278,8 @@ final class AVPlayerEngine: NSObject, VideoEngine {
     func setSubtitleFontSize(_ size: Int) {}
     func setSubtitleMargin(_ margin: Int) {}
     func setSubtitleStyle(colorHex: String, backgroundColor: String?) {}
+    func setVolume(_ volume: Double) { player.volume = Float(max(0, min(volume, 1))) }
+    func setAudioFilters(_ chain: String) {}
 
     // MARK: Picture
 

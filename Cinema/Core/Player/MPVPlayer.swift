@@ -556,6 +556,8 @@ final class MPVEngine: NSObject, VideoEngine {
     }
 
     func setVideoFill(_ fill: Bool) { handle.setDouble("panscan", fill ? 1 : 0) }
+    func setVolume(_ volume: Double) { handle.setDouble("volume", max(0, min(volume, 1)) * 100) }
+    func setAudioFilters(_ chain: String) { handle.setString("af", chain) }
 
     func setVideoEnabled(_ enabled: Bool) {
         if enabled && restoreOutputOnForeground {

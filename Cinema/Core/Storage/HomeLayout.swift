@@ -10,7 +10,10 @@ struct HomeLayout: Codable, Equatable, Sendable {
     static let myList = "builtin.myList"
     static let topTen = "builtin.topTen"
     static let platforms = "builtin.platforms"
-    static let builtIns = [continueWatching, myList, topTen, platforms]
+    static let newEpisodes = "builtin.newEpisodes"
+    static let becauseYouWatched = "builtin.becauseYouWatched"
+    static let comingSoon = "builtin.comingSoon"
+    static let builtIns = [continueWatching, newEpisodes, myList, becauseYouWatched, topTen, platforms, comingSoon]
 
     /// Every id in display order: the saved order first, then rows that are new
     /// (e.g. from a newly added addon) in their natural order.

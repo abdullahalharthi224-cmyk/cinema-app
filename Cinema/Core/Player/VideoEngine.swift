@@ -31,6 +31,11 @@ protocol VideoEngine: AnyObject {
     /// Text colour (`#RRGGBB`) and, if any, a box behind the lines (`#AARRGGBB`).
     func setSubtitleStyle(colorHex: String, backgroundColor: String?)
 
+    /// 0…1, for the sleep timer's fade.
+    func setVolume(_ volume: Double)
+    /// libmpv audio filters ("" for none); Apple's player ignores this.
+    func setAudioFilters(_ chain: String)
+
     /// Fill the screen (cropping the edges) or fit the whole picture.
     func setVideoFill(_ fill: Bool)
     /// The picture can't be drawn while the app is in the background.

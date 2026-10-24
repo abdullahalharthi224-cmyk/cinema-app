@@ -17,9 +17,7 @@ struct SubtitlePanel: View {
             HStack {
                 Picker("Section", selection: $tab) {
                     Text("Subtitles").tag(Tab.subtitles)
-                    if model.audioTracks.count > 1 {
-                        Text("Audio").tag(Tab.audio)
-                    }
+                    Text("Audio").tag(Tab.audio)
                     Text("Sync").tag(Tab.sync)
                     Text("Adjust").tag(Tab.adjust)
                 }
@@ -210,7 +208,35 @@ struct SubtitlePanel: View {
 
     @ViewBuilder
     private var audioTab: some View {
-        group(title: nil) {
+        VStack(alignment: .leading, spacing: 0) {
+            Toggle(isOn: Binding(get: { PlaybackSettings.shared.nightMode }, set: { model.setNightMode($0) })) {
+                Label("Night Mode", systemImage: "moon.stars.fill")
+            }
+            .padding(.horizontal, Theme.Spacing.m)
+            .padding(.vertical, 10)
+            Divider().padding(.leading, Theme.Spacing.m)
+            Toggle(isOn: Binding(get: { PlaybackSettings.shared.dialogueBoost }, set: { model.setDialogueBoost($0) })) {
+                Label("Dialogue Boost", systemImage: "waveform.badge.plus")
+            }
+            .padding(.horizontal, Theme.Spacing.m)
+            .padding(.vertical, 10)
+        }
+        .font(.subheadline)
+        .tint(Theme.accent)
+        .background(.white.opacity(0.06), in: .continuous(Theme.Radius.medium))
+
+        Text("Night mode evens out loud and quiet moments; dialogue boost lifts voices. Both use the built-in player.")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 4)
+
+        if model.audioTracks.count > 1 {
+            audioTracksGroup
+        }
+    }
+
+    private var audioTracksGroup: some View {
+        group(title: localized("Audio Track")) {
             ForEach(model.audioTracks) { track in
                 row(title: trackName(track), detail: track.codec?.uppercased(), checked: track.isSelected) {
                     model.selectAudio(track)

@@ -296,3 +296,43 @@ struct MoreLikeThisRow: View {
         }
     }
 }
+
+// MARK: - Available on
+
+/// The official streaming services showing the title in Saudi Arabia.
+struct AvailableOnRow: View {
+    let providers: [TMDBProvider]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            Text("Available On")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+            ScrollView(.horizontal) {
+                HStack(spacing: Theme.Spacing.s) {
+                    ForEach(providers, id: \.providerID) { provider in
+                        HStack(spacing: 6) {
+                            FallbackImage(urls: [TMDBClient.imageURL(provider.logoPath, size: "w92")].compactMap { $0 }) {
+                                Color.primary.opacity(0.08)
+                            } failure: {
+                                Image(systemName: "tv").foregroundStyle(.secondary)
+                            }
+                            .frame(width: 26, height: 26)
+                            .clipShape(.continuous(6))
+                            Text(verbatim: provider.name)
+                                .font(.caption.weight(.semibold))
+                                .lineLimit(1)
+                        }
+                        .padding(.leading, 4)
+                        .padding(.trailing, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.primary.opacity(0.07), in: Capsule())
+                    }
+                }
+            }
+            .scrollIndicators(.hidden)
+            .scrollClipDisabled()
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
