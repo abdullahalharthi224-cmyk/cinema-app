@@ -132,6 +132,16 @@ final class MPVHandle: @unchecked Sendable {
         perform { mpv in mpv_set_property_string(mpv, name, value) }
     }
 
+    /// Re-selects the current audio track, which rebuilds its decoder and
+    /// filters so changed audio options take effect.
+    func restartAudio() {
+        perform { mpv in
+            guard let current = Self.string(mpv, "aid"), current != "no", current != "auto" else { return }
+            mpv_set_property_string(mpv, "aid", "no")
+            mpv_set_property_string(mpv, "aid", current)
+        }
+    }
+
     func setFlag(_ name: String, _ value: Bool) {
         perform { mpv in
             var flag: Int32 = value ? 1 : 0
@@ -557,7 +567,13 @@ final class MPVEngine: NSObject, VideoEngine {
 
     func setVideoFill(_ fill: Bool) { handle.setDouble("panscan", fill ? 1 : 0) }
     func setVolume(_ volume: Double) { handle.setDouble("volume", max(0, min(volume, 1)) * 100) }
-    func setAudioFilters(_ chain: String) { handle.setString("af", chain) }
+    func setAudioProcessing(_ properties: [String: String]) {
+        for (name, value) in properties.sorted(by: { $0.key < $1.key }) {
+            handle.setString(name, value)
+        }
+        // The decoder and downmix options only apply when audio restarts.
+        handle.restartAudio()
+    }
 
     func setVideoEnabled(_ enabled: Bool) {
         if enabled && restoreOutputOnForeground {
