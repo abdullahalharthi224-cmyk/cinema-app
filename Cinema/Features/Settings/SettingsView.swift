@@ -90,6 +90,14 @@ struct SettingsView: View {
                         }
                     }
 
+                    NavigationLink(value: SettingsRoute.downloads) {
+                        Label {
+                            Text("Downloads")
+                        } icon: {
+                            SettingsIcon(systemName: "arrow.down.circle.fill", color: .blue)
+                        }
+                    }
+
                     NavigationLink(value: SettingsRoute.ratings) {
                         LabeledContent {
                             Text(MDBListAccount.shared.isConnected ? LocalizedStringKey("Connected") : "TMDB only")
@@ -188,6 +196,8 @@ struct SettingsView: View {
                     HomeScreenSettingsView()
                 case .ratings:
                     MDBListSettingsView()
+                case .downloads:
+                    DownloadSettingsView()
                 case .addon(let addon):
                     AddonDetailView(addon: addon)
                 }

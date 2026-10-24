@@ -26,6 +26,25 @@ enum OrientationController {
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
+        _ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        // Reconnect to downloads that kept running while the app was closed.
+        MainActor.assumeIsolated { DownloadManager.shared.configure(container: CinemaStore.container) }
+        return true
+    }
+
+    /// iOS wakes the app when background downloads finish.
+    func application(
+        _ application: UIApplication, handleEventsForBackgroundURLSession identifier: String,
+        completionHandler: @escaping () -> Void
+    ) {
+        MainActor.assumeIsolated {
+            DownloadManager.shared.backgroundCompletion = completionHandler
+            DownloadManager.shared.configure(container: CinemaStore.container)
+        }
+    }
+
+    func application(
         _ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?
     ) -> UIInterfaceOrientationMask {
         MainActor.assumeIsolated { OrientationController.mask }

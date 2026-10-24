@@ -27,6 +27,8 @@ struct PlaybackSession: Identifiable {
     var engine: PlayerEngineKind = .mpv
     /// Subtitles fetched before playback started; `nil` if they weren't ready in time.
     var subtitleSources: [SubtitleSource]?
+    /// Playing a downloaded file rather than streaming.
+    var isLocal = false
 
     /// The episode's or movie's synopsis, for the pause screen.
     var overview: String? { request.overview }
@@ -64,6 +66,14 @@ final class PlaybackLauncher {
         status = .findingStream
         defer { isResolving = false }
 
+        // Downloaded? Play the file — no link needed, works offline.
+        if let item = DownloadManager.shared.completedItem(videoID: request.videoID),
+           let local = localSession(for: item, request: request, context: context) {
+            if let history = request.history { WatchHistoryItem.record(history, in: context) }
+            session = local
+            return
+        }
+
         var request = request
         if request.prefetched == nil {
             request.prefetched = await service.streams(
@@ -99,6 +109,12 @@ final class PlaybackLauncher {
         request.subtitle = next.label
         request.history = next.history
         request.overview = next.overview
+        if let item = DownloadManager.shared.completedItem(videoID: next.videoID) {
+            request.next = request.upcoming.first
+            request.upcoming = Array(request.upcoming.dropFirst())
+            if let history = request.history { WatchHistoryItem.record(history, in: context) }
+            return localSession(for: item, request: request, context: context)
+        }
         request.prefetched = await service.streams(
             type: request.type, id: next.videoID, addons: Self.enabledAddons(in: context)
         )
@@ -108,6 +124,72 @@ final class PlaybackLauncher {
         guard let session = makeSession(for: request, preferring: nil, context: context) else { return nil }
         if let history = request.history { WatchHistoryItem.record(history, in: context) }
         return await prepare(session, context: context)
+    }
+
+    // MARK: Downloads
+
+    /// Plays a download from the Downloads list.
+    func playDownloaded(_ item: DownloadItem, context: ModelContext) {
+        let request = Self.request(for: item)
+        guard let local = localSession(for: item, request: request, context: context) else { return }
+        if let history = request.history { WatchHistoryItem.record(history, in: context) }
+        session = local
+    }
+
+    /// A session for a downloaded file, with its saved subtitles.
+    func localSession(for item: DownloadItem, request: StreamRequest, context: ModelContext) -> PlaybackSession? {
+        guard let fileName = item.fileName else { return nil }
+        let url = DownloadFiles.url(for: fileName)
+        var request = request
+        if request.overview == nil { request.overview = item.overview }
+        let saved = PlaybackProgressStore.progress(videoID: item.videoID, in: context)
+        var session = PlaybackSession(
+            url: url, title: request.title, subtitle: request.subtitle, type: item.type,
+            metaID: item.metaID, videoID: item.videoID,
+            startPosition: saved?.isResumable == true ? saved?.position ?? 0 : 0,
+            next: request.next, request: request
+        )
+        session.isLocal = true
+        let ext = url.pathExtension.lowercased()
+        session.engine = PlaybackSettings.shared.useApplePlayer && ["mp4", "m4v", "mov"].contains(ext) ? .apple : .mpv
+        if let subtitle = item.subtitleFileName {
+            let source = AddonSource(
+                manifestURL: DownloadFiles.directory,
+                manifest: AddonManifest(id: "downloaded", name: localized("Downloaded"))
+            )
+            let file = SubtitleItem(url: DownloadFiles.url(for: subtitle).absoluteString, lang: item.subtitleLanguage)
+            session.subtitleSources = [SubtitleSource(addon: source, items: [file])]
+        } else if !NetworkMonitor.shared.isConnected {
+            // Offline with no saved subtitles: don't wait on addons.
+            session.subtitleSources = []
+        }
+        return session
+    }
+
+    /// A stream request built from a download, with the downloaded episodes that follow as "next".
+    static func request(for item: DownloadItem) -> StreamRequest {
+        let history = WatchHistoryEntry(
+            metaID: item.metaID, type: item.type, name: item.title, poster: item.poster,
+            background: item.background, logo: item.logo, videoID: item.videoID,
+            episodeLabel: item.episodeLabel, addonID: item.addonID
+        )
+        var request = StreamRequest(
+            type: item.type, videoID: item.videoID, title: item.title, subtitle: item.episodeLabel,
+            history: history, overview: item.overview
+        )
+        let position = (item.season ?? 0, item.episode ?? 0)
+        let following = DownloadManager.shared.allItems()
+            .filter { $0.metaID == item.metaID && $0.state == .completed && ($0.season ?? 0, $0.episode ?? 0) > position }
+            .sorted { ($0.season ?? 0, $0.episode ?? 0) < ($1.season ?? 0, $1.episode ?? 0) }
+            .map { next -> NextEpisode in
+                var nextHistory = history
+                nextHistory.videoID = next.videoID
+                nextHistory.episodeLabel = next.episodeLabel
+                return NextEpisode(videoID: next.videoID, label: next.episodeLabel, history: nextHistory, overview: next.overview)
+            }
+        request.next = following.first
+        request.upcoming = Array(following.dropFirst())
+        return request
     }
 
     /// Another playable link for the same video, skipping links that already

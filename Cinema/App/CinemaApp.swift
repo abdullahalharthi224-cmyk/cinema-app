@@ -1,6 +1,19 @@
 import SwiftData
 import SwiftUI
 
+/// The app's database, shared by the screens and the background download manager.
+@MainActor
+enum CinemaStore {
+    static let container: ModelContainer = {
+        do {
+            return try ModelContainer(for: InstalledAddon.self, WatchHistoryItem.self, Profile.self,
+                                      PlaybackProgress.self, WatchlistItem.self, DownloadItem.self)
+        } catch {
+            fatalError("The database couldn't be opened: \(error)")
+        }
+    }()
+}
+
 @main
 struct CinemaApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
@@ -27,6 +40,6 @@ struct CinemaApp: App {
                 }
             }
         }
-        .modelContainer(for: [InstalledAddon.self, WatchHistoryItem.self, Profile.self, PlaybackProgress.self, WatchlistItem.self])
+        .modelContainer(CinemaStore.container)
     }
 }

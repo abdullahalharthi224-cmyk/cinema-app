@@ -232,6 +232,12 @@ final class PlayerViewModel {
 
     private func loadSegments(for session: PlaybackSession) {
         segmentsTask?.cancel()
+        // Timings saved with a download work offline.
+        let saved = DownloadManager.shared.item(videoID: session.videoID)?.segments
+        if let saved, saved != .none {
+            segments = saved
+            return
+        }
         guard let reference = IntroDBClient.reference(videoID: session.videoID) else { return }
         segmentsTask = Task {
             let found = try? await IntroDBClient().segments(
@@ -267,6 +273,10 @@ final class PlayerViewModel {
         nowPlaying.deactivate()
         engine?.destroy()
         engine = nil
+        // "Delete episodes after watching", for downloads.
+        if let context, PlaybackProgressStore.progress(videoID: session.videoID, in: context)?.watched == true {
+            DownloadManager.shared.deleteIfWatched(videoID: session.videoID)
+        }
         UIApplication.shared.isIdleTimerDisabled = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }

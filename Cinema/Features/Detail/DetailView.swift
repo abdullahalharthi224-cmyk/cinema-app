@@ -16,6 +16,8 @@ struct DetailView: View {
     @State private var isDescriptionExpanded = false
     @State private var scrollOffset: CGFloat = 0
     @State private var watchlistFeedback: Bool?
+    @State private var downloadRequest: DownloadRequest?
+    @State private var seasonDownloadQueued = false
     @Environment(\.openURL) private var openURL
     @Environment(\.zoomNamespace) private var zoomNamespace
     @Environment(\.modelContext) private var context
@@ -162,6 +164,10 @@ struct DetailView: View {
             await model.loadExtras(addons: addons.sources)
         }
         .playbackLauncher(launcher)
+        .sheet(item: $downloadRequest) { request in
+            DownloadPickerView(request: request)
+        }
+        .sensoryFeedback(.success, trigger: seasonDownloadQueued)
         .animation(Theme.Motion.spring, value: model.meta?.id)
         .animation(Theme.Motion.spring, value: model.availableQualities)
         .animation(Theme.Motion.spring, value: model.ratings)
@@ -296,14 +302,10 @@ struct DetailView: View {
             .accessibilityLabel(Text(isMainTargetWatched ? LocalizedStringKey("Mark as Unwatched") : "Mark as Watched"))
             .sensoryFeedback(.success, trigger: isMainTargetWatched)
 
-            if model.richDetails?.trailer == nil, let trailer = model.trailerURL {
-                Button {
-                    openURL(trailer)
-                } label: {
-                    Image(systemName: "film")
+            if !model.isSeries {
+                DownloadCircleButton(videoID: model.route.id) {
+                    downloadRequest = movieDownloadRequest
                 }
-                .buttonStyle(.glassCircle)
-                .accessibilityLabel("Trailer")
             }
         }
     }
@@ -322,6 +324,45 @@ struct DetailView: View {
             return progress[next.id]?.isResumable == true ? "Resume S\(season) E\(episode)" : "Play S\(season) E\(episode)"
         }
         return progress[model.route.id]?.isResumable == true ? "Resume" : "Play"
+    }
+
+    // MARK: Downloads
+
+    private var movieDownloadRequest: DownloadRequest {
+        let base = model.historyEntryBase
+        return DownloadRequest(
+            metaID: model.route.id, type: model.route.type, videoID: model.route.id, title: model.name,
+            episodeLabel: nil, season: nil, episode: nil, poster: model.poster ?? base.poster,
+            background: base.background, logo: base.logo, overview: model.description, addonID: base.addonID
+        )
+    }
+
+    private func episodeDownloadRequest(_ video: MetaVideo) -> DownloadRequest {
+        let base = model.historyEntryBase
+        return DownloadRequest(
+            metaID: model.route.id, type: model.route.type, videoID: video.id, title: model.name,
+            episodeLabel: episodeLabel(video), season: video.season, episode: video.episode,
+            poster: model.poster ?? base.poster, background: base.background, logo: base.logo,
+            overview: model.episodeOverview(video), addonID: base.addonID
+        )
+    }
+
+    /// Queues the shown season; each episode picks its link when its turn comes,
+    /// two downloading at a time.
+    private func downloadSeason() {
+        for video in model.episodes where DownloadManager.shared.item(videoID: video.id) == nil {
+            DownloadManager.shared.enqueue(episodeDownloadRequest(video), stream: nil)
+        }
+        seasonDownloadQueued.toggle()
+    }
+
+    private func downloadMark(for videoID: String) -> EpisodeCard.DownloadMark? {
+        let manager = DownloadManager.shared
+        if manager.downloadedVideoIDs.contains(videoID) { return .downloaded }
+        if manager.pendingVideoIDs.contains(videoID), let item = manager.item(videoID: videoID) {
+            return .downloading(manager.progress[item.id] ?? item.fraction)
+        }
+        return nil
     }
 
     /// The movie, or the episode the viewer is up to.
@@ -424,6 +465,14 @@ struct DetailView: View {
                 Text("Episodes")
                     .font(.display(.title2))
                 Spacer()
+                Button {
+                    downloadSeason()
+                } label: {
+                    Label("Download Season", systemImage: "arrow.down.circle")
+                        .labelStyle(.iconOnly)
+                        .font(.title3)
+                }
+                .accessibilityLabel("Download Season")
                 if model.seasons.count > 1 {
                     seasonMenu
                 }
@@ -442,12 +491,20 @@ struct DetailView: View {
                                     title: model.episodeTitle(video),
                                     overview: model.episodeOverview(video),
                                     progress: progress[video.id],
-                                    images: model.episodeImages(video)
+                                    images: model.episodeImages(video),
+                                    download: downloadMark(for: video.id)
                                 )
                             }
                             .buttonStyle(.cardPress)
                             .id(video.id)
                             .contextMenu {
+                                if DownloadManager.shared.item(videoID: video.id) == nil {
+                                    Button {
+                                        downloadRequest = episodeDownloadRequest(video)
+                                    } label: {
+                                        Label("Download", systemImage: "arrow.down.circle")
+                                    }
+                                }
                                 let watched = progress[video.id]?.watched == true
                                 Button {
                                     PlaybackProgressStore.setWatched(!watched, metaID: model.route.id, videoID: video.id, in: context)
@@ -616,6 +673,12 @@ private struct EpisodeCard: View {
     var progress: PlaybackProgress?
     /// The episode's still, then TMDB's, then the show's backdrop.
     var images: [URL] = []
+    var download: DownloadMark?
+
+    enum DownloadMark: Equatable {
+        case downloaded
+        case downloading(Double)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
@@ -639,6 +702,21 @@ private struct EpisodeCard: View {
                             .background(.ultraThinMaterial, in: Capsule())
                             .environment(\.colorScheme, .dark)
                             .padding(Theme.Spacing.s)
+                    }
+                }
+                .overlay(alignment: .topLeading) {
+                    switch download {
+                    case .downloaded:
+                        DownloadedBadge().padding(Theme.Spacing.s)
+                    case .downloading(let fraction):
+                        DownloadProgressRing(fraction: fraction)
+                            .frame(width: 18, height: 18)
+                            .padding(5)
+                            .background(.ultraThinMaterial, in: Circle())
+                            .environment(\.colorScheme, .dark)
+                            .padding(Theme.Spacing.s)
+                    case nil:
+                        EmptyView()
                     }
                 }
                 .overlay(alignment: .topTrailing) {

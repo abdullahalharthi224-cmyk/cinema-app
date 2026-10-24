@@ -39,6 +39,10 @@ struct RootView: View {
         .environment(\.layoutDirection, language.isRightToLeft ? .rightToLeft : .leftToRight)
         .id(language)
         .task {
+            // No connection at launch: open straight on the downloads.
+            if !(await NetworkMonitor.shared.currentStatus()), !DownloadManager.shared.downloadedVideoIDs.isEmpty {
+                router.openDownloads()
+            }
             // Ask "Who's watching?" once per launch when several people share the app.
             if !didCheckProfiles {
                 didCheckProfiles = true

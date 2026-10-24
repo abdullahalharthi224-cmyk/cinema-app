@@ -4,14 +4,18 @@ import SwiftUI
 /// The active profile's library: My List and everything they've started watching.
 struct LibraryView: View {
     @Environment(\.modelContext) private var context
+    @Environment(AppRouter.self) private var router
+    @Query(sort: \DownloadItem.createdAt, order: .reverse) private var downloads: [DownloadItem]
     @Query(sort: \WatchHistoryItem.lastWatched, order: .reverse) private var allHistory: [WatchHistoryItem]
     @Query(sort: \WatchlistItem.addedAt, order: .reverse) private var allWatchlist: [WatchlistItem]
     @Query private var allProgress: [PlaybackProgress]
 
-    @State private var filter: Filter = .all
+    @State private var launcher = PlaybackLauncher()
     @Namespace private var zoom
 
-    enum Filter: Hashable { case all, myList, watched }
+    private typealias Filter = LibraryFilter
+
+    private var filter: LibraryFilter { router.libraryFilter }
 
     /// Only the active profile's history.
     private var history: [WatchHistoryItem] {
@@ -36,7 +40,7 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if history.isEmpty && watchlist.isEmpty {
+                if history.isEmpty && watchlist.isEmpty && downloads.isEmpty {
                     ContentUnavailableView(
                         "Your Library Is Empty",
                         systemImage: "square.stack",
@@ -45,16 +49,23 @@ struct LibraryView: View {
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-                            if !history.isEmpty && !watchlist.isEmpty {
-                                Picker("Show", selection: $filter) {
+                            if [!history.isEmpty, !watchlist.isEmpty, !downloads.isEmpty].filter({ $0 }).count > 1 {
+                                Picker("Show", selection: Bindable(router).libraryFilter) {
                                     Text("All").tag(Filter.all)
-                                    Text("My List").tag(Filter.myList)
-                                    Text("Recently Watched").tag(Filter.watched)
+                                    if !watchlist.isEmpty { Text("My List").tag(Filter.myList) }
+                                    if !history.isEmpty { Text("Watched").tag(Filter.watched) }
+                                    if !downloads.isEmpty { Text("Downloads").tag(Filter.downloads) }
                                 }
                                 .pickerStyle(.segmented)
                             }
 
-                            if filter != .watched && !watchlist.isEmpty {
+                            if (filter == .all || filter == .downloads) && !downloads.isEmpty {
+                                DownloadsSection(items: downloads) { item in
+                                    launcher.playDownloaded(item, context: context)
+                                }
+                            }
+
+                            if (filter == .all || filter == .myList) && !watchlist.isEmpty {
                                 section(title: "My List", count: watchlist.count) {
                                     ForEach(watchlist) { item in
                                         NavigationLink(value: item.route) {
@@ -75,7 +86,7 @@ struct LibraryView: View {
                                 }
                             }
 
-                            if filter != .myList && !history.isEmpty {
+                            if (filter == .all || filter == .watched) && !history.isEmpty {
                                 section(title: "Recently Watched", count: history.count) {
                                     ForEach(history) { item in
                                         let transitionID = "library|" + item.key
@@ -111,6 +122,7 @@ struct LibraryView: View {
             }
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle("Library")
+            .playbackLauncher(launcher)
             .contentDestinations()
         }
         .environment(\.zoomNamespace, zoom)
@@ -208,5 +220,149 @@ private struct LibraryCard: View {
         .contentShape(Rectangle())
         .localizedTitle(id: id, into: $localized)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Downloads: progress, pause/resume, retry and delete, and the space they use.
+private struct DownloadsSection: View {
+    let items: [DownloadItem]
+    let play: (DownloadItem) -> Void
+
+    private var manager: DownloadManager { DownloadManager.shared }
+
+    var body: some View {
+        let _ = manager.revision
+        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.s) {
+                Text("Downloads")
+                    .font(.display(.title2))
+                Spacer()
+                Text(storageText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            VStack(spacing: 0) {
+                ForEach(items) { item in
+                    DownloadRow(item: item, progress: manager.progress[item.id], play: { play(item) })
+                    if item.id != items.last?.id {
+                        Divider().padding(.leading, 84)
+                    }
+                }
+            }
+            .background(Theme.surface, in: .continuous(Theme.Radius.medium))
+        }
+    }
+
+    private var storageText: String {
+        let used = ByteCountFormatter.string(fromByteCount: DownloadFiles.usedBytes(), countStyle: .file)
+        let free = DownloadFiles.availableBytes().map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "—"
+        return localized("%@ used · %@ free", used, free)
+    }
+}
+
+private struct DownloadRow: View {
+    let item: DownloadItem
+    let progress: Double?
+    let play: () -> Void
+
+    private var manager: DownloadManager { DownloadManager.shared }
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.m) {
+            PosterArtwork(url: item.poster?.asURL, title: item.title)
+                .frame(width: 56)
+                .shadow(radius: 0)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.title)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                if let label = item.episodeLabel {
+                    Text(verbatim: label)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                status
+                    .font(.caption2.weight(.medium))
+                if item.state == .downloading || item.state == .paused {
+                    ProgressView(value: progress ?? item.fraction)
+                        .tint(Theme.accent)
+                }
+            }
+            Spacer(minLength: Theme.Spacing.s)
+            actionButton
+        }
+        .padding(.horizontal, Theme.Spacing.m)
+        .padding(.vertical, Theme.Spacing.s)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if item.state == .completed { play() }
+        }
+        .contextMenu {
+            if item.state == .completed {
+                Button(action: play) { Label("Play", systemImage: "play.fill") }
+            }
+            Button(role: .destructive) {
+                withAnimation(Theme.Motion.spring) { manager.delete(item) }
+            } label: {
+                Label("Delete Download", systemImage: "trash")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var status: some View {
+        let size = ByteCountFormatter.string(fromByteCount: max(item.expectedBytes, item.receivedBytes), countStyle: .file)
+        switch item.state {
+        case .completed:
+            Label(item.qualityLabel.map { "\($0) · \(size)" } ?? size, systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        case .downloading:
+            if DownloadSettings.shared.wifiOnly && NetworkMonitor.shared.isExpensive {
+                Text("Waiting for Wi-Fi").foregroundStyle(.orange)
+            } else {
+                let received = ByteCountFormatter.string(fromByteCount: item.receivedBytes, countStyle: .file)
+                Text(verbatim: item.expectedBytes > 0 ? "\(received) / \(size)" : received)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+        case .queued:
+            Text("Waiting…").foregroundStyle(.secondary)
+        case .resolving:
+            Text("Getting a link…").foregroundStyle(.secondary)
+        case .paused:
+            Text("Paused").foregroundStyle(.secondary)
+        case .failed:
+            Text(verbatim: item.errorMessage ?? localized("Download failed"))
+                .foregroundStyle(.red)
+                .lineLimit(2)
+        }
+    }
+
+    @ViewBuilder
+    private var actionButton: some View {
+        switch item.state {
+        case .completed:
+            Button(action: play) {
+                Image(systemName: "play.circle.fill").font(.title)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Theme.accent)
+            .accessibilityLabel("Play")
+        case .downloading, .queued, .resolving:
+            Button { manager.pause(item) } label: {
+                DownloadProgressRing(fraction: progress ?? item.fraction).frame(width: 28, height: 28)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Pause Download")
+        case .paused, .failed:
+            Button { manager.resume(item) } label: {
+                Image(systemName: item.state == .failed ? "arrow.clockwise.circle" : "play.circle")
+                    .font(.title)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Theme.accent)
+            .accessibilityLabel(Text(item.state == .failed ? LocalizedStringKey("Try Again") : "Resume Download"))
+        }
     }
 }
