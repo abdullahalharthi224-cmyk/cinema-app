@@ -145,7 +145,8 @@ struct PlayerView: View {
             if let notice = model.notice {
                 NoticeCapsule(notice: notice)
                     .frame(maxHeight: .infinity, alignment: .top)
-                    .padding(.top, Theme.Spacing.l)
+                    // Below the top buttons while they're showing, so it never covers them.
+                    .padding(.top, controlsVisible ? 76 : Theme.Spacing.l)
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .allowsHitTesting(false)
             }
@@ -434,6 +435,9 @@ struct PlayerView: View {
     /// Stops playback after a while, fading the sound out.
     private var sleepTimerMenu: some View {
         Menu {
+            if let remaining = model.sleepRemaining, model.sleepTimer != nil {
+                Text("Stops in \(PlayerViewModel.format(Double(remaining)))")
+            }
             Picker("Sleep Timer", selection: Binding(
                 get: { model.sleepTimer },
                 set: { model.setSleepTimer($0) }
@@ -446,9 +450,17 @@ struct PlayerView: View {
             }
         } label: {
             if let remaining = model.sleepRemaining, model.sleepTimer != nil {
-                Text(verbatim: PlayerViewModel.format(Double(remaining)))
-                    .font(.rounded(.caption2, weight: .bold))
-                    .monospacedDigit()
+                // A moon over the minutes left (seconds in the last minute), small enough for the button.
+                VStack(spacing: 0) {
+                    Image(systemName: "moon.zzz.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text(verbatim: remaining >= 60 ? "\((remaining + 59) / 60)" : "0:\(String(format: "%02d", remaining))")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                .environment(\.layoutDirection, .leftToRight)
             } else {
                 Image(systemName: model.sleepTimer == nil ? "moon.zzz" : "moon.zzz.fill")
             }

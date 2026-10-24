@@ -33,8 +33,8 @@ protocol VideoEngine: AnyObject {
 
     /// 0…1, for the sleep timer's fade.
     func setVolume(_ volume: Double)
-    /// libmpv audio filters ("" for none); Apple's player ignores this.
-    func setAudioFilters(_ chain: String)
+    /// libmpv audio properties (night mode, dialogue boost); Apple's player ignores this.
+    func setAudioProcessing(_ properties: [String: String])
 
     /// Fill the screen (cropping the edges) or fit the whole picture.
     func setVideoFill(_ fill: Bool)

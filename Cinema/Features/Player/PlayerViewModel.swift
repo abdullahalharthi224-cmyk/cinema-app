@@ -209,8 +209,8 @@ final class PlayerViewModel {
         if settings.audioPreference == .arabic {
             options["alang"] = "ar,ara"
         }
-        if !settings.audioFilterChain.isEmpty {
-            options["af"] = settings.audioFilterChain
+        if settings.needsAudioProcessing {
+            options.merge(settings.audioProcessing) { $1 }
         }
         if let language = PlaybackSettings.shared.preferredSubtitleLanguage {
             options["slang"] = "\(language),\(Self.threeLetterCode(language))"
@@ -900,7 +900,7 @@ final class PlayerViewModel {
             start(moved)
             return
         }
-        engine?.setAudioFilters(settings.audioFilterChain)
+        engine?.setAudioProcessing(settings.audioProcessing)
     }
 
     // MARK: Audio & subtitle style

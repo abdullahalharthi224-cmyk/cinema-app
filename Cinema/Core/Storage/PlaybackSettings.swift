@@ -89,21 +89,41 @@ final class PlaybackSettings {
     /// Audio processing needs the built-in player (Apple's can't filter sound).
     var needsAudioProcessing: Bool { nightMode || dialogueBoost }
 
-    /// libmpv's audio filter chain for the options above ("" for none).
-    var audioFilterChain: String {
+    /// The libmpv properties for the options above. Every key is always
+    /// present so turning an option off resets it.
+    ///
+    /// MPVKit's FFmpeg only ships a few audio filters (no compressor or
+    /// limiter), so this uses what it has: the AC-3/E-AC-3 decoder's own
+    /// dynamic range compression, a downmix that favours the centre (dialogue)
+    /// channel over the subwoofer and surrounds, and equalizers.
+    var audioProcessing: [String: String] {
         var filters: [String] = []
+        if needsAudioProcessing {
+            // Headroom first, so the boosts below don't clip.
+            filters.append("volume=volume=0.8")
+        }
         if nightMode {
-            // A gentle compressor with make-up gain: quiet lines come up, explosions come down.
-            filters.append("acompressor=threshold=0.0625:ratio=6:attack=20:release=250:makeup=4")
+            // Much less rumble (where explosions live), a little more speech.
+            filters.append("superequalizer=1b=0.25:2b=0.3:3b=0.45:4b=0.65:5b=0.85:10b=1.25:11b=1.35:12b=1.25")
         }
         if dialogueBoost {
-            // Presence boost where speech sits, a little less rumble.
+            // Presence boost where speech sits, a little less boom.
             filters.append("equalizer=f=2500:t=q:w=1.0:g=6")
-            filters.append("equalizer=f=120:t=q:w=1.0:g=-3")
+            filters.append("equalizer=f=150:t=q:w=1.0:g=-3")
         }
-        guard !filters.isEmpty else { return "" }
-        filters.append("alimiter=limit=0.95")
-        return "lavfi=[" + filters.joined(separator: ",") + "]"
+        let downmix: String
+        if nightMode {
+            downmix = "clev=1.414,slev=0.5,lfe_mix_level=0"
+        } else if dialogueBoost {
+            downmix = "clev=1.414"
+        } else {
+            downmix = ""
+        }
+        return [
+            "af": filters.isEmpty ? "" : "lavfi=[" + filters.joined(separator: ",") + "]",
+            "audio-swresample-o": downmix,
+            "ad-lavc-ac3drc": nightMode ? "1" : "0",
+        ]
     }
 
     /// libmpv's `#AARRGGBB` for the subtitle box behind the lines.

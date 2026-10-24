@@ -3911,6 +3911,26 @@
         }
       }
     },
+    "Stops in %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يتوقف بعد %@"
+          }
+        }
+      }
+    },
+    "Stops in %@))": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يتوقف بعد %@"
+          }
+        }
+      }
+    },
     "Storage": {
       "localizations": {
         "ar": {
