@@ -25,6 +25,11 @@ struct PlaybackSettingsView: View {
                     Text(verbatim: "English").tag(PlaybackSettings.SubtitleChoice.english)
                     Text("Off").tag(PlaybackSettings.SubtitleChoice.off)
                 }
+                Picker("Subtitle Size", selection: $settings.subtitleSize) {
+                    ForEach(PlaybackSettings.SubtitleSize.allCases) { size in
+                        Text(size.title).tag(size)
+                    }
+                }
             } header: {
                 Text("Subtitles")
             } footer: {
@@ -43,6 +48,16 @@ extension PreferredQuality {
         case .uhd: return "4K"
         case .fullHD: return "1080p"
         case .hd: return "720p"
+        }
+    }
+}
+
+extension PlaybackSettings.SubtitleSize {
+    var title: LocalizedStringKey {
+        switch self {
+        case .small: return "Small"
+        case .medium: return "Medium"
+        case .large: return "Large"
         }
     }
 }

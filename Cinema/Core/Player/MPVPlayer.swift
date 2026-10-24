@@ -62,6 +62,19 @@ final class MPVHandle: @unchecked Sendable {
             "demuxer-readahead-secs": "30",
             "network-timeout": "30",
             "ytdl": "no",
+            // Subtitles stay inside the picture (not in the black bars), in a clean
+            // white with a soft dark edge that reads well on any scene.
+            "sub-use-margins": "no",
+            "sub-ass-force-margins": "no",
+            "sub-margin-y": "40",
+            "sub-font-size": "50",
+            "sub-bold": "yes",
+            "sub-color": "#FFFFFFFF",
+            "sub-border-size": "2",
+            "sub-border-color": "#D0000000",
+            "sub-shadow-offset": "1.5",
+            "sub-shadow-color": "#80000000",
+            "sub-spacing": "0.3",
         ]
         for (name, value) in base.merging(options, uniquingKeysWith: { $1 }) {
             mpv_set_option_string(mpv, name, value)
@@ -256,9 +269,26 @@ final class MPVVideoViewController: UIViewController {
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        resizeLayer(to: view.bounds.size)
+    }
+
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        coordinator.animate(alongsideTransition: { _ in
+            self.resizeLayer(to: size)
+        })
+    }
+
+    /// The drawable must follow the view's size (e.g. on rotation), otherwise the
+    /// video renderer keeps drawing at the old size and the picture goes black.
+    private func resizeLayer(to size: CGSize) {
+        guard size.width > 1, size.height > 1 else { return }
+        let scale = view.window?.screen.nativeScale ?? UIScreen.main.nativeScale
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        metalLayer.frame = view.bounds
+        metalLayer.contentsScale = scale
+        metalLayer.frame = CGRect(origin: .zero, size: size)
+        metalLayer.drawableSize = CGSize(width: size.width * scale, height: size.height * scale)
         CATransaction.commit()
     }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct CinemaApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var router = AppRouter()
 
     init() {

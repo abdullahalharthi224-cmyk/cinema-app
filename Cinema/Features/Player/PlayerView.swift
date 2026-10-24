@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The full-screen player with Apple TV-style controls.
+/// The full-screen player. It always plays in landscape, with Apple TV-style controls.
 @MainActor
 struct PlayerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -9,9 +9,9 @@ struct PlayerView: View {
     @State private var model: PlayerViewModel
     @State private var controlsVisible = true
     @State private var hideTask: Task<Void, Never>?
-    @State private var skipFeedback: SkipFeedback?
+    @State private var skipPulse: SkipPulse?
 
-    private enum SkipFeedback: Equatable { case back, forward }
+    private enum SkipPulse: Equatable { case back, forward }
 
     init(session: PlaybackSession, launcher: PlaybackLauncher) {
         _model = State(initialValue: PlayerViewModel(session: session, launcher: launcher))
@@ -29,7 +29,10 @@ struct PlayerView: View {
 
             gestureLayer
 
-            if model.isBuffering || !model.hasLoaded {
+            if !model.hasLoaded && model.errorMessage == nil {
+                LoadingCurtain(session: model.session)
+                    .transition(.opacity)
+            } else if model.isBuffering {
                 ProgressView()
                     .controlSize(.large)
                     .tint(.white)
@@ -44,8 +47,8 @@ struct PlayerView: View {
             if model.showsNextEpisode {
                 nextEpisodeButton
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    .padding(.trailing, Theme.Spacing.xl)
-                    .padding(.bottom, controlsVisible ? 110 : Theme.Spacing.xxl)
+                    .padding(.trailing, Theme.Spacing.xxl)
+                    .padding(.bottom, controlsVisible ? 92 : Theme.Spacing.xxl)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             }
 
@@ -53,23 +56,33 @@ struct PlayerView: View {
                 errorCard(message)
             }
         }
-        // Playback controls read left-to-right in every language, like the TV app.
+        // Timelines read left-to-right in every language, like the TV app.
         .environment(\.layoutDirection, .leftToRight)
         .environment(\.colorScheme, .dark)
-        .statusBarHidden(!controlsVisible)
-        .persistentSystemOverlays(controlsVisible ? .automatic : .hidden)
+        .statusBarHidden(true)
+        .persistentSystemOverlays(.hidden)
         .animation(Theme.Motion.spring, value: controlsVisible)
         .animation(Theme.Motion.spring, value: model.showsNextEpisode)
-        .onAppear { scheduleHide() }
-        .onDisappear { model.close() }
+        .animation(Theme.Motion.gentle, value: model.hasLoaded)
+        .onAppear {
+            OrientationController.lock(.landscape)
+            scheduleHide()
+        }
+        .onDisappear {
+            model.close()
+            OrientationController.lock(.portrait)
+        }
         .onChange(of: model.isPaused) { _, paused in
             if paused { showControls(autoHide: false) } else { scheduleHide() }
+        }
+        .onChange(of: controlsVisible, initial: true) { _, visible in
+            model.controlsVisibilityChanged(visible)
         }
     }
 
     // MARK: Gestures
 
-    /// Tap to show/hide the controls; double-tap the left or right side to skip 10 seconds.
+    /// Tap to show or hide the controls; double-tap either side to skip 10 seconds.
     private var gestureLayer: some View {
         HStack(spacing: 0) {
             Color.clear
@@ -88,71 +101,70 @@ struct PlayerView: View {
 
     private var controls: some View {
         ZStack {
-            LinearGradient(
-                stops: [
-                    .init(color: .black.opacity(0.7), location: 0),
-                    .init(color: .clear, location: 0.3),
-                    .init(color: .clear, location: 0.65),
-                    .init(color: .black.opacity(0.8), location: 1),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            // Shade only the edges, so the picture stays visible.
+            VStack(spacing: 0) {
+                LinearGradient(colors: [.black.opacity(0.75), .clear], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 130)
+                Spacer()
+                LinearGradient(colors: [.clear, .black.opacity(0.85)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 150)
+            }
             .ignoresSafeArea()
             .allowsHitTesting(false)
 
-            VStack {
+            VStack(spacing: 0) {
                 topBar
                 Spacer()
                 bottomBar
             }
             .padding(.horizontal, Theme.Spacing.xl)
-            .padding(.vertical, Theme.Spacing.m)
+            .padding(.top, Theme.Spacing.m)
+            .padding(.bottom, Theme.Spacing.s)
 
             centerButtons
         }
     }
 
     private var topBar: some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.m) {
+        HStack(alignment: .center, spacing: Theme.Spacing.l) {
             Button {
                 model.close()
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
             }
-            .buttonStyle(GlassCircleButtonStyle(size: 42))
+            .buttonStyle(GlassCircleButtonStyle(size: 40))
             .accessibilityLabel("Close")
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: model.session.title)
                     .font(.headline)
                     .lineLimit(1)
                 if let subtitle = model.session.subtitle {
                     Text(verbatim: subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.7))
                         .lineLimit(1)
+                        // Arabic episode names keep their natural direction.
+                        .environment(\.layoutDirection, AppLanguage.current.isRightToLeft ? .rightToLeft : .leftToRight)
                 }
             }
-            .padding(.top, 2)
 
-            Spacer()
+            Spacer(minLength: Theme.Spacing.l)
 
-            HStack(spacing: Theme.Spacing.s) {
-                subtitleMenu
-                audioMenu
-                speedMenu
-            }
+            audioAndSubtitlesMenu
+            speedMenu
         }
     }
 
     private var centerButtons: some View {
-        HStack(spacing: 56) {
+        HStack(spacing: 72) {
             Button { skip(-10) } label: {
                 Image(systemName: "gobackward.10")
-                    .font(.system(size: 30, weight: .semibold))
-                    .symbolEffect(.bounce, value: skipFeedback == .back)
+                    .font(.system(size: 34, weight: .medium))
+                    .symbolEffect(.bounce, value: skipPulse == .back)
+                    .frame(width: 70, height: 70)
+                    .contentShape(Circle())
             }
             .accessibilityLabel("Back 10 seconds")
 
@@ -160,108 +172,89 @@ struct PlayerView: View {
                 model.togglePlay()
             } label: {
                 Image(systemName: model.isPaused ? "play.fill" : "pause.fill")
-                    .font(.system(size: 46, weight: .bold))
+                    .font(.system(size: 52, weight: .semibold))
                     .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 84, height: 84)
-                    .background(.ultraThinMaterial, in: Circle())
+                    .frame(width: 90, height: 90)
+                    .contentShape(Circle())
             }
             .accessibilityLabel(Text(model.isPaused ? LocalizedStringKey("Play") : "Pause"))
 
             Button { skip(10) } label: {
                 Image(systemName: "goforward.10")
-                    .font(.system(size: 30, weight: .semibold))
-                    .symbolEffect(.bounce, value: skipFeedback == .forward)
+                    .font(.system(size: 34, weight: .medium))
+                    .symbolEffect(.bounce, value: skipPulse == .forward)
+                    .frame(width: 70, height: 70)
+                    .contentShape(Circle())
             }
             .accessibilityLabel("Forward 10 seconds")
         }
         .foregroundStyle(.white)
-        .buttonStyle(.plain)
+        .shadow(color: .black.opacity(0.45), radius: 10)
+        .buttonStyle(PressScaleStyle())
         .sensoryFeedback(.impact(weight: .light), trigger: model.isPaused)
     }
 
     private var bottomBar: some View {
-        VStack(spacing: 6) {
+        HStack(spacing: Theme.Spacing.m) {
+            Text(verbatim: PlayerViewModel.format(model.displayedPosition))
+                .frame(minWidth: 52, alignment: .leading)
             Scrubber(model: model) { editing in
                 if editing { showControls(autoHide: false) } else { scheduleHide() }
             }
-
-            HStack {
-                Text(verbatim: PlayerViewModel.format(model.displayedPosition))
-                Spacer()
-                Text(verbatim: "-" + PlayerViewModel.format(model.remaining))
-            }
-            .font(.rounded(.caption, weight: .semibold))
-            .monospacedDigit()
-            .foregroundStyle(.white.opacity(0.8))
+            Text(verbatim: "-" + PlayerViewModel.format(model.remaining))
+                .frame(minWidth: 58, alignment: .trailing)
         }
+        .font(.rounded(.footnote, weight: .semibold))
+        .monospacedDigit()
+        .foregroundStyle(.white.opacity(0.85))
     }
 
     // MARK: Menus
 
-    private var subtitleMenu: some View {
+    /// One menu for audio and subtitles, like the TV app's speech-bubble button.
+    private var audioAndSubtitlesMenu: some View {
         Menu {
-            Button {
-                model.selectSubtitle(nil)
-            } label: {
-                if model.subtitleTracks.allSatisfy({ !$0.isSelected }) {
-                    Label("Off", systemImage: "checkmark")
-                } else {
-                    Text("Off")
-                }
-            }
-            ForEach(model.subtitleTracks) { track in
-                Button {
-                    model.selectSubtitle(track)
-                } label: {
-                    if track.isSelected {
-                        Label(trackName(track), systemImage: "checkmark")
-                    } else {
-                        Text(trackName(track))
+            if model.audioTracks.count > 1 {
+                Section("Audio") {
+                    ForEach(model.audioTracks) { track in
+                        checkButton(trackName(track), checked: track.isSelected) {
+                            model.selectAudio(track)
+                        }
                     }
                 }
             }
-        } label: {
-            Image(systemName: "captions.bubble")
-        }
-        .menuStyle(.button)
-        .buttonStyle(GlassCircleButtonStyle(size: 42))
-        .accessibilityLabel("Subtitles")
-    }
 
-    private var audioMenu: some View {
-        Menu {
-            ForEach(model.audioTracks) { track in
-                Button {
-                    model.selectAudio(track)
-                } label: {
-                    if track.isSelected {
-                        Label(trackName(track), systemImage: "checkmark")
-                    } else {
-                        Text(trackName(track))
+            Section("Subtitles") {
+                checkButton(localized("Off"), checked: model.subtitleTracks.allSatisfy { !$0.isSelected }) {
+                    model.selectSubtitle(nil)
+                }
+                ForEach(model.subtitleTracks) { track in
+                    checkButton(trackName(track), checked: track.isSelected) {
+                        model.selectSubtitle(track)
+                    }
+                }
+            }
+
+            Section("Subtitle Size") {
+                ForEach(PlaybackSettings.SubtitleSize.allCases) { size in
+                    checkButton(localized(size.rawValue.capitalized), checked: PlaybackSettings.shared.subtitleSize == size) {
+                        model.setSubtitleSize(size)
                     }
                 }
             }
         } label: {
-            Image(systemName: "speaker.wave.2")
+            Image(systemName: "captions.bubble.fill")
         }
         .menuStyle(.button)
-        .buttonStyle(GlassCircleButtonStyle(size: 42))
-        .disabled(model.audioTracks.count < 2)
-        .accessibilityLabel("Audio")
+        .buttonStyle(GlassCircleButtonStyle(size: 40))
+        .accessibilityLabel("Audio & Subtitles")
     }
 
     private var speedMenu: some View {
         Menu {
             ForEach(PlayerViewModel.speeds, id: \.self) { speed in
-                Button {
+                checkButton(speedLabel(speed), checked: speed == model.speed) {
                     model.setSpeed(speed)
-                } label: {
-                    let title = Text(verbatim: speedLabel(speed))
-                    if speed == model.speed {
-                        Label { title } icon: { Image(systemName: "checkmark") }
-                    } else {
-                        title
-                    }
                 }
             }
         } label: {
@@ -269,8 +262,18 @@ struct PlayerView: View {
                 .font(.rounded(.footnote, weight: .bold))
         }
         .menuStyle(.button)
-        .buttonStyle(GlassCircleButtonStyle(size: 42))
+        .buttonStyle(GlassCircleButtonStyle(size: 40))
         .accessibilityLabel("Playback Speed")
+    }
+
+    private func checkButton(_ title: String, checked: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            if checked {
+                Label(title, systemImage: "checkmark")
+            } else {
+                Text(verbatim: title)
+            }
+        }
     }
 
     private func trackName(_ track: MPVTrack) -> String {
@@ -311,7 +314,7 @@ struct PlayerView: View {
                     }
                 }
             }
-            .frame(maxWidth: 240)
+            .frame(maxWidth: 260)
         }
         .buttonStyle(.glassProminent)
         .disabled(model.isLoadingNext)
@@ -332,7 +335,7 @@ struct PlayerView: View {
             .buttonStyle(.glass)
         }
         .padding(Theme.Spacing.xl)
-        .frame(maxWidth: 340)
+        .frame(maxWidth: 380)
         .background(.ultraThinMaterial, in: .continuous(Theme.Radius.large))
     }
 
@@ -340,10 +343,10 @@ struct PlayerView: View {
 
     private func skip(_ seconds: Double) {
         model.skip(seconds)
-        skipFeedback = seconds < 0 ? .back : .forward
+        skipPulse = seconds < 0 ? .back : .forward
         Task {
             try? await Task.sleep(for: .milliseconds(400))
-            skipFeedback = nil
+            skipPulse = nil
         }
         showControls(autoHide: true)
     }
@@ -369,6 +372,48 @@ struct PlayerView: View {
             guard !Task.isCancelled, !model.isPaused, !model.isScrubbing else { return }
             controlsVisible = false
         }
+    }
+}
+
+/// Shown while a stream opens: the title's artwork, blurred, with its name.
+private struct LoadingCurtain: View {
+    let session: PlaybackSession
+
+    var body: some View {
+        ZStack {
+            Color.black
+            if let background = session.request.history.flatMap({ Artwork.background(id: $0.metaID, provided: $0.background) }) {
+                RemoteImage(url: background) { Color.black }
+                    .blur(radius: 30)
+                    .opacity(0.45)
+                    .clipped()
+            }
+            VStack(spacing: Theme.Spacing.m) {
+                ProgressView()
+                    .controlSize(.large)
+                    .tint(.white)
+                Text(verbatim: session.title)
+                    .font(.display(.title3))
+                if let subtitle = session.subtitle {
+                    Text(verbatim: subtitle)
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.xxl)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+}
+
+/// Shrinks a control slightly while pressed.
+private struct PressScaleStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.88 : 1)
+            .opacity(configuration.isPressed ? 0.8 : 1)
+            .animation(Theme.Motion.snappy, value: configuration.isPressed)
     }
 }
 
@@ -398,7 +443,7 @@ private struct Scrubber: View {
                 Capsule().fill(.white)
                     .frame(width: proxy.size.width * fraction)
             }
-            .frame(height: model.isScrubbing ? 10 : 5)
+            .frame(height: model.isScrubbing ? 9 : 5)
             .frame(maxHeight: .infinity)
             .contentShape(Rectangle())
             .gesture(
@@ -420,7 +465,7 @@ private struct Scrubber: View {
             )
             .animation(Theme.Motion.snappy, value: model.isScrubbing)
         }
-        .frame(height: 24)
+        .frame(height: 28)
         .sensoryFeedback(.selection, trigger: model.isScrubbing)
         .accessibilityElement()
         .accessibilityLabel("Timeline")

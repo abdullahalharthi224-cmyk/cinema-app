@@ -23,6 +23,8 @@ final class PlayerViewModel {
     private var handle: MPVHandle?
     private var lastSavedPosition: Double = 0
     private var addedSubtitles = false
+    private var lifecycleObservers: [NSObjectProtocol] = []
+    private var wasPlayingBeforeBackground = false
     private weak var context: ModelContext?
     private let launcher: PlaybackLauncher
 
@@ -49,6 +51,7 @@ final class PlayerViewModel {
         self.context = context
         let languages = PlaybackSettings.shared.subtitleLanguages
         var options: [String: String] = [:]
+        options["sub-font-size"] = String(PlaybackSettings.shared.subtitleSize.fontSize)
         if languages.isEmpty {
             options["sid"] = "no"
         } else {
@@ -62,6 +65,7 @@ final class PlayerViewModel {
         handle.onEvent = { [weak self] event in self?.process(event) }
         self.handle = handle
 
+        observeAppLifecycle()
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
         try? AVAudioSession.sharedInstance().setActive(true)
         UIApplication.shared.isIdleTimerDisabled = true
@@ -82,11 +86,49 @@ final class PlayerViewModel {
     }
 
     func close() {
+        for observer in lifecycleObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        lifecycleObservers = []
         saveProgress()
         handle?.destroy()
         handle = nil
         UIApplication.shared.isIdleTimerDisabled = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    /// Pauses in the background and restores the picture on return (the GPU
+    /// surface is lost while the app is in the background).
+    private func observeAppLifecycle() {
+        let center = NotificationCenter.default
+        lifecycleObservers = [
+            center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.wasPlayingBeforeBackground = !self.isPaused
+                    self.handle?.setFlag("pause", true)
+                    self.handle?.setString("vid", "no")
+                    self.saveProgress()
+                }
+            },
+            center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.handle?.setString("vid", "auto")
+                    if self.wasPlayingBeforeBackground { self.handle?.setFlag("pause", false) }
+                }
+            },
+        ]
+    }
+
+    /// Lifts subtitles above the controls while they're on screen.
+    func controlsVisibilityChanged(_ visible: Bool) {
+        handle?.setString("sub-margin-y", visible ? "150" : "40")
+    }
+
+    func setSubtitleSize(_ size: PlaybackSettings.SubtitleSize) {
+        PlaybackSettings.shared.subtitleSize = size
+        handle?.setString("sub-font-size", String(size.fontSize))
     }
 
     // MARK: Events

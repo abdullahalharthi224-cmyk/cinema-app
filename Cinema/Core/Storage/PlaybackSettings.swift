@@ -11,6 +11,20 @@ final class PlaybackSettings {
         var id: String { rawValue }
     }
 
+    enum SubtitleSize: String, CaseIterable, Identifiable {
+        case small, medium, large
+        var id: String { rawValue }
+
+        /// libmpv's `sub-font-size`, in pixels of a 720-line video.
+        var fontSize: Int {
+            switch self {
+            case .small: return 40
+            case .medium: return 50
+            case .large: return 62
+            }
+        }
+    }
+
     var quality: PreferredQuality {
         didSet { UserDefaults.standard.set(quality.rawValue, forKey: "playback.quality") }
     }
@@ -19,6 +33,9 @@ final class PlaybackSettings {
     }
     var subtitles: SubtitleChoice {
         didSet { UserDefaults.standard.set(subtitles.rawValue, forKey: "playback.subtitles") }
+    }
+    var subtitleSize: SubtitleSize {
+        didSet { UserDefaults.standard.set(subtitleSize.rawValue, forKey: "playback.subtitleSize") }
     }
 
     var preferences: PlaybackPreferences {
@@ -39,5 +56,6 @@ final class PlaybackSettings {
         quality = PreferredQuality(rawValue: defaults.string(forKey: "playback.quality") ?? "") ?? .fullHD
         preferCached = defaults.object(forKey: "playback.preferCached") as? Bool ?? true
         subtitles = SubtitleChoice(rawValue: defaults.string(forKey: "playback.subtitles") ?? "") ?? .arabic
+        subtitleSize = SubtitleSize(rawValue: defaults.string(forKey: "playback.subtitleSize") ?? "") ?? .medium
     }
 }

@@ -351,6 +351,16 @@
         }
       }
     },
+    "Audio & Subtitles": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصوت والترجمة"
+          }
+        }
+      }
+    },
     "Available Catalogs": {
       "localizations": {
         "ar": {
@@ -1091,6 +1101,16 @@
         }
       }
     },
+    "Large": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كبير"
+          }
+        }
+      }
+    },
     "Less": {
       "localizations": {
         "ar": {
@@ -1207,6 +1227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "أنا"
+          }
+        }
+      }
+    },
+    "Medium": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متوسط"
           }
         }
       }
@@ -2111,6 +2141,16 @@
         }
       }
     },
+    "Small": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صغير"
+          }
+        }
+      }
+    },
     "Something Went Wrong": {
       "localizations": {
         "ar": {
@@ -2221,12 +2261,22 @@
         }
       }
     },
+    "Subtitle Size": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حجم الترجمة"
+          }
+        }
+      }
+    },
     "Subtitles": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "الترجمات"
+            "value": "الترجمة"
           }
         }
       }
