@@ -111,4 +111,41 @@ final class TMDBClientTests: XCTestCase {
         XCTAssertEqual(credits.map(\.title.title), ["High", "Low"])
         XCTAssertEqual(credits.first?.media, .tv)
     }
+
+    func testArabicTitleFromAnotherRegion() async throws {
+        let http = MockHTTPClient { request in
+            let url = request.url!.absoluteString
+            if url.contains("/translations") {
+                return (200, Data("""
+                {"translations": [
+                    {"iso_3166_1": "FR", "iso_639_1": "fr", "data": {"name": "Matière noire", "overview": "Fr"}},
+                    {"iso_3166_1": "EG", "iso_639_1": "ar", "data": {"name": "عنوان مصري", "overview": ""}},
+                    {"iso_3166_1": "AE", "iso_639_1": "ar", "data": {"name": "المادة المظلمة", "overview": "قصة عالم فيزياء."}}
+                ]}
+                """.utf8))
+            }
+            return (200, Data(#"{"name": "Dark Matter", "overview": "", "genres": []}"#.utf8))
+        }
+        let details = try await TMDBClient(token: "t", http: http)
+            .localizedDetails(media: .tv, tmdbID: 1, language: "ar-SA")
+
+        // The UAE's translation beats Egypt's; the synopsis comes from it too.
+        XCTAssertEqual(details.title, "المادة المظلمة")
+        XCTAssertEqual(details.overview, "قصة عالم فيزياء.")
+    }
+
+    func testNoArabicTranslationKeepsTheOriginalTitle() async throws {
+        let http = MockHTTPClient { request in
+            if request.url!.absoluteString.contains("/translations") {
+                return (200, Data(#"{"translations": [{"iso_3166_1": "US", "iso_639_1": "en", "data": {"title": "X"}}]}"#.utf8))
+            }
+            return (200, Data(#"{"title": "Original", "overview": "Plot.", "genres": []}"#.utf8))
+        }
+        let details = try await TMDBClient(token: "t", http: http)
+            .localizedDetails(media: .movie, tmdbID: 2, language: "ar-SA")
+        XCTAssertEqual(details.title, "Original")
+        XCTAssertEqual(details.overview, "Plot.")
+        XCTAssertTrue("مرحبا".containsArabicLetters)
+        XCTAssertFalse("Dark Matter".containsArabicLetters)
+    }
 }

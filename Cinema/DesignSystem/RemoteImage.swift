@@ -61,6 +61,35 @@ actor ImagePipeline {
 }
 
 extension UIImage {
+    /// The average brightness (0…1) of the visible pixels, ignoring transparent ones.
+    func averageOpaqueLuminance() -> Double? {
+        guard let cgImage else { return nil }
+        let side = 32
+        var pixels = [UInt8](repeating: 0, count: side * side * 4)
+        let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(
+                data: buffer.baseAddress, width: side, height: side, bitsPerComponent: 8, bytesPerRow: side * 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return false }
+            context.draw(cgImage, in: CGRect(x: 0, y: 0, width: side, height: side))
+            return true
+        }
+        guard drawn else { return nil }
+        var total = 0.0, weight = 0.0
+        for index in stride(from: 0, to: pixels.count, by: 4) {
+            let alpha = Double(pixels[index + 3]) / 255
+            guard alpha > 0.3 else { continue }
+            // Un-premultiply, then perceived luminance.
+            let r = Double(pixels[index]) / 255 / alpha
+            let g = Double(pixels[index + 1]) / 255 / alpha
+            let b = Double(pixels[index + 2]) / 255 / alpha
+            total += (0.2126 * r + 0.7152 * g + 0.0722 * b) * alpha
+            weight += alpha
+        }
+        return weight > 0 ? total / weight : nil
+    }
+
     /// Averages a tiny thumbnail, favouring saturated, mid-bright pixels so the
     /// result is a rich colour rather than a muddy grey.
     func dominantColor() -> UIColor? {
@@ -136,6 +165,69 @@ struct RemoteImage<Placeholder: View>: View {
             }
             let loaded = await ImagePipeline.shared.image(for: url)
             withAnimation(.easeOut(duration: 0.25)) { image = loaded }
+        }
+    }
+}
+
+/// Tries each URL in turn (then, optionally, one more found on demand) and
+/// shows `failure` instead of an endless placeholder when none loads.
+struct FallbackImage<Placeholder: View, Failure: View>: View {
+    let urls: [URL]
+    var contentMode: ContentMode = .fill
+    /// Asked once every URL has failed, e.g. to look the artwork up on TMDB.
+    var resolveMore: (@Sendable () async -> URL?)?
+    var placeholder: () -> Placeholder
+    var failure: () -> Failure
+
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    init(
+        urls: [URL], contentMode: ContentMode = .fill, resolveMore: (@Sendable () async -> URL?)? = nil,
+        @ViewBuilder placeholder: @escaping () -> Placeholder, @ViewBuilder failure: @escaping () -> Failure
+    ) {
+        self.urls = urls
+        self.contentMode = contentMode
+        self.resolveMore = resolveMore
+        self.placeholder = placeholder
+        self.failure = failure
+        _image = State(initialValue: urls.first.flatMap { ImagePipeline.shared.cachedImage(for: $0) })
+    }
+
+    var body: some View {
+        ZStack {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: contentMode)
+                    .transition(.opacity)
+            } else if failed {
+                failure()
+                    .transition(.opacity)
+            } else {
+                placeholder()
+            }
+        }
+        .task(id: urls) {
+            failed = false
+            for url in urls {
+                if let cached = ImagePipeline.shared.cachedImage(for: url) {
+                    image = cached
+                    return
+                }
+                if let loaded = await ImagePipeline.shared.image(for: url) {
+                    withAnimation(.easeOut(duration: 0.25)) { image = loaded }
+                    return
+                }
+                guard !Task.isCancelled else { return }
+            }
+            if let resolveMore, let url = await resolveMore(), let loaded = await ImagePipeline.shared.image(for: url) {
+                withAnimation(.easeOut(duration: 0.25)) { image = loaded }
+                return
+            }
+            guard !Task.isCancelled else { return }
+            image = nil
+            withAnimation(.easeOut(duration: 0.25)) { failed = true }
         }
     }
 }

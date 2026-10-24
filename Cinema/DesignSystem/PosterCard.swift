@@ -44,7 +44,7 @@ struct PosterCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: title, shape: shape)
+            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: title, shape: shape, id: item.id)
                 .frame(width: width)
                 .zoomSource(id: transitionID, in: namespace)
 
@@ -65,23 +65,27 @@ struct PosterCard: View {
 }
 
 /// Poster artwork with 12pt continuous corners, a hairline edge and a soft shadow.
+/// With the title's `id`, missing artwork falls back to Stremio's image service
+/// and TMDB, and finally to a card with the title instead of an empty box.
 struct PosterArtwork: View {
     let url: URL?
     let title: String
     var shape: PosterShape = .poster
+    var id: String? = nil
+
+    private var resolveFromTMDB: (@Sendable () async -> URL?)? {
+        guard let id else { return nil }
+        let wantsBackdrop = shape != .poster
+        return { @Sendable in await Artwork.tmdbImage(id: id, backdrop: wantsBackdrop) }
+    }
 
     var body: some View {
         Color.clear
             .overlay {
-                RemoteImage(url: url) {
-                    ZStack {
-                        ShimmerPlaceholder()
-                        Text(title)
-                            .font(.footnote.weight(.semibold))
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(.tertiary)
-                            .padding(Theme.Spacing.s)
-                    }
+                FallbackImage(urls: Artwork.posters(id: id, provided: url), resolveMore: resolveFromTMDB) {
+                    ShimmerPlaceholder()
+                } failure: {
+                    TitleCard(title: title)
                 }
             }
             .aspectRatio(shape.aspectRatio, contentMode: .fit)
@@ -91,6 +95,35 @@ struct PosterArtwork: View {
                     .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
             }
             .shadow(color: .black.opacity(0.55), radius: 14, y: 8)
+    }
+}
+
+/// Stands in for missing artwork: the title on a soft, accent-tinted card.
+struct TitleCard: View {
+    let title: String
+    var symbol = "film"
+
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Theme.accent.opacity(0.28), Theme.surface, Theme.surface],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            VStack(spacing: Theme.Spacing.s) {
+                Image(systemName: symbol)
+                    .font(.title2.weight(.light))
+                    .foregroundStyle(Theme.accent)
+                Text(title)
+                    .font(.system(.subheadline, design: .default, weight: .bold))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(.primary)
+            }
+            .padding(Theme.Spacing.m)
+        }
+        .accessibilityHidden(true)
     }
 }
 

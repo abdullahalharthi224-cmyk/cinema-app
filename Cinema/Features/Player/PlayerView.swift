@@ -14,6 +14,7 @@ struct PlayerView: View {
     @State private var showsPanel = false
     @State private var zoomNotice: ZoomNotice?
     @State private var zoomNoticeTask: Task<Void, Never>?
+    @State private var isClosing = false
 
     private enum ZoomNotice: Equatable { case fill, fit }
 
@@ -98,6 +99,13 @@ struct PlayerView: View {
             if let message = model.errorMessage {
                 errorCard(message)
             }
+
+            if isClosing {
+                // Covers the turn back to portrait, so nothing appears sideways.
+                Color.black
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
         }
         // Timelines read left-to-right in every language, like the TV app.
         .environment(\.layoutDirection, .leftToRight)
@@ -150,6 +158,20 @@ struct PlayerView: View {
                     showZoomNotice(fill ? .fill : .fit)
                 }
         )
+    }
+
+    /// Turns back to portrait first, behind a black curtain, then closes, so
+    /// the screen underneath never shows up sideways.
+    private func closePlayer() {
+        guard !isClosing else { return }
+        withAnimation(.easeOut(duration: 0.15)) { isClosing = true }
+        model.close()
+        let wasLandscape = OrientationController.isLandscape
+        OrientationController.lock(.portrait)
+        Task {
+            if wasLandscape { try? await Task.sleep(for: .milliseconds(450)) }
+            dismiss()
+        }
     }
 
     private func showZoomNotice(_ notice: ZoomNotice) {
@@ -207,8 +229,7 @@ struct PlayerView: View {
     private var topBar: some View {
         HStack(alignment: .center, spacing: Theme.Spacing.l) {
             Button {
-                model.close()
-                dismiss()
+                closePlayer()
             } label: {
                 Image(systemName: "xmark")
             }
@@ -395,8 +416,7 @@ struct PlayerView: View {
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
             Button("Close") {
-                model.close()
-                dismiss()
+                closePlayer()
             }
             .buttonStyle(.glass)
         }
@@ -543,18 +563,13 @@ private struct SubtitleOverlay: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     .padding(.bottom, model.subtitleMargin * scale)
                     // Arabic lines keep their natural direction.
-                    .environment(\.layoutDirection, text.containsArabic ? .rightToLeft : .leftToRight)
+                    .environment(\.layoutDirection, text.containsArabicLetters ? .rightToLeft : .leftToRight)
             }
         }
         .animation(.easeOut(duration: 0.12), value: model.subtitleMargin)
     }
 }
 
-private extension String {
-    var containsArabic: Bool {
-        unicodeScalars.contains { (0x0600...0x06FF).contains($0.value) || (0x0750...0x077F).contains($0.value) }
-    }
-}
 
 /// A thin timeline that thickens while you drag it, like the TV app's.
 private struct Scrubber: View {

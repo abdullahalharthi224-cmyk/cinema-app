@@ -229,6 +229,9 @@ struct DetailView: View {
                 playMainTarget(choosingStream: false)
             } label: {
                 Label(playTitle, systemImage: "play.fill")
+                    // One line always: shrink a little rather than wrap.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.glassProminent)
@@ -371,7 +374,8 @@ struct DetailView: View {
                                     video: video,
                                     title: model.episodeTitle(video),
                                     overview: model.episodeOverview(video),
-                                    progress: progress[video.id]
+                                    progress: progress[video.id],
+                                    images: model.episodeImages(video)
                                 )
                             }
                             .buttonStyle(.cardPress)
@@ -539,18 +543,17 @@ private struct EpisodeCard: View {
     var title: String?
     var overview: String?
     var progress: PlaybackProgress?
+    /// The episode's still, then TMDB's, then the show's backdrop.
+    var images: [URL] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             Color.clear
                 .overlay {
-                    RemoteImage(url: video.thumbnail?.asURL) {
-                        ZStack {
-                            ShimmerPlaceholder()
-                            Image(systemName: "play.rectangle")
-                                .font(.title)
-                                .foregroundStyle(.tertiary)
-                        }
+                    FallbackImage(urls: images) {
+                        ShimmerPlaceholder()
+                    } failure: {
+                        TitleCard(title: title ?? "", symbol: "play.rectangle")
                     }
                 }
                 .aspectRatio(16 / 9, contentMode: .fit)

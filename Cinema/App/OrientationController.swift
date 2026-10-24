@@ -5,6 +5,13 @@ import UIKit
 enum OrientationController {
     private(set) static var mask: UIInterfaceOrientationMask = .portrait
 
+    /// Whether the interface is currently turned sideways.
+    static var isLandscape: Bool {
+        UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.interfaceOrientation }
+            .first?.isLandscape ?? false
+    }
+
     static func lock(_ mask: UIInterfaceOrientationMask) {
         self.mask = mask
         for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {

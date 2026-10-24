@@ -154,6 +154,11 @@ final class DetailViewModel {
         guard language == .arabic else {
             let cast = await castRequest ?? []
             withAnimation(Theme.Motion.spring) { self.cast = cast }
+            // Episode stills from TMDB, for episodes the addon has no image for.
+            if found.media == .tv {
+                tmdbShowID = found.id
+                await loadEpisodeTexts(season: selectedSeason)
+            }
             return
         }
 
@@ -182,7 +187,7 @@ final class DetailViewModel {
     func loadEpisodeTexts(season: Int?) async {
         guard let season, let tmdbShowID, episodeTexts[season] == nil,
               let client = TMDBAccount.shared.client,
-              let episodes = try? await client.season(tvID: tmdbShowID, number: season, language: AppLanguage.arabic.tmdbCode)
+              let episodes = try? await client.season(tvID: tmdbShowID, number: season, language: Appearance.shared.language.tmdbCode)
         else { return }
         withAnimation(Theme.Motion.spring) { episodeTexts[season] = episodes }
     }
@@ -193,6 +198,17 @@ final class DetailViewModel {
 
     func episodeOverview(_ video: MetaVideo) -> String? {
         translatedEpisode(video)?.overview?.nonEmpty ?? video.overview
+    }
+
+    /// Images to try for an episode card, best first.
+    func episodeImages(_ video: MetaVideo) -> [URL] {
+        let urls = [
+            video.thumbnail?.asURL,
+            TMDBClient.imageURL(translatedEpisode(video)?.stillPath, size: "w500"),
+            backgroundURL,
+        ].compactMap { $0 }
+        var seen = Set<URL>()
+        return urls.filter { seen.insert($0).inserted }
     }
 
     private func translatedEpisode(_ video: MetaVideo) -> TMDBEpisode? {
