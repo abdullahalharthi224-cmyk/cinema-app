@@ -496,7 +496,7 @@ private struct StreamRow: View {
                 if info.isCached || info.hasArabic || !tags.isEmpty {
                     FlowLayout(spacing: 5) {
                         if info.isCached {
-                            Label("Instant", systemImage: "bolt.fill")
+                            IconText("Instant", systemImage: "bolt.fill")
                                 .font(.rounded(.caption2, weight: .heavy))
                                 .foregroundStyle(.black)
                                 .padding(.horizontal, 8)
@@ -530,13 +530,13 @@ private struct StreamRow: View {
                     .foregroundStyle(.tertiary)
 
                 if info.isUncached {
-                    Label("Not cached yet — may take a while to start.", systemImage: "hourglass")
+                    IconText("Not cached yet — may take a while to start.", systemImage: "hourglass")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.orange)
                 }
 
                 if !stream.stream.isSupported {
-                    Label(unsupportedReason, systemImage: "exclamationmark.triangle.fill")
+                    IconText(unsupportedReason, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.orange)
                 }
@@ -545,6 +545,8 @@ private struct StreamRow: View {
             .multilineTextAlignment(.leading)
         }
         .padding(.vertical, 4)
+        // Very large text sizes would break the badges apart; cap them gracefully.
+        .dynamicTypeSize(...DynamicTypeSize.xLarge)
         .opacity(stream.stream.isSupported ? 1 : 0.55)
         .contentShape(Rectangle())
     }
@@ -552,43 +554,38 @@ private struct StreamRow: View {
     private var facts: some View {
         HStack(spacing: Theme.Spacing.m) {
             if let size = info.sizeBytes {
-                Label {
-                    Text(verbatim: ByteCountFormatter.string(fromByteCount: size, countStyle: .binary))
-                } icon: {
-                    Image(systemName: "internaldrive")
-                }
+                IconText(verbatim: ByteCountFormatter.string(fromByteCount: size, countStyle: .binary), systemImage: "internaldrive")
             }
             if let seeders = info.seeders {
-                Label {
-                    Text(seeders, format: .number)
-                } icon: {
-                    Image(systemName: "person.2.fill")
-                }
+                IconText(verbatim: seeders.formatted(), systemImage: "person.2.fill")
             }
             if info.languages.count > 1 {
                 // Many flags collapse into one "multi-language" mark with a count.
-                Label {
-                    Text(info.languages.count, format: .number)
-                } icon: {
-                    Image(systemName: "globe")
-                }
-                .accessibilityLabel(Text("\(info.languages.count) languages"))
+                IconText(verbatim: info.languages.count.formatted(), systemImage: "globe")
+                    .accessibilityLabel(Text("\(info.languages.count) languages"))
             }
             if let provider = info.provider {
                 Text(verbatim: provider)
                     .lineLimit(1)
             }
         }
-        .labelStyle(.titleAndIcon)
     }
 
     private var qualityBadge: some View {
-        let label = info.resolution?.label ?? "—"
         let isPremium = info.resolution == .uhd4k
-        return Text(verbatim: label)
+        return Group {
+            if let label = info.resolution?.label {
+                Text(verbatim: label)
+            } else {
+                Image(systemName: "play.fill")
+            }
+        }
             .font(.rounded(.subheadline, weight: .heavy))
             .foregroundStyle(isPremium ? Color.black : Color.white)
-            .frame(width: 58, height: 34)
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 10)
+            .frame(minWidth: 62, minHeight: 34)
             .background {
                 if isPremium {
                     Capsule().fill(Theme.accent.gradient)
@@ -615,5 +612,29 @@ private struct StreamRow: View {
             return "Torrent streams aren't supported. Use a debrid-enabled addon for direct links."
         }
         return "This stream type isn't supported."
+    }
+}
+
+/// An icon followed by text. Unlike `Label`, it never turns into a list-style
+/// icon column inside `List` rows, so badges keep their shape.
+private struct IconText: View {
+    private let title: Text
+    private let systemImage: String
+
+    init(_ key: LocalizedStringKey, systemImage: String) {
+        self.title = Text(key)
+        self.systemImage = systemImage
+    }
+
+    init(verbatim: String, systemImage: String) {
+        self.title = Text(verbatim: verbatim)
+        self.systemImage = systemImage
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            Image(systemName: systemImage)
+            title
+        }
     }
 }
