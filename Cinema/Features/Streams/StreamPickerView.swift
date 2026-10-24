@@ -19,6 +19,8 @@ struct StreamPickerView: View {
 
     @State private var results: [String: StreamGroup] = [:]
     @State private var filter: QualityFilter = .all
+    /// `nil` shows every source; otherwise only this addon's streams.
+    @State private var sourceFilter: String?
     @State private var selected: ParsedStream?
     @State private var toastMessage: String?
     @State private var errorMessage: String?
@@ -93,27 +95,173 @@ struct StreamPickerView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+
+                sourceChips
             }
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
 
-            ForEach(candidates) { addon in
-                Section {
-                    groupContent(for: addon)
-                } header: {
-                    HStack {
-                        Text(addon.name)
-                        Spacer()
-                        if case .success(let streams)? = results[addon.id]?.result {
-                            Text(streams.filter { filter.matches($0.info) }.count, format: .number)
-                                .monospacedDigit()
+            if let source = sourceFilter, let addon = candidates.first(where: { $0.id == source }) {
+                addonSection(addon)
+            } else {
+                ForEach(sourcesWithStreams) { addon in
+                    addonSection(addon)
+                }
+
+                if !loadingSources.isEmpty {
+                    Section {
+                        ForEach(loadingSources) { addon in
+                            HStack(spacing: Theme.Spacing.m) {
+                                ProgressView()
+                                Text(verbatim: addon.name)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                    } header: {
+                        Text("Looking for streams…")
+                    }
+                }
+
+                if !sourcesWithoutStreams.isEmpty {
+                    Section {
+                        ForEach(sourcesWithoutStreams) { addon in
+                            compactRow(for: addon)
+                        }
+                    } header: {
+                        Text("No Results")
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
         .animation(Theme.Motion.spring, value: filter)
+        .animation(Theme.Motion.spring, value: sourceFilter)
+        .animation(Theme.Motion.spring, value: results.count)
+    }
+
+    private func addonSection(_ addon: AddonSource) -> some View {
+        Section {
+            groupContent(for: addon)
+        } header: {
+            HStack {
+                Text(verbatim: addon.name)
+                Spacer()
+                if let count = streamCount(addon) {
+                    Text(count, format: .number)
+                        .monospacedDigit()
+                }
+            }
+        }
+    }
+
+    /// One line for an addon that had nothing to offer, so it doesn't take up a whole section.
+    private func compactRow(for addon: AddonSource) -> some View {
+        HStack(spacing: Theme.Spacing.m) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: addon.name)
+                    .font(.subheadline.weight(.semibold))
+                Group {
+                    if case .failure(let error)? = results[addon.id]?.result {
+                        Text(error.localizedDescription)
+                    } else if case .success(let streams)? = results[addon.id]?.result, !streams.isEmpty {
+                        Text("No streams match this quality.")
+                    } else {
+                        Text("No streams found.")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+            }
+            Spacer(minLength: Theme.Spacing.s)
+            if case .failure? = results[addon.id]?.result {
+                Button("Retry") {
+                    Task { await load(addon) }
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .controlSize(.small)
+            }
+        }
+    }
+
+    // MARK: Sources
+
+    /// "All" plus one chip per addon, so you can look at a single source.
+    private var sourceChips: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: Theme.Spacing.s) {
+                sourceChip(id: nil, title: Text("All"), count: totalCount, isLoading: false, isEmpty: false)
+                ForEach(sourcesWithStreams + loadingSources + sourcesWithoutStreams) { addon in
+                    sourceChip(
+                        id: addon.id,
+                        title: Text(verbatim: addon.name),
+                        count: streamCount(addon),
+                        isLoading: results[addon.id] == nil,
+                        isEmpty: sourcesWithoutStreams.contains(addon)
+                    )
+                }
+            }
+            .padding(.vertical, 2)
+        }
+        .scrollIndicators(.hidden)
+        .sensoryFeedback(.selection, trigger: sourceFilter)
+    }
+
+    private func sourceChip(id: String?, title: Text, count: Int?, isLoading: Bool, isEmpty: Bool) -> some View {
+        let isSelected = sourceFilter == id
+        return Button {
+            withAnimation(Theme.Motion.spring) { sourceFilter = id }
+        } label: {
+            HStack(spacing: 6) {
+                title
+                    .lineLimit(1)
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.mini)
+                } else if let count {
+                    Text(count, format: .number)
+                        .font(.rounded(.caption, weight: .bold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 1)
+                        .background(isSelected ? Color.black.opacity(0.12) : Color.white.opacity(0.12), in: Capsule())
+                }
+            }
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .foregroundStyle(isSelected ? Color.black : Color.primary)
+            .background(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(.ultraThinMaterial), in: Capsule())
+            .opacity(isEmpty && !isSelected ? 0.5 : 1)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Streams from this addon that pass the quality filter, or `nil` while loading / on error.
+    private func streamCount(_ addon: AddonSource) -> Int? {
+        guard case .success(let streams)? = results[addon.id]?.result else { return nil }
+        return streams.filter { filter.matches($0.info) }.count
+    }
+
+    private var totalCount: Int {
+        candidates.compactMap(streamCount).reduce(0, +)
+    }
+
+    /// Addons with streams come first, in the user's addon order.
+    private var sourcesWithStreams: [AddonSource] {
+        candidates.filter { (streamCount($0) ?? 0) > 0 }
+    }
+
+    private var loadingSources: [AddonSource] {
+        candidates.filter { results[$0.id] == nil }
+    }
+
+    private var sourcesWithoutStreams: [AddonSource] {
+        candidates.filter { addon in
+            guard let group = results[addon.id] else { return false }
+            if case .failure = group.result { return true }
+            return streamCount(addon) == 0
+        }
     }
 
     @ViewBuilder

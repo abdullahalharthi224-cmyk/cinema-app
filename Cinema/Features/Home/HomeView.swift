@@ -8,7 +8,12 @@ struct HomeView: View {
         filter: #Predicate<InstalledAddon> { $0.isEnabled },
         sort: \InstalledAddon.sortIndex
     ) private var addons: [InstalledAddon]
-    @Query(sort: \WatchHistoryItem.lastWatched, order: .reverse) private var history: [WatchHistoryItem]
+    @Query(sort: \WatchHistoryItem.lastWatched, order: .reverse) private var allHistory: [WatchHistoryItem]
+
+    /// Only the active profile's history.
+    private var history: [WatchHistoryItem] {
+        allHistory.filter { $0.profileID == ProfileSession.shared.activeID }
+    }
 
     @State private var model = HomeViewModel()
     @State private var scrollOffset: CGFloat = 0
@@ -99,6 +104,11 @@ struct HomeView: View {
             .ignoresSafeArea(edges: .top)
             .overlay(alignment: .top) {
                 GlassTopBar(title: Text("Home"), progress: barProgress(heroHeight: heroHeight))
+            }
+            .overlay(alignment: .topTrailing) {
+                ProfileButton()
+                    .padding(.trailing, Theme.Spacing.l)
+                    .padding(.top, 3)
             }
             .refreshable {
                 await model.load(addons: sources, force: true)
