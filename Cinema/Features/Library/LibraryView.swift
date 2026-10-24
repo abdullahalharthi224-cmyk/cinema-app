@@ -69,7 +69,7 @@ struct LibraryView: View {
                                         let transitionID = "library|" + item.key
                                         NavigationLink(value: libraryRoute(item, transitionID: transitionID)) {
                                             VStack(alignment: .leading, spacing: 6) {
-                                                PosterArtwork(url: item.poster?.asURL, title: item.name)
+                                                PosterArtwork(url: item.poster?.asURL, title: item.name, id: item.metaID)
                                                     .zoomSource(id: transitionID, in: zoom)
                                                 Text(item.name)
                                                     .font(.footnote.weight(.semibold))

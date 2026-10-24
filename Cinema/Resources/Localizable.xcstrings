@@ -71,6 +71,16 @@
         }
       }
     },
+    "%lld options": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld خيارات"
+          }
+        }
+      }
+    },
     "%lld. %@": {
       "localizations": {
         "ar": {
@@ -1031,6 +1041,16 @@
         }
       }
     },
+    "From Addons": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "من الإضافات"
+          }
+        }
+      }
+    },
     "From Stremio": {
       "localizations": {
         "ar": {
@@ -1906,7 +1926,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تشغيل م%lld · ح%lld"
+            "value": "تشغيل · م%lld ح%lld"
           }
         }
       }
@@ -2206,7 +2226,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "استئناف م%lld · ح%lld"
+            "value": "استئناف · م%lld ح%lld"
           }
         }
       }

@@ -191,7 +191,7 @@ private struct RankedPoster: View {
                 .offset(y: 24)
                 .accessibilityHidden(true)
 
-            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: localized?.title ?? item.name)
+            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: localized?.title ?? item.name, id: item.id)
                 .frame(width: 118)
                 .zoomSource(id: transitionID, in: namespace)
         }
@@ -411,7 +411,7 @@ struct WatchlistPoster: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: localized?.title ?? item.name)
+            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: localized?.title ?? item.name, id: item.metaID)
                 .frame(width: width)
             Text(localized?.title ?? item.name)
                 .font(.footnote.weight(.semibold))

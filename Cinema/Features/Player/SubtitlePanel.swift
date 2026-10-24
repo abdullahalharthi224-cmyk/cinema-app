@@ -7,6 +7,8 @@ struct SubtitlePanel: View {
     var onClose: () -> Void
 
     @State private var tab: Tab = .subtitles
+    /// The addon-subtitle language whose options are showing.
+    @State private var expandedLanguage: String?
 
     enum Tab: Hashable { case subtitles, audio, sync, adjust }
 
@@ -86,16 +88,31 @@ struct SubtitlePanel: View {
             }
         }
 
-        ForEach(model.subtitleSources) { source in
-            group(title: source.addon.name) {
-                ForEach(Array(source.items.prefix(40).enumerated()), id: \.offset) { index, item in
-                    row(
-                        title: languageName(item.lang),
-                        detail: localized("Option %lld", index + 1),
-                        checked: model.selectedSubtitleURL == item.url
-                    ) {
-                        model.selectExternalSubtitle(item)
+        let groups = languageGroups
+        if !groups.isEmpty {
+            group(title: localized("From Addons")) {
+                ForEach(groups) { language in
+                    languageRow(language)
+                    if expandedLanguage == language.id && language.options.count > 1 {
+                        ForEach(language.options) { option in
+                            row(
+                                title: option.source,
+                                detail: localized("Option %lld", option.number),
+                                checked: model.selectedSubtitleURL == option.item.url
+                            ) {
+                                model.selectExternalSubtitle(option.item)
+                            }
+                            .padding(.leading, Theme.Spacing.l)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
                     }
+                }
+            }
+            .animation(Theme.Motion.snappy, value: expandedLanguage)
+            .onAppear {
+                // Open the language that's showing, so its choice is visible.
+                if expandedLanguage == nil, let url = model.selectedSubtitleURL {
+                    expandedLanguage = groups.first { $0.options.contains { $0.item.url == url } }?.id
                 }
             }
         }
@@ -112,6 +129,81 @@ struct SubtitlePanel: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    /// Addon subtitles grouped by language: one entry per language (Arabic
+    /// first, then the other preferred languages, then the rest by name), each
+    /// opening its options from every addon.
+    private struct LanguageGroup: Identifiable {
+        struct Option: Identifiable {
+            var item: SubtitleItem
+            var source: String
+            var number: Int
+            var id: String { item.url }
+        }
+        var id: String
+        var name: String
+        var options: [Option]
+    }
+
+    private var languageGroups: [LanguageGroup] {
+        var groups: [String: LanguageGroup] = [:]
+        for source in model.subtitleSources {
+            var counts: [String: Int] = [:]
+            for item in source.items {
+                let key = SubtitleLanguage.code(for: item.lang) ?? item.lang?.lowercased() ?? "unknown"
+                counts[key, default: 0] += 1
+                let option = LanguageGroup.Option(item: item, source: source.addon.name, number: counts[key]!)
+                guard !(groups[key]?.options.contains { $0.id == option.id } ?? false) else { continue }
+                groups[key, default: LanguageGroup(id: key, name: languageName(item.lang), options: [])].options.append(option)
+            }
+        }
+        let preferred = ["ar"] + PlaybackSettings.shared.subtitleLanguages.filter { $0 != "ar" }
+        return groups.values.sorted { lhs, rhs in
+            let left = preferred.firstIndex(of: lhs.id) ?? preferred.count
+            let right = preferred.firstIndex(of: rhs.id) ?? preferred.count
+            if left != right { return left < right }
+            return lhs.name.localizedCompare(rhs.name) == .orderedAscending
+        }
+    }
+
+    private func languageRow(_ language: LanguageGroup) -> some View {
+        let isSelected = language.options.contains { $0.item.url == model.selectedSubtitleURL }
+        let isExpanded = expandedLanguage == language.id
+        return Button {
+            if language.options.count == 1, let only = language.options.first {
+                model.selectExternalSubtitle(only.item)
+            } else {
+                expandedLanguage = isExpanded ? nil : language.id
+            }
+        } label: {
+            HStack(spacing: Theme.Spacing.m) {
+                Image(systemName: "checkmark")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(Theme.accent)
+                    .opacity(isSelected ? 1 : 0)
+                Text(verbatim: language.name)
+                    .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                    .lineLimit(1)
+                Spacer(minLength: Theme.Spacing.s)
+                Text(verbatim: language.options.count == 1
+                     ? language.options[0].source
+                     : localized("%lld options", language.options.count))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                if language.options.count > 1 {
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.m)
+            .padding(.vertical, 11)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: Audio

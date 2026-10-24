@@ -141,11 +141,27 @@ struct TMDBClient: Sendable {
     /// falls back to English, since many titles have no translated synopsis.
     func localizedDetails(media: TMDBMediaType, tmdbID: Int, language: String) async throws -> TMDBLocalizedDetails {
         var details: TMDBLocalizedDetails = try await get("\(media.rawValue)/\(tmdbID)", query: ["language": language])
+        // TMDB files Arabic under regions (SA, AE, EG…); if the requested one
+        // has no title, use another Arabic region's.
+        if language.hasPrefix("ar"), !(details.title?.containsArabicLetters ?? false),
+           let arabic = try? await arabicTranslation(media: media, tmdbID: tmdbID) {
+            if let title = arabic.title { details.title = title }
+            if !(details.overview?.containsArabicLetters ?? false), let overview = arabic.overview {
+                details.overview = overview
+            }
+        }
         if details.overview?.isEmpty ?? true, language != "en-US" {
             let english: TMDBLocalizedDetails = try await get("\(media.rawValue)/\(tmdbID)", query: ["language": "en-US"])
             details.overview = english.overview
         }
         return details
+    }
+
+    /// The Arabic title and synopsis from whichever Arabic-speaking region has
+    /// them, preferring Saudi Arabia, then the UAE and Egypt.
+    func arabicTranslation(media: TMDBMediaType, tmdbID: Int) async throws -> (title: String?, overview: String?)? {
+        let response: TMDBTranslations = try await get("\(media.rawValue)/\(tmdbID)/translations")
+        return response.bestArabic
     }
 
     /// The title's logo artwork in a given language (e.g. "ar"), if TMDB has one.
@@ -336,8 +352,51 @@ struct TMDBEpisode: Decodable, Sendable {
     var episodeNumber: Int
     var name: String?
     var overview: String?
+    var stillPath: String?
 
-    enum CodingKeys: String, CodingKey { case episodeNumber = "episode_number", name, overview }
+    enum CodingKeys: String, CodingKey {
+        case episodeNumber = "episode_number", name, overview, stillPath = "still_path"
+    }
+}
+
+/// `/{media}/{id}/translations`: a title's name and synopsis in every language TMDB has.
+struct TMDBTranslations: Decodable, Sendable {
+    struct Translation: Decodable, Sendable {
+        struct Content: Decodable, Sendable {
+            var title: String?
+            var name: String?
+            var overview: String?
+        }
+        var region: String?
+        var language: String?
+        var data: Content?
+
+        enum CodingKeys: String, CodingKey { case region = "iso_3166_1", language = "iso_639_1", data }
+    }
+
+    var translations: [Translation]?
+
+    /// The best Arabic title and synopsis across regions (SA, then AE, EG, then any).
+    var bestArabic: (title: String?, overview: String?)? {
+        let regionOrder = ["SA", "AE", "EG"]
+        let arabic = (translations ?? []).filter { $0.language == "ar" }.sorted {
+            (regionOrder.firstIndex(of: $0.region ?? "") ?? regionOrder.count)
+                < (regionOrder.firstIndex(of: $1.region ?? "") ?? regionOrder.count)
+        }
+        let title = arabic.lazy.compactMap { ($0.data?.title ?? $0.data?.name)?.trimmed }.first { !$0.isEmpty }
+        let overview = arabic.lazy.compactMap { $0.data?.overview?.trimmed }.first { !$0.isEmpty }
+        guard title != nil || overview != nil else { return nil }
+        return (title, overview)
+    }
+}
+
+extension String {
+    /// Whether the text contains Arabic script (i.e. is already translated).
+    var containsArabicLetters: Bool {
+        unicodeScalars.contains { (0x0600...0x06FF).contains($0.value) || (0x0750...0x077F).contains($0.value) }
+    }
+
+    fileprivate var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
 }
 
 enum TMDBError: Error, Equatable, LocalizedError {

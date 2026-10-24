@@ -55,8 +55,44 @@ enum Artwork {
         return imdbID(id).flatMap { URL(string: "\(metahub)/background/medium/\($0)/img") }
     }
 
+    /// Posters to try for a title: the given one, then Stremio's image service.
+    static func posters(id: String?, provided: URL?...) -> [URL] {
+        var urls = provided.compactMap { $0 }
+        if let imdb = id.flatMap(imdbID), let url = URL(string: "\(metahub)/poster/medium/\(imdb)/img") {
+            urls.append(url)
+        }
+        var seen = Set<URL>()
+        return urls.filter { seen.insert($0).inserted }
+    }
+
+    /// A poster or backdrop from TMDB, as the last resort when others fail.
+    static func tmdbImage(id: String, backdrop: Bool = false) async -> URL? {
+        guard let imdb = imdbID(id), let client = TMDBAccount.shared.client else { return nil }
+        return await TMDBArtworkCache.shared.image(imdbID: imdb, backdrop: backdrop, client: client)
+    }
+
     private static func imdbID(_ id: String) -> String? {
         let base = id.split(separator: ":").first.map(String.init) ?? id
         return base.hasPrefix("tt") ? base : nil
+    }
+}
+
+/// Remembers TMDB artwork lookups for the session.
+actor TMDBArtworkCache {
+    static let shared = TMDBArtworkCache()
+    private var found: [String: TMDBFindResult?] = [:]
+
+    func image(imdbID: String, backdrop: Bool, client: TMDBClient) async -> URL? {
+        let result: TMDBFindResult?
+        if let cached = found[imdbID] {
+            result = cached
+        } else {
+            result = try? await client.findLocalized(imdbID: imdbID, language: "en-US")
+            found[imdbID] = .some(result)
+        }
+        guard let title = result?.title else { return nil }
+        return backdrop
+            ? TMDBClient.imageURL(title.backdropPath, size: "w780")
+            : TMDBClient.imageURL(title.posterPath, size: "w342")
     }
 }

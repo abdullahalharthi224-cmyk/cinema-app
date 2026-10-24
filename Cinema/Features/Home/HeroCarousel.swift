@@ -187,13 +187,21 @@ struct TitleArtwork: View {
     let logo: URL?
     var maxHeight: CGFloat = 90
 
+    /// Dark logos (e.g. thin black lettering) vanish on dark artwork; they get a soft white glow.
+    @State private var isDarkLogo = false
+
     var body: some View {
         if let logo {
             RemoteImage(url: logo, contentMode: .fit) {
                 title
             }
             .frame(maxWidth: 290, maxHeight: maxHeight)
-            .shadow(color: .black.opacity(0.5), radius: 16)
+            .shadow(color: isDarkLogo ? .white.opacity(0.55) : .black.opacity(0.5), radius: isDarkLogo ? 10 : 16)
+            .shadow(color: isDarkLogo ? .white.opacity(0.4) : .clear, radius: 1.5)
+            .task(id: logo) {
+                let luminance = await ImagePipeline.shared.image(for: logo)?.averageOpaqueLuminance()
+                isDarkLogo = (luminance ?? 1) < 0.4
+            }
         } else {
             title
         }

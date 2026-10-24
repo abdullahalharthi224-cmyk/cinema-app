@@ -34,6 +34,12 @@ actor TitleLocalizer {
                 poster: TMDBClient.imageURL(found.title.posterPath, size: "w342"),
                 logo: nil
             )
+            // No title for this Arabic region: another Arabic region may have one.
+            if language.hasPrefix("ar"), !(result.title?.containsArabicLetters ?? false),
+               let arabic = try? await client.arabicTranslation(media: found.media, tmdbID: found.title.id),
+               let title = arabic.title {
+                result.title = title
+            }
             if wantsLogo {
                 let code = String(language.prefix(2))
                 let logo = (try? await client.logo(media: found.media, tmdbID: found.title.id, languageCode: code)) ?? nil
