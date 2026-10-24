@@ -38,6 +38,9 @@ struct SearchView: View {
                 .searchable(text: $query, prompt: Text("Movies, series and more"))
                 .onSubmit(of: .search) { remember(trimmedQuery) }
                 .contentDestinations()
+                .navigationDestination(for: BrowseCategory.self) { category in
+                    CategoryView(category: category)
+                }
         }
         .environment(\.zoomNamespace, zoom)
         .task(id: trimmedQuery) {
@@ -79,47 +82,81 @@ struct SearchView: View {
 
     // MARK: States
 
-    @ViewBuilder
+    /// Before typing: colourful categories to browse, then recent searches.
     private var idleView: some View {
-        if recentSearches.isEmpty {
-            ContentUnavailableView(
-                "Find Something to Watch",
-                systemImage: "sparkle.magnifyingglass",
-                description: Text("Search across all of your addons at once.")
-            )
-        } else {
-            List {
-                Section {
-                    ForEach(recentSearches, id: \.self) { term in
-                        Button {
-                            query = term
-                        } label: {
-                            Label {
-                                Text(verbatim: term)
-                                    .foregroundStyle(.primary)
-                            } icon: {
-                                Image(systemName: "clock.arrow.circlepath")
-                                    .foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
+                if TMDBAccount.shared.isConnected {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        Text("Browse")
+                            .font(.display(.title2))
+                        LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.Spacing.m), GridItem(.flexible(), spacing: Theme.Spacing.m)],
+                                  spacing: Theme.Spacing.m) {
+                            ForEach(BrowseCategory.all) { category in
+                                NavigationLink(value: category) {
+                                    CategoryCard(category: category)
+                                }
+                                .buttonStyle(.cardPress)
                             }
                         }
                     }
-                    .onDelete { offsets in
-                        var terms = recentSearches
-                        terms.remove(atOffsets: offsets)
-                        recentStorage = terms.joined(separator: "\n")
-                    }
-                } header: {
-                    HStack {
-                        Text("Recent Searches")
-                        Spacer()
-                        Button("Clear") { recentStorage = "" }
-                            .font(.footnote.weight(.semibold))
-                            .textCase(nil)
+                }
+
+                if !recentSearches.isEmpty {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("Recent Searches")
+                                .font(.display(.title3))
+                            Spacer()
+                            Button("Clear") { withAnimation(Theme.Motion.spring) { recentStorage = "" } }
+                                .font(.footnote.weight(.semibold))
+                        }
+                        VStack(spacing: 0) {
+                            ForEach(recentSearches, id: \.self) { term in
+                                HStack(spacing: Theme.Spacing.m) {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                        .foregroundStyle(.secondary)
+                                    Text(verbatim: term)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    Button {
+                                        withAnimation(Theme.Motion.spring) {
+                                            recentStorage = recentSearches.filter { $0 != term }.joined(separator: "\n")
+                                        }
+                                    } label: {
+                                        Image(systemName: "xmark")
+                                            .font(.caption.weight(.bold))
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Remove")
+                                }
+                                .padding(.horizontal, Theme.Spacing.m)
+                                .padding(.vertical, 12)
+                                .contentShape(Rectangle())
+                                .onTapGesture { query = term }
+                                if term != recentSearches.last {
+                                    Divider().padding(.leading, 44)
+                                }
+                            }
+                        }
+                        .background(Theme.surface, in: .continuous(Theme.Radius.medium))
                     }
                 }
+
+                if !TMDBAccount.shared.isConnected && recentSearches.isEmpty {
+                    ContentUnavailableView(
+                        "Find Something to Watch",
+                        systemImage: "sparkle.magnifyingglass",
+                        description: Text("Search across all of your addons at once.")
+                    )
+                    .padding(.top, 60)
+                }
             }
-            .scrollContentBackground(.hidden)
+            .padding(.horizontal, Theme.Spacing.l)
+            .padding(.vertical, Theme.Spacing.s)
         }
+        .scrollDismissesKeyboard(.immediately)
     }
 
     private var resultsSkeleton: some View {

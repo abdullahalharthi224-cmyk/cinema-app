@@ -189,4 +189,39 @@ final class TMDBClientTests: XCTestCase {
         XCTAssertNil(details.trailer)
         XCTAssertEqual(details.media, .tv)
     }
+
+    func testWatchProvidersForSaudiArabia() async throws {
+        let http = MockHTTPClient(json: """
+        {"watch/providers": {"results": {
+            "US": {"flatrate": [{"provider_id": 8, "provider_name": "Netflix", "logo_path": "/n.png"}]},
+            "SA": {"flatrate": [{"provider_id": 8, "provider_name": "Netflix", "logo_path": "/n.png"},
+                                {"provider_id": 350, "provider_name": "Apple TV+", "logo_path": "/a.png"}],
+                   "ads": [{"provider_id": 8, "provider_name": "Netflix", "logo_path": "/n.png"}]}
+        }}}
+        """)
+        let details = try await TMDBClient(token: "t", http: http).richDetails(media: .movie, tmdbID: 1, language: "ar-SA")
+        XCTAssertEqual(details.providers.map(\.name), ["Netflix", "Apple TV+"])
+    }
+
+    func testScheduleOfASeries() async throws {
+        let http = MockHTTPClient(json: """
+        {"name": "Severance", "poster_path": "/p.jpg", "status": "Returning Series",
+         "last_episode_to_air": {"name": "Cold Harbor", "air_date": "2025-03-21", "season_number": 2, "episode_number": 10},
+         "next_episode_to_air": null}
+        """)
+        let schedule = try await TMDBClient(token: "t", http: http).schedule(tvID: 95396, language: "en-US")
+        XCTAssertEqual(schedule.id, 95396)
+        XCTAssertEqual(schedule.lastEpisode?.episode, 10)
+        XCTAssertNil(schedule.nextEpisode)
+        let components = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: schedule.lastEpisode!.date!)
+        XCTAssertEqual([components.year, components.month, components.day], [2025, 3, 21])
+    }
+
+    func testDiscoverWithExtraFilters() async throws {
+        let http = MockHTTPClient(json: #"{"page": 1, "total_pages": 1, "results": []}"#)
+        _ = try await TMDBClient(token: "t", http: http).discover(
+            media: .tv, providers: nil, region: "SA", language: "ar-SA", page: 1, extra: ["with_original_language": "tr"]
+        )
+        XCTAssertTrue(http.lastRequest!.url!.query!.contains("with_original_language=tr"))
+    }
 }

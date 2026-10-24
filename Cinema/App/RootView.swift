@@ -5,6 +5,7 @@ struct RootView: View {
     @Environment(\.modelContext) private var context
     @State private var isPickingProfile = false
     @State private var didCheckProfiles = false
+    @State private var showsBackupReminder = false
 
     private var language: AppLanguage { Appearance.shared.language }
 
@@ -55,11 +56,26 @@ struct RootView: View {
                     isPickingProfile = true
                 }
             }
+            // Every two weeks, a gentle nudge to back up (after the launch animation).
+            if BackupService.shouldRemind(context: context) {
+                while LaunchState.shared.isShowingSplash { try? await Task.sleep(for: .milliseconds(100)) }
+                try? await Task.sleep(for: .seconds(1))
+                showsBackupReminder = true
+            }
             // Swap any old-protocol addons (e.g. the original OpenSubtitles) for their modern versions.
             await AddonStore(context: context).migrateLegacyAddons()
         }
         .fullScreenCover(isPresented: $isPickingProfile) {
             ProfilePickerView()
+        }
+        .alert("Time for a Backup?", isPresented: $showsBackupReminder) {
+            Button("Back Up Now") {
+                router.settingsPath = [.backup]
+                router.selectedTab = .settings
+            }
+            Button("Later", role: .cancel) {}
+        } message: {
+            Text("A backup keeps your profiles, library and addons safe if you ever reinstall Cinema.")
         }
     }
 }

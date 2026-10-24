@@ -11,6 +11,16 @@
         }
       }
     },
+    "%@ min": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ د"
+          }
+        }
+      }
+    },
     "%@ used · %@ free": {
       "localizations": {
         "ar": {
@@ -131,6 +141,16 @@
         }
       }
     },
+    "A backup keeps your profiles, library and addons safe if you ever reinstall Cinema.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "النسخة الاحتياطية تحفظ ملفاتك الشخصية ومكتبتك وإضافاتك إذا أعدت تثبيت Cinema."
+          }
+        }
+      }
+    },
     "A good 1080p file at a sensible size. 4K files can be several times larger.": {
       "localizations": {
         "ar": {
@@ -177,6 +197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الحساب"
+          }
+        }
+      }
+    },
+    "Action": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أكشن"
           }
         }
       }
@@ -351,6 +381,16 @@
         }
       }
     },
+    "AirPlay sends the sound only for this format. Use Screen Mirroring for the picture.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مع هذا النوع من الملفات يرسل AirPlay الصوت فقط. استخدم «انعكاس الشاشة» لعرض الصورة."
+          }
+        }
+      }
+    },
     "All": {
       "localizations": {
         "ar": {
@@ -421,6 +461,16 @@
         }
       }
     },
+    "Arabic Movies": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفلام عربية"
+          }
+        }
+      }
+    },
     "Arabic When Available": {
       "localizations": {
         "ar": {
@@ -451,12 +501,32 @@
         }
       }
     },
+    "Audio Track": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المسار الصوتي"
+          }
+        }
+      }
+    },
     "Available Catalogs": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الكتالوجات المتاحة"
+          }
+        }
+      }
+    },
+    "Available On": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متوفر على"
           }
         }
       }
@@ -481,12 +551,62 @@
         }
       }
     },
+    "Back Up Now": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "انسخ الآن"
+          }
+        }
+      }
+    },
     "Background": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الخلفية"
+          }
+        }
+      }
+    },
+    "Backup & Restore": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "النسخ الاحتياطي والاستعادة"
+          }
+        }
+      }
+    },
+    "Backup Saved": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حُفظت النسخة الاحتياطية"
+          }
+        }
+      }
+    },
+    "Because You Watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لأنك شاهدت"
+          }
+        }
+      }
+    },
+    "Because you watched %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لأنك شاهدت %@"
           }
         }
       }
@@ -517,6 +637,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "انقل الإضافات من حسابك في Stremio، أو الصق رابط إضافة واحدة."
+          }
+        }
+      }
+    },
+    "Browse": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تصفّح"
           }
         }
       }
@@ -781,6 +911,26 @@
         }
       }
     },
+    "Comedy": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كوميديا"
+          }
+        }
+      }
+    },
+    "Coming Soon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قريبًا"
+          }
+        }
+      }
+    },
     "Connect to the internet to browse. Your downloads play without a connection.": {
       "localizations": {
         "ar": {
@@ -837,6 +987,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "تعذّر التحميل"
+          }
+        }
+      }
+    },
+    "Couldn't Open": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر الفتح"
+          }
+        }
+      }
+    },
+    "Couldn't Restore": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّرت الاستعادة"
+          }
+        }
+      }
+    },
+    "Couldn't Save": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر الحفظ"
           }
         }
       }
@@ -907,6 +1087,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "بلد الإنتاج"
+          }
+        }
+      }
+    },
+    "Crime Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسلسلات جريمة"
           }
         }
       }
@@ -1031,6 +1221,16 @@
         }
       }
     },
+    "Dialogue Boost": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعزيز الحوار"
+          }
+        }
+      }
+    },
     "Director": {
       "localizations": {
         "ar": {
@@ -1057,6 +1257,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "متوقفة — رابطها يفتح الآن صفحة ويب بدل الإضافة. يمكنك حذفها."
+          }
+        }
+      }
+    },
+    "Documentary": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وثائقي"
           }
         }
       }
@@ -1161,6 +1371,16 @@
         }
       }
     },
+    "Drama": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "دراما"
+          }
+        }
+      }
+    },
     "Edit": {
       "localizations": {
         "ar": {
@@ -1221,6 +1441,16 @@
         }
       }
     },
+    "End of Episode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نهاية الحلقة"
+          }
+        }
+      }
+    },
     "Ended": {
       "localizations": {
         "ar": {
@@ -1247,6 +1477,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "الحلقات"
+          }
+        }
+      }
+    },
+    "Everything is back. Some settings apply fully the next time you open Cinema.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عاد كل شيء. بعض الإعدادات تكتمل عند فتح Cinema في المرة القادمة."
+          }
+        }
+      }
+    },
+    "Export": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تصدير"
+          }
+        }
+      }
+    },
+    "Export Backup": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تصدير نسخة احتياطية"
+          }
+        }
+      }
+    },
+    "Family": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عائلي"
           }
         }
       }
@@ -1361,6 +1631,26 @@
         }
       }
     },
+    "From %@): %@ profiles, %@ addons, %@ titles watched.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "من %@: %@ ملفات شخصية، %@ إضافات، %@ أعمال مشاهدة."
+          }
+        }
+      }
+    },
+    "From %@: %lld profiles, %lld addons, %lld titles watched.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "من %@: %lld ملفات شخصية، %lld إضافات، %lld أعمال مشاهدة."
+          }
+        }
+      }
+    },
     "From Addons": {
       "localizations": {
         "ar": {
@@ -1377,6 +1667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "من Stremio"
+          }
+        }
+      }
+    },
+    "From series you watch": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "من المسلسلات التي تتابعها"
           }
         }
       }
@@ -1471,6 +1771,16 @@
         }
       }
     },
+    "Horror": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رعب"
+          }
+        }
+      }
+    },
     "IMDb": {
       "localizations": {
         "ar": {
@@ -1551,6 +1861,16 @@
         }
       }
     },
+    "Include Secret Keys": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تضمين المفاتيح السرية"
+          }
+        }
+      }
+    },
     "Install Addon": {
       "localizations": {
         "ar": {
@@ -1581,6 +1901,26 @@
         }
       }
     },
+    "Keep the file somewhere safe, like iCloud Drive.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "احفظ الملف في مكان آمن مثل iCloud Drive."
+          }
+        }
+      }
+    },
+    "Keep your profiles, library, My List, Continue Watching, addons and settings safe in one file, ready for when you reinstall Cinema.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "احفظ ملفاتك الشخصية ومكتبتك وقائمتي ومتابعة المشاهدة والإضافات والإعدادات في ملف واحد، جاهز لو أعدت تثبيت Cinema."
+          }
+        }
+      }
+    },
     "Key saved": {
       "localizations": {
         "ar": {
@@ -1601,6 +1941,16 @@
         }
       }
     },
+    "Korean Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسلسلات كورية"
+          }
+        }
+      }
+    },
     "Language": {
       "localizations": {
         "ar": {
@@ -1617,6 +1967,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "كبير"
+          }
+        }
+      }
+    },
+    "Last backup: %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "آخر نسخة: %@"
+          }
+        }
+      }
+    },
+    "Last backup: %@.formatted(date: .abbreviated, time: .shortened))": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "آخر نسخة: %@"
+          }
+        }
+      }
+    },
+    "Later": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لاحقًا"
           }
         }
       }
@@ -1921,12 +2301,42 @@
         }
       }
     },
+    "New": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جديد"
+          }
+        }
+      }
+    },
     "New Collections": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "مجموعات جديدة"
+          }
+        }
+      }
+    },
+    "New Episode Alerts": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تنبيهات الحلقات الجديدة"
+          }
+        }
+      }
+    },
+    "New Episodes": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حلقات جديدة"
           }
         }
       }
@@ -1961,6 +2371,16 @@
         }
       }
     },
+    "New episode of %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حلقة جديدة من %@"
+          }
+        }
+      }
+    },
     "Next Episode": {
       "localizations": {
         "ar": {
@@ -1987,6 +2407,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "الحلقة التالية خلال %lld ث"
+          }
+        }
+      }
+    },
+    "Night Mode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الوضع الليلي"
+          }
+        }
+      }
+    },
+    "Night mode evens out loud and quiet moments; dialogue boost lifts voices. Both use the built-in player.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الوضع الليلي يوازن بين المقاطع العالية والهادئة، وتعزيز الحوار يوضّح الأصوات. كلاهما يعمل بالمشغّل المدمج."
           }
         }
       }
@@ -2047,6 +2487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "بدون ترجمة"
+          }
+        }
+      }
+    },
+    "No backup yet.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد نسخة احتياطية بعد."
           }
         }
       }
@@ -2167,6 +2617,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "لا تعمل (%lld)"
+          }
+        }
+      }
+    },
+    "Not a Cinema Backup": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ليس ملف نسخة Cinema"
           }
         }
       }
@@ -2861,6 +3321,16 @@
         }
       }
     },
+    "Replace everything with this backup?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استبدال كل شيء بهذه النسخة؟"
+          }
+        }
+      }
+    },
     "Reset": {
       "localizations": {
         "ar": {
@@ -2887,6 +3357,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "زمن الاستجابة: %lld ملّي ثانية"
+          }
+        }
+      }
+    },
+    "Restore": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استعادة"
+          }
+        }
+      }
+    },
+    "Restore from Backup": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استعادة من نسخة احتياطية"
+          }
+        }
+      }
+    },
+    "Restored": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تمت الاستعادة"
+          }
+        }
+      }
+    },
+    "Restoring replaces your current profiles, library, addons and settings with the ones in the file.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الاستعادة تستبدل ملفاتك الشخصية ومكتبتك وإضافاتك وإعداداتك الحالية بما في الملف."
           }
         }
       }
@@ -2987,6 +3497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "حفظ"
+          }
+        }
+      }
+    },
+    "Science Fiction": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خيال علمي"
           }
         }
       }
@@ -3267,6 +3787,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "تم تخطي الملخص"
+          }
+        }
+      }
+    },
+    "Sleep Timer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مؤقّت النوم"
+          }
+        }
+      }
+    },
+    "Sleep timer set": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم ضبط مؤقّت النوم"
           }
         }
       }
@@ -3831,6 +4371,16 @@
         }
       }
     },
+    "This file couldn't be read as a Cinema backup.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّرت قراءة هذا الملف كنسخة احتياطية من Cinema."
+          }
+        }
+      }
+    },
     "This is how subtitles will look.": {
       "localizations": {
         "ar": {
@@ -3881,6 +4431,16 @@
         }
       }
     },
+    "Time for a Backup?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حان وقت النسخ الاحتياطي؟"
+          }
+        }
+      }
+    },
     "Timeline": {
       "localizations": {
         "ar": {
@@ -3917,6 +4477,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "ستظهر هنا الأعمال التي تبدأ بمشاهدتها."
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اليوم"
+          }
+        }
+      }
+    },
+    "Tomorrow": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "غدًا"
           }
         }
       }
@@ -4051,6 +4631,16 @@
         }
       }
     },
+    "Turkish Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسلسلات تركية"
+          }
+        }
+      }
+    },
     "Turn on a subtitle first, then come back here to sync it.": {
       "localizations": {
         "ar": {
@@ -4117,6 +4707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "قريباً"
+          }
+        }
+      }
+    },
+    "Upcoming episodes of series you follow": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحلقات القادمة للمسلسلات التي تتابعها"
           }
         }
       }
@@ -4357,6 +4957,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "مفتاح TMDB يفتح لك المنصات، والعناوين والملخصات بالعربية."
+          }
+        }
+      }
+    },
+    "Your TMDB, MDBList and Stremio keys will be inside the file in plain text. Anyone with the file can use them. Keep it private.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ستكون مفاتيح TMDB وMDBList وStremio داخل الملف كنص واضح، وأي شخص يحصل على الملف يستطيع استخدامها. احتفظ به لنفسك."
           }
         }
       }

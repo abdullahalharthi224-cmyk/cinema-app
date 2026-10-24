@@ -18,6 +18,8 @@ struct HomeView: View {
     @State private var model = HomeViewModel()
     @State private var scrollOffset: CGFloat = 0
     @State private var launcher = PlaybackLauncher()
+    @State private var taste = TasteModel()
+    @Query private var allProgress: [PlaybackProgress]
     @Query(sort: \WatchlistItem.addedAt, order: .reverse) private var allWatchlist: [WatchlistItem]
 
     /// This profile's "My List".
@@ -49,6 +51,9 @@ struct HomeView: View {
         .environment(\.zoomNamespace, zoom)
         .task(id: sources.map(\.id)) {
             await model.load(addons: sources)
+        }
+        .task(id: tasteKey) {
+            await loadTaste()
         }
     }
 
@@ -110,6 +115,26 @@ struct HomeView: View {
         .animation(Theme.Motion.spring, value: model.hero?.items.map(\.id))
     }
 
+    /// Changes when the profile watches or saves something new.
+    private var tasteKey: String {
+        (history.prefix(3).map(\.metaID) + watchlist.prefix(3).map(\.metaID)).joined(separator: "|")
+            + "|\(ProfileSession.shared.activeID?.uuidString ?? "")|\(TMDBAccount.shared.isConnected)"
+    }
+
+    private func loadTaste() async {
+        var seen = Set<String>()
+        let recent = history.compactMap { item -> TasteModel.Seed? in
+            guard seen.insert(item.metaID).inserted else { return nil }
+            return TasteModel.Seed(metaID: item.metaID, name: item.name, isSeries: item.type == "series")
+        }
+        var seriesSeen = Set<String>()
+        let series = (history.map { TasteModel.Seed(metaID: $0.metaID, name: $0.name, isSeries: $0.type == "series") }
+            + watchlist.map { TasteModel.Seed(metaID: $0.metaID, name: $0.name, isSeries: $0.type == "series") })
+            .filter { $0.isSeries && seriesSeen.insert($0.metaID).inserted }
+        let watched = Set(allProgress.filter { $0.profileID == ProfileSession.shared.activeID && $0.watched }.map(\.videoID))
+        await taste.load(recent: recent, series: series, watched: watched)
+    }
+
     /// Home's rows: the built-in ones and every addon row worth showing.
     private var sectionIDs: [String] {
         HomeLayoutStore.shared.layout.visible(HomeLayout.builtIns + model.visibleRows.map(\.id))
@@ -137,6 +162,18 @@ struct HomeView: View {
             }
         case HomeLayout.platforms:
             PlatformsRow()
+        case HomeLayout.newEpisodes:
+            if !taste.newEpisodes.isEmpty {
+                EpisodeScheduleRow(kind: .new, entries: taste.newEpisodes)
+            }
+        case HomeLayout.becauseYouWatched:
+            ForEach(taste.because) { row in
+                BecauseYouWatchedRow(row: row)
+            }
+        case HomeLayout.comingSoon:
+            if !taste.comingSoon.isEmpty {
+                EpisodeScheduleRow(kind: .upcoming, entries: taste.comingSoon)
+            }
         default:
             if let row = model.visibleRows.first(where: { $0.id == id }) {
                 PosterRow(reference: row, content: model.content(for: row)) {

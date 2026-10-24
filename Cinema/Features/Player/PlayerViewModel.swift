@@ -42,6 +42,10 @@ final class PlayerViewModel {
     /// "More Like This" at the end of a movie.
     private(set) var suggestions: [TMDBTitle] = []
     private(set) var suggestionsDismissed = false
+    /// The sleep timer, if one is set.
+    private(set) var sleepTimer: SleepTimer?
+    /// Seconds until the sleep timer stops playback.
+    private(set) var sleepRemaining: Int?
     private var controlsVisible = true
     var isScrubbing = false
     var scrubPosition: Double = 0
@@ -67,6 +71,9 @@ final class PlayerViewModel {
     @ObservationIgnored private var suggestionsTask: Task<Void, Never>?
     @ObservationIgnored private var noticeTask: Task<Void, Never>?
     @ObservationIgnored private var suggestionsMedia: TMDBMediaType = .movie
+    @ObservationIgnored private var sleepTask: Task<Void, Never>?
+    @ObservationIgnored private var sleepDeadline: Date?
+    @ObservationIgnored private var routeObserver: NSObjectProtocol?
     @ObservationIgnored private weak var context: ModelContext?
     @ObservationIgnored private let launcher: PlaybackLauncher
 
@@ -82,7 +89,12 @@ final class PlayerViewModel {
     }
 
     enum Notice: Equatable {
-        case skippedIntro, skippedRecap, tryingAnother
+        case skippedIntro, skippedRecap, tryingAnother, airPlayAudioOnly, sleepTimerSet
+    }
+
+    enum SleepTimer: Hashable {
+        case minutes(Int)
+        case endOfEpisode
     }
 
     enum SkipKind: Equatable { case intro, recap }
@@ -162,8 +174,25 @@ final class PlayerViewModel {
             try? AVAudioSession.sharedInstance().setActive(true)
             UIApplication.shared.isIdleTimerDisabled = true
             activateNowPlaying()
+            observeAudioRoute()
         }
         load(session)
+    }
+
+    /// AirPlay carries the picture only from Apple's player; with the built-in
+    /// one, the TV gets the sound. Say so when the viewer picks AirPlay.
+    private func observeAudioRoute() {
+        routeObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.engineKind == .mpv else { return }
+                let outputs = AVAudioSession.sharedInstance().currentRoute.outputs
+                if outputs.contains(where: { $0.portType == .airPlay }) {
+                    self.show(.airPlayAudioOnly, for: 6)
+                }
+            }
+        }
     }
 
     /// Subtitles in the preferred language only: libmpv must never pick another
@@ -179,6 +208,9 @@ final class PlayerViewModel {
         }
         if settings.audioPreference == .arabic {
             options["alang"] = "ar,ara"
+        }
+        if !settings.audioFilterChain.isEmpty {
+            options["af"] = settings.audioFilterChain
         }
         if let language = PlaybackSettings.shared.preferredSubtitleLanguage {
             options["slang"] = "\(language),\(Self.threeLetterCode(language))"
@@ -260,6 +292,9 @@ final class PlayerViewModel {
 
     func close() {
         countdownTask?.cancel()
+        sleepTask?.cancel()
+        if let routeObserver { NotificationCenter.default.removeObserver(routeObserver) }
+        routeObserver = nil
         loadTimeoutTask?.cancel()
         segmentsTask?.cancel()
         suggestionsTask?.cancel()
@@ -691,7 +726,7 @@ final class PlayerViewModel {
         guard let creditsStart else { return }
         if time >= creditsStart {
             if session.next != nil, PlaybackSettings.shared.autoPlayNext, !countdownCancelled,
-               nextCountdown == nil, !isLoadingNext {
+               nextCountdown == nil, !isLoadingNext, sleepTimer != .endOfEpisode {
                 startCountdown()
             }
             if session.next == nil, session.type == "movie", suggestionsTask == nil {
@@ -794,6 +829,78 @@ final class PlayerViewModel {
             guard !Task.isCancelled else { return }
             withAnimation(Theme.Motion.spring) { self.notice = nil }
         }
+    }
+
+    // MARK: Sleep timer
+
+    /// Stops playback after a while (or at the end of the episode), fading
+    /// the sound out over the last 30 seconds.
+    func setSleepTimer(_ timer: SleepTimer?) {
+        sleepTask?.cancel()
+        engine?.setVolume(1)
+        sleepTimer = timer
+        sleepRemaining = nil
+        guard let timer else { return }
+        if case .minutes(let minutes) = timer {
+            sleepDeadline = Date.now.addingTimeInterval(Double(minutes * 60))
+        }
+        show(.sleepTimerSet)
+        sleepTask = Task {
+            while !Task.isCancelled {
+                let remaining = secondsUntilSleep(timer)
+                sleepRemaining = remaining.map { max(Int($0.rounded()), 0) }
+                if let remaining {
+                    if remaining <= 0 {
+                        engine?.setPaused(true)
+                        engine?.setVolume(1)
+                        sleepTimer = nil
+                        sleepRemaining = nil
+                        return
+                    }
+                    engine?.setVolume(min(1, remaining / 30))
+                }
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+
+    private func secondsUntilSleep(_ timer: SleepTimer) -> Double? {
+        switch timer {
+        case .minutes:
+            // Counts real time while playing; paused time doesn't count.
+            guard let deadline = sleepDeadline else { return nil }
+            if isPaused { sleepDeadline = deadline.addingTimeInterval(1) }
+            return deadline.timeIntervalSinceNow
+        case .endOfEpisode:
+            guard duration > 0 else { return nil }
+            return (creditsStart ?? duration) - precisePosition
+        }
+    }
+
+    // MARK: Night mode & dialogue boost
+
+    func setNightMode(_ on: Bool) {
+        PlaybackSettings.shared.nightMode = on
+        applyAudioFilters()
+    }
+
+    func setDialogueBoost(_ on: Bool) {
+        PlaybackSettings.shared.dialogueBoost = on
+        applyAudioFilters()
+    }
+
+    /// Applies the filters; Apple's player can't process sound, so playback
+    /// moves to the built-in player at the same moment.
+    private func applyAudioFilters() {
+        let settings = PlaybackSettings.shared
+        if engineKind == .apple && settings.needsAudioProcessing {
+            var moved = session
+            moved.engine = .mpv
+            moved.startPosition = max(precisePosition, 0)
+            start(moved)
+            return
+        }
+        engine?.setAudioFilters(settings.audioFilterChain)
     }
 
     // MARK: Audio & subtitle style

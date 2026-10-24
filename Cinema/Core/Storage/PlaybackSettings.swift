@@ -77,6 +77,35 @@ final class PlaybackSettings {
         didSet { UserDefaults.standard.set(autoPlayNext, forKey: "playback.autoPlayNext") }
     }
 
+    /// Evens out loud and quiet moments, for late at night.
+    var nightMode: Bool {
+        didSet { UserDefaults.standard.set(nightMode, forKey: "playback.nightMode") }
+    }
+    /// Lifts voices above music and effects.
+    var dialogueBoost: Bool {
+        didSet { UserDefaults.standard.set(dialogueBoost, forKey: "playback.dialogueBoost") }
+    }
+
+    /// Audio processing needs the built-in player (Apple's can't filter sound).
+    var needsAudioProcessing: Bool { nightMode || dialogueBoost }
+
+    /// libmpv's audio filter chain for the options above ("" for none).
+    var audioFilterChain: String {
+        var filters: [String] = []
+        if nightMode {
+            // A gentle compressor with make-up gain: quiet lines come up, explosions come down.
+            filters.append("acompressor=threshold=0.0625:ratio=6:attack=20:release=250:makeup=4")
+        }
+        if dialogueBoost {
+            // Presence boost where speech sits, a little less rumble.
+            filters.append("equalizer=f=2500:t=q:w=1.0:g=6")
+            filters.append("equalizer=f=120:t=q:w=1.0:g=-3")
+        }
+        guard !filters.isEmpty else { return "" }
+        filters.append("alimiter=limit=0.95")
+        return "lavfi=[" + filters.joined(separator: ",") + "]"
+    }
+
     /// libmpv's `#AARRGGBB` for the subtitle box behind the lines.
     var subtitleBackgroundMPVColor: String {
         String(format: "#%02X000000", Int((subtitleBackground * 255).rounded()))
@@ -123,5 +152,7 @@ final class PlaybackSettings {
         audioPreference = AudioPreference(rawValue: defaults.string(forKey: "playback.audioPreference") ?? "") ?? .original
         autoSkipIntro = defaults.bool(forKey: "playback.autoSkipIntro")
         autoPlayNext = defaults.object(forKey: "playback.autoPlayNext") as? Bool ?? true
+        nightMode = defaults.bool(forKey: "playback.nightMode")
+        dialogueBoost = defaults.bool(forKey: "playback.dialogueBoost")
     }
 }

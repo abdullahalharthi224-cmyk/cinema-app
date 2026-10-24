@@ -43,7 +43,8 @@ struct TMDBClient: Sendable {
         networkID: Int? = nil,
         region: String,
         language: String,
-        page: Int
+        page: Int,
+        extra: [String: String] = [:]
     ) async throws -> TMDBPage {
         var query = [
             "language": language,
@@ -59,6 +60,8 @@ struct TMDBClient: Sendable {
         if let networkID, media == .tv {
             query["with_networks"] = String(networkID)
         }
+        // Genre, original language and similar filters.
+        query.merge(extra) { $1 }
         return try await get("discover/\(media.rawValue)", query: query)
     }
 
@@ -162,11 +165,18 @@ struct TMDBClient: Sendable {
     func richDetails(media: TMDBMediaType, tmdbID: Int, language: String) async throws -> TMDBRichDetails {
         var details: TMDBRichDetails = try await get("\(media.rawValue)/\(tmdbID)", query: [
             "language": language,
-            "append_to_response": "videos,release_dates,content_ratings,recommendations",
+            "append_to_response": "videos,release_dates,content_ratings,recommendations,watch/providers",
             "include_video_language": "\(language.prefix(2)),en,null",
         ])
         details.media = media
         return details
+    }
+
+    /// A series' latest aired and next upcoming episode, with its name and artwork.
+    func schedule(tvID: Int, language: String) async throws -> TMDBSchedule {
+        var schedule: TMDBSchedule = try await get("tv/\(tvID)", query: ["language": language])
+        schedule.id = tvID
+        return schedule
     }
 
     /// The Arabic title and synopsis from whichever Arabic-speaking region has
@@ -402,6 +412,8 @@ struct TMDBRichDetails: Decodable, Sendable {
     var certification: String?
     var recommendations: [TMDBTitle] = []
     var seasonCount: Int?
+    /// Streaming services showing the title in Saudi Arabia (subscription first, then free).
+    var providers: [TMDBProvider] = []
 
     enum CodingKeys: String, CodingKey {
         case voteAverage = "vote_average", status, runtime, episodeRunTime = "episode_run_time"
@@ -409,7 +421,20 @@ struct TMDBRichDetails: Decodable, Sendable {
         case originCountry = "origin_country", productionCompanies = "production_companies"
         case videos, releaseDates = "release_dates", contentRatings = "content_ratings"
         case recommendations, seasonCount = "number_of_seasons"
+        case watchProviders = "watch/providers"
     }
+
+    private struct WatchProviders: Decodable {
+        struct Region: Decodable {
+            var flatrate: [TMDBProvider]?
+            var free: [TMDBProvider]?
+            var ads: [TMDBProvider]?
+        }
+        var results: [String: Region]?
+    }
+
+    /// Where "available on" is looked up.
+    static let providerRegion = "SA"
 
     private struct Results<T: Decodable>: Decodable {
         var results: [T]?
@@ -460,6 +485,60 @@ struct TMDBRichDetails: Decodable, Sendable {
         certification = Self.certificationRegions.lazy.compactMap { ratings[$0] }.first
 
         recommendations = Array((c.lenient(Results<TMDBTitle>.self, forKey: .recommendations)?.results ?? []).prefix(20))
+
+        if let region = c.lenient(WatchProviders.self, forKey: .watchProviders)?.results?[Self.providerRegion] {
+            var seen = Set<Int>()
+            providers = ((region.flatrate ?? []) + (region.free ?? []) + (region.ads ?? []))
+                .filter { seen.insert($0.providerID).inserted }
+        }
+    }
+}
+
+/// A series' airing schedule (see `TMDBClient.schedule`).
+struct TMDBSchedule: Decodable, Sendable {
+    struct Episode: Decodable, Sendable, Hashable {
+        var name: String?
+        var airDate: String?
+        var season: Int
+        var episode: Int
+        var stillPath: String?
+
+        enum CodingKeys: String, CodingKey {
+            case name, airDate = "air_date", season = "season_number", episode = "episode_number", stillPath = "still_path"
+        }
+
+        /// The air date at the start of that day, in the user's time zone.
+        var date: Date? {
+            guard let airDate else { return nil }
+            let formatter = DateFormatter()
+            formatter.calendar = Calendar(identifier: .gregorian)
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = "yyyy-MM-dd"
+            return formatter.date(from: airDate)
+        }
+    }
+
+    var id: Int = 0
+    var name: String
+    var posterPath: String?
+    var backdropPath: String?
+    var lastEpisode: Episode?
+    var nextEpisode: Episode?
+    var status: String?
+
+    enum CodingKeys: String, CodingKey {
+        case name, posterPath = "poster_path", backdropPath = "backdrop_path", status
+        case lastEpisode = "last_episode_to_air", nextEpisode = "next_episode_to_air"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = c.lenient(String.self, forKey: .name) ?? ""
+        posterPath = c.lenient(String.self, forKey: .posterPath)
+        backdropPath = c.lenient(String.self, forKey: .backdropPath)
+        lastEpisode = c.lenient(Episode.self, forKey: .lastEpisode)
+        nextEpisode = c.lenient(Episode.self, forKey: .nextEpisode)
+        status = c.lenient(String.self, forKey: .status)
     }
 }
 

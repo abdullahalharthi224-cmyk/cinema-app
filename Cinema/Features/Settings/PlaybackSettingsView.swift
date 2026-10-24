@@ -49,8 +49,12 @@ struct PlaybackSettingsView: View {
                     Text("Original Audio").tag(PlaybackSettings.AudioPreference.original)
                     Text("Arabic When Available").tag(PlaybackSettings.AudioPreference.arabic)
                 }
+                Toggle("Night Mode", isOn: $settings.nightMode)
+                Toggle("Dialogue Boost", isOn: $settings.dialogueBoost)
             } header: {
                 Text("Audio")
+            } footer: {
+                Text("Night mode evens out loud and quiet moments; dialogue boost lifts voices. Both use the built-in player.")
             }
 
             Section {

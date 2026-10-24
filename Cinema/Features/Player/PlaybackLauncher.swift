@@ -151,7 +151,8 @@ final class PlaybackLauncher {
         )
         session.isLocal = true
         let ext = url.pathExtension.lowercased()
-        session.engine = PlaybackSettings.shared.useApplePlayer && ["mp4", "m4v", "mov"].contains(ext) ? .apple : .mpv
+        session.engine = PlaybackSettings.shared.useApplePlayer && !PlaybackSettings.shared.needsAudioProcessing
+            && ["mp4", "m4v", "mov"].contains(ext) ? .apple : .mpv
         if let subtitle = item.subtitleFileName {
             let source = AddonSource(
                 manifestURL: DownloadFiles.directory,
@@ -211,7 +212,9 @@ final class PlaybackLauncher {
         next.url = url
         next.request = request
         next.startPosition = position
-        next.engine = await PlayerEngineKind.choose(for: url, allowApple: PlaybackSettings.shared.useApplePlayer)
+        next.engine = await PlayerEngineKind.choose(
+            for: url, allowApple: PlaybackSettings.shared.useApplePlayer && !PlaybackSettings.shared.needsAudioProcessing
+        )
         return next
     }
 
@@ -241,7 +244,9 @@ final class PlaybackLauncher {
                 await service.subtitleSources(type: type, id: id, addons: addons, preferredLanguages: languages)
             }
         }
-        session.engine = await engine
+        // Night mode and dialogue boost need the built-in player.
+        let chosen = await engine
+        session.engine = settings.needsAudioProcessing ? .mpv : chosen
         return session
     }
 

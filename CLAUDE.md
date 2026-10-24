@@ -75,3 +75,15 @@ Keep the code organized: `App/`, `Features/<Feature>/`, `Core/Addons/`, `Core/Pl
 `Core/Storage/`, `DesignSystem/`.
 Write unit tests for the addon client and Stremio import parsing.
 Never commit secrets. Never hardcode content sources.
+7. Roadmap (agreed with the owner — planned, not built yet)
+Next version:
+Profile lock: a passcode or Face ID per profile, or for the whole app.
+Kids profile limited by age rating (TMDB certification).
+Finish customization: hero source, poster size, show/hide ratings, alternate app icons.
+After that:
+Home Screen widget (last watched, continue with one tap).
+Siri / App Intents ("Continue watching in Cinema").
+Viewing statistics page (hours watched, top genres, most-seen actors).
+After that:
+A web version for the laptop.
+Never write anything to the owner's Stremio account: it is used only to import addons.

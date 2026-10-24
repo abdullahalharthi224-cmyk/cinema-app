@@ -75,6 +75,11 @@ struct DetailView: View {
                             .transition(.opacity.combined(with: .move(edge: .top)))
                     }
 
+                    if let providers = model.richDetails?.providers, !providers.isEmpty {
+                        AvailableOnRow(providers: providers)
+                            .transition(.opacity)
+                    }
+
                     if !model.availableQualities.isEmpty {
                         qualityBadges
                             .transition(.opacity.combined(with: .move(edge: .top)))
