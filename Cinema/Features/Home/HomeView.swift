@@ -41,12 +41,13 @@ struct HomeView: View {
             }
             .background(Theme.background.ignoresSafeArea())
             .contentDestinations()
+            // Inside the stack, so a title picked at the end of a movie can open here.
+            .playbackLauncher(launcher)
         }
         .environment(\.zoomNamespace, zoom)
         .task(id: sources.map(\.id)) {
             await model.load(addons: sources)
         }
-        .playbackLauncher(launcher)
     }
 
     // MARK: Feed

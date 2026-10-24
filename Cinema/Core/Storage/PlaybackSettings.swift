@@ -17,6 +17,18 @@ final class PlaybackSettings {
         var id: String { rawValue }
     }
 
+    /// Which audio track to start with when a file has several.
+    enum AudioPreference: String, CaseIterable, Identifiable {
+        /// The file's default track, usually the original language.
+        case original
+        /// Arabic dubbing when the file has it.
+        case arabic
+        var id: String { rawValue }
+    }
+
+    /// Subtitle colours, as `#RRGGBB`.
+    static let subtitleColors = ["#FFFFFF", "#FFE066", "#7FE3FF", "#A8F0A0", "#FFB3D1"]
+
     enum SubtitleSize: String, CaseIterable, Identifiable {
         case small, medium, large
         var id: String { rawValue }
@@ -46,6 +58,30 @@ final class PlaybackSettings {
     var subtitleFallback: SubtitleFallback {
         didSet { UserDefaults.standard.set(subtitleFallback.rawValue, forKey: "playback.subtitleFallback") }
     }
+    var subtitleColorHex: String {
+        didSet { UserDefaults.standard.set(subtitleColorHex, forKey: "playback.subtitleColor") }
+    }
+    /// 0 = outlined text only; up to 0.85 = a dark box behind the lines.
+    var subtitleBackground: Double {
+        didSet { UserDefaults.standard.set(subtitleBackground, forKey: "playback.subtitleBackground") }
+    }
+    var audioPreference: AudioPreference {
+        didSet { UserDefaults.standard.set(audioPreference.rawValue, forKey: "playback.audioPreference") }
+    }
+    /// Jump over intros and recaps without asking.
+    var autoSkipIntro: Bool {
+        didSet { UserDefaults.standard.set(autoSkipIntro, forKey: "playback.autoSkipIntro") }
+    }
+    /// Count down into the next episode when one ends.
+    var autoPlayNext: Bool {
+        didSet { UserDefaults.standard.set(autoPlayNext, forKey: "playback.autoPlayNext") }
+    }
+
+    /// libmpv's `#AARRGGBB` for the subtitle box behind the lines.
+    var subtitleBackgroundMPVColor: String {
+        String(format: "#%02X000000", Int((subtitleBackground * 255).rounded()))
+    }
+
     /// Play MP4 / HLS streams with Apple's player, for Picture in Picture and AirPlay.
     var useApplePlayer: Bool {
         didSet { UserDefaults.standard.set(useApplePlayer, forKey: "playback.useApplePlayer") }
@@ -82,5 +118,10 @@ final class PlaybackSettings {
         subtitleSize = SubtitleSize(rawValue: defaults.string(forKey: "playback.subtitleSize") ?? "") ?? .medium
         subtitleFallback = SubtitleFallback(rawValue: defaults.string(forKey: "playback.subtitleFallback") ?? "") ?? .off
         useApplePlayer = defaults.object(forKey: "playback.useApplePlayer") as? Bool ?? true
+        subtitleColorHex = defaults.string(forKey: "playback.subtitleColor") ?? "#FFFFFF"
+        subtitleBackground = defaults.object(forKey: "playback.subtitleBackground") as? Double ?? 0
+        audioPreference = AudioPreference(rawValue: defaults.string(forKey: "playback.audioPreference") ?? "") ?? .original
+        autoSkipIntro = defaults.bool(forKey: "playback.autoSkipIntro")
+        autoPlayNext = defaults.object(forKey: "playback.autoPlayNext") as? Bool ?? true
     }
 }

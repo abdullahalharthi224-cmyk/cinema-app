@@ -277,6 +277,7 @@ final class AVPlayerEngine: NSObject, VideoEngine {
     func setSubtitleDelay(_ seconds: Double) {}
     func setSubtitleFontSize(_ size: Int) {}
     func setSubtitleMargin(_ margin: Int) {}
+    func setSubtitleStyle(colorHex: String, backgroundColor: String?) {}
 
     // MARK: Picture
 

@@ -47,6 +47,22 @@ final class StreamRankerTests: XCTestCase {
         XCTAssertNotEqual(auto?.index, 3, "Torrents can't be played")
     }
 
+    func testBestSkipsLinksThatAlreadyFailed() throws {
+        let streams = [
+            try stream("[RD+] 1080p", title: "A.1080p.mkv 💾 6 GB", url: "https://cdn/a.mkv", index: 0),
+            try stream("[RD+] 1080p", title: "B.1080p.mkv 💾 5 GB", url: "https://cdn/b.mkv", index: 1),
+        ]
+        let groups = [StreamGroup(addon: AddonSource(manifestURL: URL(string: "https://a/manifest.json")!, manifest: AddonManifest(id: "a", name: "A")), result: .success(streams))]
+        let preferences = PlaybackPreferences(quality: .fullHD)
+        let first = try XCTUnwrap(StreamRanker.best(in: groups, preferences: preferences))
+        guard case .direct(let failed) = first.stream.kind else { return XCTFail("Expected a direct link") }
+
+        let next = StreamRanker.best(in: groups, preferences: preferences, excluding: [failed])
+        XCTAssertNotNil(next)
+        XCTAssertNotEqual(next?.index, first.index)
+        XCTAssertNil(StreamRanker.best(in: groups, preferences: preferences, excluding: [URL(string: "https://cdn/a.mkv")!, URL(string: "https://cdn/b.mkv")!]))
+    }
+
     func testSortOptionsKeepUnplayableLast() throws {
         let streams = [
             try stream("A", title: "720p 💾 1 GB 👤 50", index: 0),

@@ -54,6 +54,8 @@ extension WatchHistoryItem {
     /// Records (or refreshes) that the active profile just started a title.
     @MainActor
     static func record(_ entry: WatchHistoryEntry, in context: ModelContext) {
+        // Private viewing leaves no trace.
+        guard !PrivacySettings.shared.privateMode else { return }
         let profileID = ProfileSession.shared.activeID
         let key = makeKey(profileID: profileID, type: entry.type, metaID: entry.metaID)
         let descriptor = FetchDescriptor<WatchHistoryItem>(predicate: #Predicate { $0.key == key })

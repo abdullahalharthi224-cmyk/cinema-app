@@ -32,6 +32,16 @@ final class PlayerViewModel {
     private(set) var overlayCues: [SubtitleCue]?
     /// The playback time for drawn subtitles, updated ten times a second.
     private(set) var subtitleClock: Double = 0
+    /// Intro, recap and end-credits timings (from IntroDB).
+    private(set) var segments: MediaSegments = .none
+    /// A short message over the picture ("Skipped intro", "Trying another link…").
+    private(set) var notice: Notice?
+    /// Seconds left before the next episode starts by itself.
+    private(set) var nextCountdown: Int?
+    private(set) var countdownCancelled = false
+    /// "More Like This" at the end of a movie.
+    private(set) var suggestions: [TMDBTitle] = []
+    private(set) var suggestionsDismissed = false
     private var controlsVisible = true
     var isScrubbing = false
     var scrubPosition: Double = 0
@@ -48,6 +58,15 @@ final class PlayerViewModel {
     @ObservationIgnored private var lifecycleObservers: [NSObjectProtocol] = []
     @ObservationIgnored private var thumbnailTask: Task<Void, Never>?
     @ObservationIgnored private var overlayTask: Task<Void, Never>?
+    @ObservationIgnored private var skippedSegments: Set<Double> = []
+    @ObservationIgnored private var failedURLs: Set<URL> = []
+    @ObservationIgnored private var isTryingAnother = false
+    @ObservationIgnored private var countdownTask: Task<Void, Never>?
+    @ObservationIgnored private var loadTimeoutTask: Task<Void, Never>?
+    @ObservationIgnored private var segmentsTask: Task<Void, Never>?
+    @ObservationIgnored private var suggestionsTask: Task<Void, Never>?
+    @ObservationIgnored private var noticeTask: Task<Void, Never>?
+    @ObservationIgnored private var suggestionsMedia: TMDBMediaType = .movie
     @ObservationIgnored private weak var context: ModelContext?
     @ObservationIgnored private let launcher: PlaybackLauncher
 
@@ -62,6 +81,12 @@ final class PlayerViewModel {
         case failed
     }
 
+    enum Notice: Equatable {
+        case skippedIntro, skippedRecap, tryingAnother
+    }
+
+    enum SkipKind: Equatable { case intro, recap }
+
     static let speeds: [Double] = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
     init(session: PlaybackSession, launcher: PlaybackLauncher) {
@@ -73,10 +98,38 @@ final class PlayerViewModel {
     var displayedPosition: Double { isScrubbing ? scrubPosition : position }
     var remaining: Double { max(duration - displayedPosition, 0) }
 
-    /// Offer the next episode during the last 90 seconds (or 5%) of an episode.
+    /// Where the end credits begin: IntroDB's timing, otherwise 30 seconds
+    /// before the end of an episode or two minutes before the end of a movie.
+    var creditsStart: Double? {
+        guard duration > 180 else { return nil }
+        if let outro = segments.outro, outro.start < duration { return outro.start }
+        return duration - (session.type == "movie" ? 120 : 30)
+    }
+
+    private var isInCredits: Bool {
+        guard let creditsStart else { return false }
+        return displayedPosition >= creditsStart
+    }
+
+    /// The "Next Episode" button, once the countdown was cancelled or is turned off.
     var showsNextEpisode: Bool {
-        guard session.next != nil, duration > 0 else { return false }
-        return remaining <= max(90, duration * 0.05)
+        session.next != nil && isInCredits && nextCountdown == nil
+    }
+
+    /// "More Like This" over a movie's end credits.
+    var showsSuggestions: Bool {
+        session.next == nil && session.type == "movie" && isInCredits && !suggestions.isEmpty && !suggestionsDismissed
+    }
+
+    /// The intro or recap playing right now, offered as "Skip Intro".
+    var activeSkip: SkipKind? {
+        activeSkipSpan(at: displayedPosition)?.kind
+    }
+
+    private func activeSkipSpan(at time: Double) -> (kind: SkipKind, span: MediaSegments.Span)? {
+        if let recap = segments.recap, recap.contains(time), recap.end - time > 1 { return (.recap, recap) }
+        if let intro = segments.intro, intro.contains(time), intro.end - time > 1 { return (.intro, intro) }
+        return nil
     }
 
     // MARK: Lifecycle
@@ -117,7 +170,16 @@ final class PlayerViewModel {
     /// language on its own (the view model handles the fallback).
     private func mpvOptions() -> [String: String] {
         var options: [String: String] = [:]
-        options["sub-font-size"] = String(PlaybackSettings.shared.subtitleSize.fontSize)
+        let settings = PlaybackSettings.shared
+        options["sub-font-size"] = String(settings.subtitleSize.fontSize)
+        options["sub-color"] = settings.subtitleColorHex
+        if settings.subtitleBackground > 0.01 {
+            options["sub-border-style"] = "background-box"
+            options["sub-back-color"] = settings.subtitleBackgroundMPVColor
+        }
+        if settings.audioPreference == .arabic {
+            options["alang"] = "ar,ara"
+        }
         if let language = PlaybackSettings.shared.preferredSubtitleLanguage {
             options["slang"] = "\(language),\(Self.threeLetterCode(language))"
         } else {
@@ -140,11 +202,61 @@ final class PlayerViewModel {
         precisePosition = session.startPosition
         duration = 0
         lastSavedPosition = session.startPosition
+        segments = .none
+        skippedSegments = []
+        nextCountdown = nil
+        countdownCancelled = false
+        countdownTask?.cancel()
+        suggestions = []
+        suggestionsDismissed = false
+        suggestionsTask = nil
         engine?.load(url: session.url, start: session.startPosition)
         engine?.setSpeed(speed)
+        loadSegments(for: session)
+        watchForStall()
+    }
+
+    /// Starts `session` in the right engine: the current one, or a fresh surface
+    /// (and engine) when the new link needs the other one.
+    private func start(_ session: PlaybackSession) {
+        self.session = session
+        if session.engine != engineKind {
+            engine?.destroy()
+            engine = nil
+            hasLoaded = false
+            engineKind = session.engine
+        } else {
+            load(session)
+        }
+    }
+
+    private func loadSegments(for session: PlaybackSession) {
+        segmentsTask?.cancel()
+        guard let reference = IntroDBClient.reference(videoID: session.videoID) else { return }
+        segmentsTask = Task {
+            let found = try? await IntroDBClient().segments(
+                imdbID: reference.imdbID, season: reference.season, episode: reference.episode
+            )
+            guard !Task.isCancelled, self.session.videoID == session.videoID else { return }
+            segments = found ?? .none
+        }
+    }
+
+    /// A link that never starts is treated like one that failed.
+    private func watchForStall() {
+        loadTimeoutTask?.cancel()
+        loadTimeoutTask = Task {
+            try? await Task.sleep(for: .seconds(30))
+            guard !Task.isCancelled, !hasLoaded, errorMessage == nil else { return }
+            await tryAnotherStream(reason: localized("it took too long to start"))
+        }
     }
 
     func close() {
+        countdownTask?.cancel()
+        loadTimeoutTask?.cancel()
+        segmentsTask?.cancel()
+        suggestionsTask?.cancel()
         for observer in lifecycleObservers {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -186,6 +298,7 @@ final class PlayerViewModel {
     /// Apple's player couldn't open the stream: hand it to libmpv instead. The
     /// player screen swaps the video surface and calls `attach` again.
     private func switchToMPV() {
+        loadTimeoutTask?.cancel()
         engine?.destroy()
         engine = nil
         hasLoaded = false
@@ -266,6 +379,7 @@ final class PlayerViewModel {
         case .position(let value):
             precisePosition = value
             if overlayCues != nil { subtitleClock = value }
+            followTimeline(value)
             // Updates arrive many times a second; a few a second is plenty for the UI.
             if abs(value - position) >= 0.25 || value < position { position = value }
             if abs(value - lastSavedPosition) >= 10 {
@@ -291,9 +405,11 @@ final class PlayerViewModel {
         case .fileLoaded:
             hasLoaded = true
             isBuffering = false
+            loadTimeoutTask?.cancel()
             applySubtitleMargin()
             refreshTracks { [weak self] in
                 guard let self else { return }
+                self.applyAudioPreference()
                 self.decideSubtitles()
                 if !self.sourcesLoaded {
                     Task { await self.loadSubtitleSources() }
@@ -307,7 +423,7 @@ final class PlayerViewModel {
             if engineKind == .apple && !hasLoaded {
                 switchToMPV()
             } else {
-                errorMessage = localized("This stream couldn't be played (%@). Try another one.", reason)
+                Task { await tryAnotherStream(reason: reason) }
             }
         }
     }
@@ -538,15 +654,166 @@ final class PlayerViewModel {
         guard let next = session.next, let context, !isLoadingNext else { return }
         isLoadingNext = true
         defer { isLoadingNext = false }
+        countdownTask?.cancel()
+        nextCountdown = nil
         saveProgress()
         guard let nextSession = await launcher.session(for: next, after: session, context: context) else {
             errorMessage = localized("No playable stream was found for the next episode.")
             return
         }
-        session = nextSession
         errorMessage = nil
+        failedURLs = []
+        start(nextSession)
         activateNowPlaying()
-        load(nextSession)
+    }
+
+    // MARK: Timeline: skip intro, end credits
+
+    private func followTimeline(_ time: Double) {
+        guard hasLoaded, !isScrubbing else { return }
+        if PlaybackSettings.shared.autoSkipIntro,
+           let skip = activeSkipSpan(at: time), !skippedSegments.contains(skip.span.start) {
+            skippedSegments.insert(skip.span.start)
+            seek(to: skip.span.end)
+            show(skip.kind == .intro ? .skippedIntro : .skippedRecap)
+            return
+        }
+        guard let creditsStart else { return }
+        if time >= creditsStart {
+            if session.next != nil, PlaybackSettings.shared.autoPlayNext, !countdownCancelled,
+               nextCountdown == nil, !isLoadingNext {
+                startCountdown()
+            }
+            if session.next == nil, session.type == "movie", suggestionsTask == nil {
+                loadSuggestions()
+            }
+        } else if nextCountdown != nil {
+            // Went back before the credits.
+            countdownTask?.cancel()
+            nextCountdown = nil
+        }
+    }
+
+    /// Skips the intro or recap playing now.
+    func skipSegment() {
+        guard let skip = activeSkipSpan(at: precisePosition) else { return }
+        skippedSegments.insert(skip.span.start)
+        seek(to: skip.span.end)
+    }
+
+    private func startCountdown() {
+        nextCountdown = 10
+        countdownTask?.cancel()
+        countdownTask = Task {
+            while let remaining = nextCountdown, remaining > 0 {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                // Holds while paused.
+                if !isPaused { nextCountdown = remaining - 1 }
+            }
+            guard !Task.isCancelled, nextCountdown != nil else { return }
+            await playNextEpisode()
+        }
+    }
+
+    func cancelCountdown() {
+        countdownTask?.cancel()
+        nextCountdown = nil
+        countdownCancelled = true
+    }
+
+    func playNextNow() {
+        countdownTask?.cancel()
+        Task { await playNextEpisode() }
+    }
+
+    private func loadSuggestions() {
+        suggestionsTask = Task {
+            guard let client = TMDBAccount.shared.client,
+                  let imdbID = IntroDBClient.reference(videoID: session.videoID)?.imdbID,
+                  let found = try? await client.find(imdbID: imdbID),
+                  let details = try? await client.richDetails(
+                      media: found.media, tmdbID: found.id, language: AppLanguage.current.tmdbCode
+                  ),
+                  !Task.isCancelled
+            else { return }
+            suggestionsMedia = found.media
+            withAnimation(Theme.Motion.spring) {
+                suggestions = Array(details.recommendations.filter { $0.posterPath != nil }.prefix(12))
+            }
+        }
+    }
+
+    func dismissSuggestions() {
+        suggestionsDismissed = true
+    }
+
+    /// Opens a suggested title once the player has closed.
+    func openSuggestion(_ title: TMDBTitle) {
+        launcher.suggestedTitle = TMDBTitleRoute(media: suggestionsMedia, title: title)
+    }
+
+    // MARK: Failed links
+
+    /// A link failed (or never started): quietly move on to the next best one.
+    private func tryAnotherStream(reason: String) async {
+        guard let context, !isTryingAnother else { return }
+        failedURLs.insert(session.url)
+        let fail = { self.errorMessage = localized("This stream couldn't be played (%@). Try another one.", reason) }
+        guard failedURLs.count <= 5 else { return fail() }
+        isTryingAnother = true
+        show(.tryingAnother, for: nil)
+        defer {
+            isTryingAnother = false
+            if notice == .tryingAnother { notice = nil }
+        }
+        let resumeAt = max(precisePosition, session.startPosition)
+        guard let next = await launcher.alternativeSession(
+            for: session, excluding: failedURLs, at: resumeAt, context: context
+        ) else { return fail() }
+        errorMessage = nil
+        start(next)
+    }
+
+    private func show(_ notice: Notice, for seconds: Double? = 2.5) {
+        noticeTask?.cancel()
+        withAnimation(Theme.Motion.spring) { self.notice = notice }
+        guard let seconds else { return }
+        noticeTask = Task {
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled else { return }
+            withAnimation(Theme.Motion.spring) { self.notice = nil }
+        }
+    }
+
+    // MARK: Audio & subtitle style
+
+    /// Starts with Arabic dubbing when the viewer prefers it and the file has it.
+    private func applyAudioPreference() {
+        guard PlaybackSettings.shared.audioPreference == .arabic,
+              let arabic = audioTracks.first(where: { SubtitleLanguage.code(for: $0.language) == "ar" }),
+              !arabic.isSelected
+        else { return }
+        engine?.selectAudio(id: arabic.id)
+        refreshTracks()
+    }
+
+    func setSubtitleColor(_ hex: String) {
+        PlaybackSettings.shared.subtitleColorHex = hex
+        applySubtitleStyle()
+    }
+
+    func setSubtitleBackground(_ opacity: Double) {
+        PlaybackSettings.shared.subtitleBackground = opacity
+        applySubtitleStyle()
+    }
+
+    private func applySubtitleStyle() {
+        let settings = PlaybackSettings.shared
+        engine?.setSubtitleStyle(
+            colorHex: settings.subtitleColorHex,
+            backgroundColor: settings.subtitleBackground > 0.01 ? settings.subtitleBackgroundMPVColor : nil
+        )
     }
 
     // MARK: Progress

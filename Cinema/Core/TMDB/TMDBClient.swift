@@ -157,6 +157,18 @@ struct TMDBClient: Sendable {
         return details
     }
 
+    /// Everything the detail page shows beyond the addon's data: trailer,
+    /// studios, age rating, status, countries and similar titles — one request.
+    func richDetails(media: TMDBMediaType, tmdbID: Int, language: String) async throws -> TMDBRichDetails {
+        var details: TMDBRichDetails = try await get("\(media.rawValue)/\(tmdbID)", query: [
+            "language": language,
+            "append_to_response": "videos,release_dates,content_ratings,recommendations",
+            "include_video_language": "\(language.prefix(2)),en,null",
+        ])
+        details.media = media
+        return details
+    }
+
     /// The Arabic title and synopsis from whichever Arabic-speaking region has
     /// them, preferring Saudi Arabia, then the UAE and Egypt.
     func arabicTranslation(media: TMDBMediaType, tmdbID: Int) async throws -> (title: String?, overview: String?)? {
@@ -356,6 +368,98 @@ struct TMDBEpisode: Decodable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case episodeNumber = "episode_number", name, overview, stillPath = "still_path"
+    }
+}
+
+/// The extra facts for a detail page (see `TMDBClient.richDetails`).
+struct TMDBRichDetails: Decodable, Sendable {
+    struct Company: Decodable, Sendable, Hashable, Identifiable {
+        var id: Int
+        var name: String
+        var logoPath: String?
+        enum CodingKeys: String, CodingKey { case id, name, logoPath = "logo_path" }
+    }
+
+    struct Video: Decodable, Sendable, Hashable {
+        var key: String
+        var site: String
+        var type: String
+        var official: Bool?
+        var name: String?
+
+        var youtubeURL: URL? { site == "YouTube" ? URL(string: "https://www.youtube.com/watch?v=\(key)") : nil }
+        var thumbnailURL: URL? { site == "YouTube" ? URL(string: "https://img.youtube.com/vi/\(key)/hqdefault.jpg") : nil }
+    }
+
+    var media: TMDBMediaType = .movie
+    var voteAverage: Double?
+    var status: String?
+    var runtime: Int?
+    var originalLanguage: String?
+    var countries: [String] = []
+    var companies: [Company] = []
+    var trailer: Video?
+    var certification: String?
+    var recommendations: [TMDBTitle] = []
+    var seasonCount: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case voteAverage = "vote_average", status, runtime, episodeRunTime = "episode_run_time"
+        case originalLanguage = "original_language", productionCountries = "production_countries"
+        case originCountry = "origin_country", productionCompanies = "production_companies"
+        case videos, releaseDates = "release_dates", contentRatings = "content_ratings"
+        case recommendations, seasonCount = "number_of_seasons"
+    }
+
+    private struct Results<T: Decodable>: Decodable {
+        var results: [T]?
+        enum CodingKeys: String, CodingKey { case results }
+        // One malformed entry shouldn't hide the rest.
+        init(from decoder: Decoder) throws {
+            results = try decoder.container(keyedBy: CodingKeys.self).lossyArray(T.self, forKey: .results)
+        }
+    }
+    private struct Country: Decodable { var iso_3166_1: String }
+    private struct ReleaseCountry: Decodable {
+        struct Release: Decodable { var certification: String? }
+        var iso_3166_1: String
+        var release_dates: [Release]?
+    }
+    private struct ContentRating: Decodable { var iso_3166_1: String; var rating: String? }
+
+    /// Age ratings are looked up for these regions, in order.
+    static let certificationRegions = ["SA", "AE", "US", "GB"]
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        voteAverage = c.lenient(Double.self, forKey: .voteAverage)
+        status = c.lenient(String.self, forKey: .status)
+        runtime = c.lenient(Int.self, forKey: .runtime) ?? c.lenient([Int].self, forKey: .episodeRunTime)?.first
+        originalLanguage = c.lenient(String.self, forKey: .originalLanguage)
+        countries = c.lenient([Country].self, forKey: .productionCountries)?.map(\.iso_3166_1)
+            ?? c.lenient([String].self, forKey: .originCountry) ?? []
+        if countries.isEmpty { countries = c.lenient([String].self, forKey: .originCountry) ?? [] }
+        companies = Array((c.lenient([Company].self, forKey: .productionCompanies) ?? []).prefix(6))
+        seasonCount = c.lenient(Int.self, forKey: .seasonCount)
+
+        let videos = c.lenient(Results<Video>.self, forKey: .videos)?.results ?? []
+        let youtube = videos.filter { $0.site == "YouTube" }
+        trailer = youtube.first { $0.type == "Trailer" && $0.official == true }
+            ?? youtube.first { $0.type == "Trailer" }
+            ?? youtube.first { $0.type == "Teaser" }
+
+        var ratings: [String: String] = [:]
+        for country in c.lenient(Results<ReleaseCountry>.self, forKey: .releaseDates)?.results ?? [] {
+            if let rating = country.release_dates?.lazy.compactMap(\.certification).first(where: { !$0.isEmpty }) {
+                ratings[country.iso_3166_1] = rating
+            }
+        }
+        for country in c.lenient(Results<ContentRating>.self, forKey: .contentRatings)?.results ?? [] {
+            if let rating = country.rating, !rating.isEmpty { ratings[country.iso_3166_1] = rating }
+        }
+        certification = Self.certificationRegions.lazy.compactMap { ratings[$0] }.first
+
+        recommendations = Array((c.lenient(Results<TMDBTitle>.self, forKey: .recommendations)?.results ?? []).prefix(20))
     }
 }
 

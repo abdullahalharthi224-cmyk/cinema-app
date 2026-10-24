@@ -28,6 +28,8 @@ protocol VideoEngine: AnyObject {
     func setSubtitleDelay(_ seconds: Double)
     func setSubtitleFontSize(_ size: Int)
     func setSubtitleMargin(_ margin: Int)
+    /// Text colour (`#RRGGBB`) and, if any, a box behind the lines (`#AARRGGBB`).
+    func setSubtitleStyle(colorHex: String, backgroundColor: String?)
 
     /// Fill the screen (cropping the edges) or fit the whole picture.
     func setVideoFill(_ fill: Bool)

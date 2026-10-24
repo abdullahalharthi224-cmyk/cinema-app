@@ -68,6 +68,11 @@ struct DetailView: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                     actions
 
+                    if !model.ratings.isEmpty {
+                        RatingsBar(ratings: model.ratings)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+
                     if !model.availableQualities.isEmpty {
                         qualityBadges
                             .transition(.opacity.combined(with: .move(edge: .top)))
@@ -108,9 +113,31 @@ struct DetailView: View {
                         .padding(.top, Theme.Spacing.xxl)
                 }
 
+                if let trailer = model.richDetails?.trailer {
+                    TrailerCard(video: trailer)
+                        .padding(.horizontal, Theme.Spacing.l)
+                        .padding(.top, Theme.Spacing.xxl)
+                }
+
                 if let meta = model.meta {
                     creditsSection(meta)
                         .padding(.top, Theme.Spacing.xxl)
+                }
+
+                if let details = model.richDetails {
+                    TitleFactsSection(details: details, isSeries: model.isSeries)
+                        .padding(.horizontal, Theme.Spacing.l)
+                        .padding(.top, Theme.Spacing.xxl)
+
+                    if !details.companies.isEmpty {
+                        CompanyLogosRow(companies: details.companies)
+                            .padding(.top, Theme.Spacing.xxl)
+                    }
+
+                    if !details.recommendations.isEmpty {
+                        MoreLikeThisRow(media: details.media, titles: details.recommendations)
+                            .padding(.top, Theme.Spacing.xxl)
+                    }
                 }
             }
             .padding(.bottom, Theme.Spacing.xxxl)
@@ -137,6 +164,7 @@ struct DetailView: View {
         .playbackLauncher(launcher)
         .animation(Theme.Motion.spring, value: model.meta?.id)
         .animation(Theme.Motion.spring, value: model.availableQualities)
+        .animation(Theme.Motion.spring, value: model.ratings)
     }
 
     /// Black, warmed by a wash of the poster's own colour near the top.
@@ -257,7 +285,18 @@ struct DetailView: View {
             .accessibilityLabel(Text(isInWatchlist ? LocalizedStringKey("Remove from My List") : "Add to My List"))
             .sensoryFeedback(.success, trigger: watchlistFeedback) { _, new in new == true }
 
-            if let trailer = model.trailerURL {
+            Button {
+                toggleWatched()
+            } label: {
+                Image(systemName: isMainTargetWatched ? "checkmark.seal.fill" : "checkmark.seal")
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .buttonStyle(.glassCircle)
+            .disabled(model.isSeries && model.episodes.isEmpty)
+            .accessibilityLabel(Text(isMainTargetWatched ? LocalizedStringKey("Mark as Unwatched") : "Mark as Watched"))
+            .sensoryFeedback(.success, trigger: isMainTargetWatched)
+
+            if model.richDetails?.trailer == nil, let trailer = model.trailerURL {
                 Button {
                     openURL(trailer)
                 } label: {
@@ -285,13 +324,31 @@ struct DetailView: View {
         return progress[model.route.id]?.isResumable == true ? "Resume" : "Play"
     }
 
+    /// The movie, or the episode the viewer is up to.
+    private var mainTargetVideoID: String? {
+        model.isSeries ? (nextUpEpisode ?? model.episodes.first)?.id : model.route.id
+    }
+
+    private var isMainTargetWatched: Bool {
+        mainTargetVideoID.flatMap { progress[$0]?.watched } ?? false
+    }
+
+    /// Marks the movie (or the episode the viewer is up to) as watched, by hand.
+    private func toggleWatched() {
+        guard let videoID = mainTargetVideoID else { return }
+        withAnimation(Theme.Motion.spring) {
+            PlaybackProgressStore.setWatched(!isMainTargetWatched, metaID: model.route.id, videoID: videoID, in: context)
+        }
+    }
+
     private func playMainTarget(choosingStream: Bool) {
         if model.isSeries {
             if let next = nextUpEpisode ?? model.episodes.first { play(next, choosingStream: choosingStream) }
         } else {
             let request = StreamRequest(
                 type: model.route.type, videoID: model.route.id, title: model.name, subtitle: nil,
-                history: model.historyEntryBase, prefetched: model.prefetchedStreams
+                history: model.historyEntryBase, prefetched: model.prefetchedStreams,
+                overview: model.description
             )
             launch(request, choosingStream: choosingStream)
         }
@@ -304,12 +361,22 @@ struct DetailView: View {
         var request = StreamRequest(
             type: model.route.type, videoID: video.id, title: model.name, subtitle: episodeLabel(video), history: history
         )
-        if let next = model.episode(after: video) {
+        request.overview = model.episodeOverview(video) ?? model.description
+        // Everything after this episode, for the "Next Episode" countdown.
+        var following: [NextEpisode] = []
+        var cursor = video
+        while following.count < 40, let next = model.episode(after: cursor) {
             var nextHistory = model.historyEntryBase
             nextHistory.videoID = next.id
             nextHistory.episodeLabel = episodeLabel(next)
-            request.next = NextEpisode(videoID: next.id, label: episodeLabel(next), history: nextHistory)
+            following.append(NextEpisode(
+                videoID: next.id, label: episodeLabel(next), history: nextHistory,
+                overview: model.episodeOverview(next)
+            ))
+            cursor = next
         }
+        request.next = following.first
+        request.upcoming = Array(following.dropFirst())
         return request
     }
 
@@ -533,6 +600,10 @@ struct StreamRequest: Identifiable {
     var prefetched: [StreamGroup]?
     /// The following episode, for the player's "Next Episode" button.
     var next: NextEpisode? = nil
+    /// The synopsis, shown on the player's pause screen.
+    var overview: String? = nil
+    /// The episodes after `next`, so autoplay can carry on.
+    var upcoming: [NextEpisode] = []
 
     var id: String { videoID }
 }

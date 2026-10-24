@@ -11,6 +11,7 @@ enum SettingsRoute: Hashable {
     case tmdb
     case playback
     case homeScreen
+    case ratings
     case addon(InstalledAddon)
 }
 

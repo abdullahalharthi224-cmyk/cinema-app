@@ -26,6 +26,10 @@ final class DetailViewModel {
     /// The cast with photos, from TMDB.
     private(set) var cast: [TMDBCastMember] = []
     private(set) var localizedRuntime: Int?
+    /// Trailer, studios, age rating, countries and similar titles, from TMDB.
+    private(set) var richDetails: TMDBRichDetails?
+    /// IMDb, Rotten Tomatoes, Metacritic and Letterboxd scores (needs an MDBList key).
+    private(set) var externalRatings: [ExternalRating] = []
     /// While Arabic details are being fetched, the English logo is held back so
     /// the title doesn't flash from English to Arabic.
     private(set) var isTranslating = false
@@ -134,7 +138,31 @@ final class DetailViewModel {
     func loadExtras(addons: [AddonSource]) async {
         async let color: Void = loadTint()
         async let streams: Void = prefetchStreams(addons: addons)
-        _ = await (color, streams)
+        async let facts: Void = loadRichDetails()
+        async let ratings: Void = loadRatings()
+        _ = await (color, streams, facts, ratings)
+    }
+
+    /// The scores to show: MDBList's when available, otherwise TMDB's own.
+    var ratings: [ExternalRating] {
+        if !externalRatings.isEmpty { return externalRatings }
+        if let vote = richDetails?.voteAverage, vote > 0 { return [ExternalRating(source: .tmdb, value: vote)] }
+        return []
+    }
+
+    private func loadRichDetails() async {
+        guard richDetails == nil, let client = TMDBAccount.shared.client, let imdbID,
+              let found = try? await client.find(imdbID: imdbID),
+              let details = try? await client.richDetails(media: found.media, tmdbID: found.id, language: Appearance.shared.language.tmdbCode)
+        else { return }
+        withAnimation(Theme.Motion.spring) { richDetails = details }
+    }
+
+    private func loadRatings() async {
+        guard externalRatings.isEmpty, let client = MDBListAccount.shared.client, let imdbID,
+              let ratings = try? await client.ratings(imdbID: imdbID, isSeries: isSeries)
+        else { return }
+        withAnimation(Theme.Motion.spring) { externalRatings = ratings }
     }
 
     /// In Arabic, replaces the title, synopsis and genres with TMDB's Arabic

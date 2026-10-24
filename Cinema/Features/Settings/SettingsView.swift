@@ -90,6 +90,18 @@ struct SettingsView: View {
                         }
                     }
 
+                    NavigationLink(value: SettingsRoute.ratings) {
+                        LabeledContent {
+                            Text(MDBListAccount.shared.isConnected ? LocalizedStringKey("Connected") : "TMDB only")
+                        } label: {
+                            Label {
+                                Text("Ratings")
+                            } icon: {
+                                SettingsIcon(systemName: "star.fill", color: .yellow)
+                            }
+                        }
+                    }
+
                     NavigationLink(value: SettingsRoute.homeScreen) {
                         Label {
                             Text("Home Screen")
@@ -111,6 +123,21 @@ struct SettingsView: View {
                             }
                         }
                     }
+                }
+
+                Section {
+                    Toggle(isOn: Binding(
+                        get: { PrivacySettings.shared.privateMode },
+                        set: { PrivacySettings.shared.privateMode = $0 }
+                    )) {
+                        Label {
+                            Text("Private Viewing")
+                        } icon: {
+                            SettingsIcon(systemName: "eye.slash.fill", color: .gray)
+                        }
+                    }
+                } footer: {
+                    Text("While on, nothing you watch is added to Continue Watching or your history, and no resume positions are saved.")
                 }
 
                 Section("Stremio Account") {
@@ -159,6 +186,8 @@ struct SettingsView: View {
                     PlaybackSettingsView()
                 case .homeScreen:
                     HomeScreenSettingsView()
+                case .ratings:
+                    MDBListSettingsView()
                 case .addon(let addon):
                     AddonDetailView(addon: addon)
                 }

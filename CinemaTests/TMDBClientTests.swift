@@ -148,4 +148,45 @@ final class TMDBClientTests: XCTestCase {
         XCTAssertTrue("مرحبا".containsArabicLetters)
         XCTAssertFalse("Dark Matter".containsArabicLetters)
     }
+
+    func testRichDetailsForAMovie() async throws {
+        let http = MockHTTPClient(json: """
+        {"vote_average": 8.7, "status": "Released", "runtime": 142, "original_language": "en",
+         "production_countries": [{"iso_3166_1": "US", "name": "United States"}],
+         "production_companies": [{"id": 97, "name": "Castle Rock", "logo_path": "/c.png"}],
+         "videos": {"results": [
+            {"key": "teaser1", "site": "YouTube", "type": "Teaser"},
+            {"key": "trailer1", "site": "YouTube", "type": "Trailer", "official": false},
+            {"key": "trailer2", "site": "YouTube", "type": "Trailer", "official": true}]},
+         "release_dates": {"results": [
+            {"iso_3166_1": "DE", "release_dates": [{"certification": "12"}]},
+            {"iso_3166_1": "US", "release_dates": [{"certification": ""}, {"certification": "R"}]}]},
+         "recommendations": {"results": [{"id": 680, "title": "Pulp Fiction", "poster_path": "/p.jpg"}, {"title": "broken"}]}}
+        """)
+        let details = try await TMDBClient(token: "t", http: http).richDetails(media: .movie, tmdbID: 278, language: "ar-SA")
+
+        XCTAssertEqual(details.voteAverage, 8.7)
+        XCTAssertEqual(details.runtime, 142)
+        XCTAssertEqual(details.countries, ["US"])
+        XCTAssertEqual(details.companies.map(\.name), ["Castle Rock"])
+        XCTAssertEqual(details.trailer?.key, "trailer2")
+        XCTAssertEqual(details.trailer?.thumbnailURL?.absoluteString, "https://img.youtube.com/vi/trailer2/hqdefault.jpg")
+        XCTAssertEqual(details.certification, "R")
+        XCTAssertEqual(details.recommendations.map(\.title), ["Pulp Fiction"])
+        XCTAssertTrue(http.lastRequest!.url!.query!.contains("append_to_response=videos,release_dates,content_ratings,recommendations"))
+    }
+
+    func testRichDetailsForASeries() async throws {
+        let http = MockHTTPClient(json: """
+        {"status": "Returning Series", "episode_run_time": [54], "origin_country": ["US"], "number_of_seasons": 2,
+         "content_ratings": {"results": [{"iso_3166_1": "SA", "rating": "R15"}, {"iso_3166_1": "US", "rating": "TV-MA"}]}}
+        """)
+        let details = try await TMDBClient(token: "t", http: http).richDetails(media: .tv, tmdbID: 1, language: "en-US")
+        XCTAssertEqual(details.runtime, 54)
+        XCTAssertEqual(details.countries, ["US"])
+        XCTAssertEqual(details.certification, "R15")
+        XCTAssertEqual(details.seasonCount, 2)
+        XCTAssertNil(details.trailer)
+        XCTAssertEqual(details.media, .tv)
+    }
 }
