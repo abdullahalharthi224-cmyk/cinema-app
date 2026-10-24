@@ -131,6 +131,11 @@ struct DetailView: View {
                         .padding(.top, Theme.Spacing.xxl)
                 }
 
+                if let parts = model.collection?.parts.filter({ $0.posterPath != nil }), !parts.isEmpty {
+                    MoreLikeThisRow(heading: "Films in This Collection", media: .movie, titles: parts)
+                        .padding(.top, Theme.Spacing.xxl)
+                }
+
                 if let details = model.richDetails {
                     TitleFactsSection(details: details, isSeries: model.isSeries)
                         .padding(.horizontal, Theme.Spacing.l)

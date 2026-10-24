@@ -271,12 +271,13 @@ struct CompanyLogosRow: View {
 
 /// Titles TMDB recommends alongside this one.
 struct MoreLikeThisRow: View {
+    var heading: LocalizedStringKey = "More Like This"
     let media: TMDBMediaType
     let titles: [TMDBTitle]
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("More Like This")
+            Text(heading)
                 .font(.display(.title2))
                 .padding(.horizontal, Theme.Spacing.l)
             ScrollView(.horizontal) {

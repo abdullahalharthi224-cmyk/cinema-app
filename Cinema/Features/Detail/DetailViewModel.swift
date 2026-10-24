@@ -28,6 +28,10 @@ final class DetailViewModel {
     private(set) var localizedRuntime: Int?
     /// Trailer, studios, age rating, countries and similar titles, from TMDB.
     private(set) var richDetails: TMDBRichDetails?
+    /// The films in a collection (like a trilogy), from TMDB.
+    private(set) var collection: TMDBCollection?
+    /// Which TMDB entry this title is, worked out once and shared.
+    private var matchTask: Task<TMDBMatch?, Never>?
     /// IMDb, Rotten Tomatoes, Metacritic and Letterboxd scores (needs an MDBList key).
     private(set) var externalRatings: [ExternalRating] = []
     /// While Arabic details are being fetched, the English logo is held back so
@@ -55,7 +59,7 @@ final class DetailViewModel {
 
     /// Arabic is on and TMDB can translate this title.
     var usesArabicTitles: Bool {
-        guard Appearance.shared.language == .arabic, TMDBAccount.shared.isConnected, imdbID != nil else { return false }
+        guard Appearance.shared.language == .arabic, TMDBAccount.shared.isConnected else { return false }
         return !translationFinished || localizedTitle != nil
     }
 
@@ -150,16 +154,74 @@ final class DetailViewModel {
         return []
     }
 
+    /// Finds this title on TMDB: directly from its IDs when the addon uses IMDb
+    /// or TMDB ones, otherwise by searching for its name and year.
+    private func tmdbMatch() async -> TMDBMatch? {
+        if let matchTask { return await matchTask.value }
+        let task = Task { await resolveMatch() }
+        matchTask = task
+        return await task.value
+    }
+
+    private func resolveMatch() async -> TMDBMatch? {
+        guard let client = TMDBAccount.shared.client else { return nil }
+        let type = meta?.type ?? route.type
+        switch TMDBMatcher.hint(id: route.id, type: type, imdbID: meta?.imdbID, tmdbID: meta?.tmdbID) {
+        case .imdb(let id):
+            if let found = try? await client.find(imdbID: id) { return .title(found.media, found.id) }
+        case .tmdb(let media, let id):
+            return .title(media, id)
+        case .collection(let id):
+            return .collection(id)
+        case nil:
+            break
+        }
+
+        // No usable ID: search by name, accepting only a result with the same name and year.
+        let name = meta?.name.nonEmpty ?? route.name
+        let year = TMDBMatcher.year(from: meta?.releaseInfo ?? route.releaseInfo)
+        if TMDBMatcher.isCollection(id: route.id, type: type, name: name) {
+            let results = (try? await client.searchCollections(query: name, language: "en-US")) ?? []
+            if let match = TMDBMatcher.bestMatch(in: results, name: name, year: nil, isCollection: true) {
+                return .collection(match.id)
+            }
+        }
+        let preferred = TMDBMatcher.preferredMedia(type: type)
+        for media in [preferred, preferred == .movie ? .tv : .movie] {
+            let results = (try? await client.search(media: media, query: name, language: "en-US")) ?? []
+            if let match = TMDBMatcher.bestMatch(in: results, name: name, year: year) {
+                return .title(media, match.id)
+            }
+        }
+        return nil
+    }
+
+    /// The IMDb ID, from the addon's ID or else through TMDB.
+    private func resolvedIMDbID() async -> String? {
+        if let imdbID { return imdbID }
+        if let id = meta?.imdbID, id.hasPrefix("tt") { return id }
+        guard case .title(let media, let id) = await tmdbMatch(), let client = TMDBAccount.shared.client else { return nil }
+        return try? await client.imdbID(media: media, tmdbID: id)
+    }
+
     private func loadRichDetails() async {
-        guard richDetails == nil, let client = TMDBAccount.shared.client, let imdbID,
-              let found = try? await client.find(imdbID: imdbID),
-              let details = try? await client.richDetails(media: found.media, tmdbID: found.id, language: Appearance.shared.language.tmdbCode)
-        else { return }
-        withAnimation(Theme.Motion.spring) { richDetails = details }
+        guard richDetails == nil, collection == nil, let client = TMDBAccount.shared.client else { return }
+        let language = Appearance.shared.language.tmdbCode
+        switch await tmdbMatch() {
+        case .title(let media, let id):
+            guard let details = try? await client.richDetails(media: media, tmdbID: id, language: language) else { return }
+            withAnimation(Theme.Motion.spring) { richDetails = details }
+        case .collection(let id):
+            guard let found = try? await client.collection(id: id, language: language) else { return }
+            withAnimation(Theme.Motion.spring) { collection = found }
+        case nil:
+            return
+        }
     }
 
     private func loadRatings() async {
-        guard externalRatings.isEmpty, let client = MDBListAccount.shared.client, let imdbID,
+        guard externalRatings.isEmpty, let client = MDBListAccount.shared.client,
+              let imdbID = await resolvedIMDbID(),
               let ratings = try? await client.ratings(imdbID: imdbID, isSeries: isSeries)
         else { return }
         withAnimation(Theme.Motion.spring) { externalRatings = ratings }
@@ -169,8 +231,7 @@ final class DetailViewModel {
     /// versions (TMDB itself falls back to English when no Arabic synopsis exists).
     func loadTranslation() async {
         guard !translationFinished, !isTranslating,
-              let client = TMDBAccount.shared.client,
-              let imdbID
+              let client = TMDBAccount.shared.client
         else {
             translationFinished = true
             return
@@ -181,7 +242,17 @@ final class DetailViewModel {
             isTranslating = false
             translationFinished = true
         }
-        guard let found = try? await client.find(imdbID: imdbID) else { return }
+        let match = await tmdbMatch()
+        if case .collection(let id) = match {
+            guard language == .arabic,
+                  let details = try? await client.collection(id: id, language: AppLanguage.arabic.tmdbCode)
+            else { return }
+            // The addon's logo stays; only the synopsis is translated.
+            withAnimation(Theme.Motion.spring) { localizedOverview = details.overview?.nonEmpty }
+            return
+        }
+        guard case .title(let media, let tmdbID) = match else { return }
+        let found = (media: media, id: tmdbID)
 
         // Cast photos in any language; titles and synopses only need translating in Arabic.
         async let castRequest = try? client.credits(media: found.media, tmdbID: found.id, language: language.tmdbCode)
