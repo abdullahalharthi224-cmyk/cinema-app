@@ -19,7 +19,10 @@ struct PlatformView: View {
         case loading, loaded, failed(String)
     }
 
-    private let columns = [GridItem(.adaptive(minimum: 104, maximum: 160), spacing: Theme.Spacing.m)]
+    private var columns: [GridItem] {
+        let size = HomeCustomization.shared
+        return [GridItem(.adaptive(minimum: size.width(104), maximum: size.width(160)), spacing: Theme.Spacing.m)]
+    }
 
     var body: some View {
         ScrollView {
@@ -182,7 +185,7 @@ struct TMDBPosterCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PosterArtwork(url: TMDBClient.imageURL(title.posterPath, size: "w342"), title: title.title)
+            PosterArtwork(url: TMDBClient.imageURL(title.posterPath, size: "w342"), title: title.title, rating: title.rating)
                 .zoomSource(id: transitionID, in: namespace)
             Text(title.title)
                 .font(.footnote.weight(.semibold))
@@ -208,7 +211,10 @@ struct TMDBTitleLoaderView: View {
     var body: some View {
         Group {
             if let imdbID {
-                DetailView(route: metaRoute(imdbID: imdbID))
+                let detailRoute = metaRoute(imdbID: imdbID)
+                KidsGated(id: detailRoute.id, type: detailRoute.type) {
+                    DetailView(route: detailRoute)
+                }
             } else if let errorMessage {
                 ContentUnavailableView {
                     Label("Can't Open This Title", systemImage: "exclamationmark.triangle")

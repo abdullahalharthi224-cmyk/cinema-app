@@ -14,10 +14,26 @@ struct LibraryView: View {
 
     private typealias Filter = LibraryFilter
 
+    /// In a kids profile, the downloaded titles rated for its age (checked as the Library opens).
+    @State private var kidsAllowedDownloads: Set<String> = []
+
     /// Downloads come from the download manager, the one source of truth for them.
+    /// Kids profiles only see the ones that suit their age.
     private var downloads: [DownloadItem] {
         _ = DownloadManager.shared.revision
-        return DownloadManager.shared.allItems().reversed()
+        let all = DownloadManager.shared.allItems().reversed()
+        guard ProfileSession.shared.isKids else { return Array(all) }
+        return all.filter { kidsAllowedDownloads.contains($0.metaID) }
+    }
+
+    private func checkKidsDownloads() async {
+        guard let maxAge = ProfileSession.shared.kidsMaxAge else { return }
+        var seen = Set<String>()
+        let titles = DownloadManager.shared.allItems()
+            .map { (id: $0.metaID, type: $0.type) }
+            .filter { seen.insert($0.id).inserted }
+        let allowed = await KidsRatings.shared.filter(titles, maxAge: maxAge) { ($0.id, $0.type) }
+        kidsAllowedDownloads = Set(allowed.map { $0.id })
     }
 
     /// The chosen section, or everything when that section has nothing in it
@@ -46,10 +62,15 @@ struct LibraryView: View {
         return Dictionary(mine.map { ($0.videoID, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
-    /// Three even columns, every card the same size.
-    private let columns = Array(
-        repeating: GridItem(.flexible(), spacing: Theme.Spacing.m, alignment: .top), count: 3
-    )
+    /// Even columns, every card the same size: four, three or two by poster size.
+    private var columns: [GridItem] {
+        let count = switch HomeCustomization.shared.posterSize {
+        case .small: 4
+        case .medium: 3
+        case .large: 2
+        }
+        return Array(repeating: GridItem(.flexible(), spacing: Theme.Spacing.m, alignment: .top), count: count)
+    }
 
     var body: some View {
         NavigationStack {
@@ -137,6 +158,9 @@ struct LibraryView: View {
             }
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle("Library")
+            .task(id: "\(ProfileSession.shared.kidsMaxAge ?? -1)|\(DownloadManager.shared.revision)") {
+                await checkKidsDownloads()
+            }
             .playbackLauncher(launcher)
             .contentDestinations()
         }

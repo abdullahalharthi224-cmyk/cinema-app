@@ -81,6 +81,26 @@ struct MetaPreview: Decodable, Hashable, Sendable, Identifiable {
     }
 }
 
+extension MetaPreview {
+    init(
+        id: String, type: String, name: String, poster: String? = nil, background: String? = nil,
+        logo: String? = nil, description: String? = nil, releaseInfo: String? = nil,
+        imdbRating: String? = nil, genres: [String] = []
+    ) {
+        self.id = id
+        self.type = type
+        self.name = name
+        self.poster = poster
+        posterShape = nil
+        self.background = background
+        self.logo = logo
+        self.description = description
+        self.releaseInfo = releaseInfo
+        self.imdbRating = imdbRating
+        self.genres = genres
+    }
+}
+
 /// The full detail of a title (`meta` resource).
 struct MetaItem: Decodable, Hashable, Sendable, Identifiable {
     var id: String

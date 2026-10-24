@@ -39,6 +39,9 @@ targets:
         PRODUCT_NAME: Cinema
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # The styles under Settings → Appearance → App Icon.
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon-Light AppIcon-Dark AppIcon-Gold AppIcon-Neon AppIcon-Terminal AppIcon-Retro AppIcon-Aqua"
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: NO
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_FILE: Cinema/Resources/Info.plist
     info:
@@ -69,6 +72,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
         NSLocalNetworkUsageDescription: Cinema connects to addons you host on your local network.
+        NSFaceIDUsageDescription: Cinema uses Face ID to unlock locked profiles.
 
   CinemaTests:
     type: bundle.unit-test

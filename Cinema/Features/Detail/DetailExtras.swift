@@ -286,7 +286,7 @@ struct MoreLikeThisRow: View {
                         let transitionID = "similar|\(media.rawValue)|\(title.id)"
                         NavigationLink(value: TMDBTitleRoute(media: media, title: title, transitionID: transitionID)) {
                             TMDBPosterCard(title: title, transitionID: transitionID)
-                                .frame(width: 118)
+                                .frame(width: HomeCustomization.shared.width(118))
                         }
                         .buttonStyle(.cardPress)
                     }

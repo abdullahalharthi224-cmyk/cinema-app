@@ -729,7 +729,8 @@ final class PlayerViewModel {
                nextCountdown == nil, !isLoadingNext, sleepTimer != .endOfEpisode {
                 startCountdown()
             }
-            if session.next == nil, session.type == "movie", suggestionsTask == nil {
+            // Suggestions aren't age-checked, so kids profiles don't get them.
+            if session.next == nil, session.type == "movie", suggestionsTask == nil, !ProfileSession.shared.isKids {
                 loadSuggestions()
             }
         } else if nextCountdown != nil {

@@ -29,12 +29,33 @@ struct BrowseCategory: Hashable, Identifiable {
         .init(id: "family", titleKey: "Family", media: .movie, filters: ["with_genres": "10751"], colors: ("#FF9F5A", "#B5541A"), symbol: "figure.2.and.child.holdinghands"),
     ]
 
-    /// One page of the category's titles, most popular first.
+    /// Categories for kids profiles: every film is limited by its certificate, and series are checked one by one.
+    static let kids: [BrowseCategory] = [
+        .init(id: "kids.animation", titleKey: "Animation", media: .movie, filters: ["with_genres": "16"], colors: ("#FF9F5A", "#C2410C"), symbol: "sparkles"),
+        .init(id: "kids.shows", titleKey: "Kids Shows", media: .tv, filters: ["with_genres": "10762"], colors: ("#3E9BFF", "#1B4D8C"), symbol: "balloon.2.fill"),
+        .init(id: "kids.family", titleKey: "Family", media: .movie, filters: ["with_genres": "10751"], colors: ("#3DBE8B", "#17644A"), symbol: "figure.2.and.child.holdinghands"),
+        .init(id: "kids.cartoons", titleKey: "Cartoons", media: .tv, filters: ["with_genres": "16", "without_genres": "18,80,10765"], colors: ("#FF6FA8", "#9B2C6B"), symbol: "star.fill"),
+        .init(id: "kids.adventure", titleKey: "Adventure", media: .movie, filters: ["with_genres": "12"], colors: ("#F5B83D", "#B9700E"), symbol: "map.fill"),
+        .init(id: "kids.fantasy", titleKey: "Fantasy", media: .movie, filters: ["with_genres": "14"], colors: ("#8E6CEF", "#3E2A8C"), symbol: "wand.and.stars"),
+    ]
+
+    /// One page of the category's titles, most popular first. In a kids
+    /// profile, films are limited to the age's certificate and series are age-checked.
     func page(_ number: Int, client: TMDBClient) async throws -> TMDBPage {
-        try await client.discover(
+        var extra = filters
+        let maxAge = ProfileSession.shared.kidsMaxAge
+        if let maxAge, media == .movie {
+            extra["certification_country"] = "US"
+            extra["certification.lte"] = AgeRating.usMovieCertificate(forMaxAge: maxAge)
+        }
+        var page = try await client.discover(
             media: media, providers: nil, region: TMDBRichDetails.providerRegion,
-            language: AppLanguage.current.tmdbCode, page: number, extra: filters
+            language: AppLanguage.current.tmdbCode, page: number, extra: extra
         )
+        if let maxAge, media == .tv {
+            page.results = await KidsRatings.shared.filter(page.results, media: .tv, maxAge: maxAge)
+        }
+        return page
     }
 }
 
@@ -106,7 +127,10 @@ struct CategoryView: View {
     @State private var isLoading = false
     @State private var failure: String?
 
-    private let columns = [GridItem(.adaptive(minimum: 104, maximum: 160), spacing: Theme.Spacing.m)]
+    private var columns: [GridItem] {
+        let size = HomeCustomization.shared
+        return [GridItem(.adaptive(minimum: size.width(104), maximum: size.width(160)), spacing: Theme.Spacing.m)]
+    }
 
     var body: some View {
         ScrollView {

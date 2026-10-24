@@ -52,6 +52,18 @@ struct SettingsView: View {
                             }
                         }
                     }
+
+                    NavigationLink(value: SettingsRoute.security) {
+                        LabeledContent {
+                            Text(SecuritySettings.shared.hasPasscode ? LocalizedStringKey("On") : "Off")
+                        } label: {
+                            Label {
+                                Text("Passcode & Face ID")
+                            } icon: {
+                                SettingsIcon(systemName: "faceid", color: .green)
+                            }
+                        }
+                    }
                 }
 
                 Section {
@@ -220,6 +232,10 @@ struct SettingsView: View {
                     DownloadSettingsView()
                 case .backup:
                     BackupSettingsView()
+                case .appIcon:
+                    AppIconView()
+                case .security:
+                    SecuritySettingsView()
                 case .addon(let addon):
                     AddonDetailView(addon: addon)
                 }

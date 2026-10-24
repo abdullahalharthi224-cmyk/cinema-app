@@ -15,6 +15,8 @@ final class HomeViewModel {
 
     private let service = ContentService()
     private var loadedRowIDs: [String] = []
+    /// A kids profile's age limit: rows then only keep titles rated for it.
+    private var kidsMaxAge: Int?
 
     /// Rows worth showing on Home. Catalogs that came back empty or failed are
     /// left out (the addon check in Settings explains failures), and so are
@@ -51,6 +53,13 @@ final class HomeViewModel {
         return nil
     }
 
+    /// Hero titles from one chosen addon row, when it has artwork.
+    func hero(fromRow id: String) -> (items: [MetaPreview], addonID: String)? {
+        guard let row = rows.first(where: { $0.id == id }), case .loaded(let items) = states[row.id] else { return nil }
+        let withArt = items.filter { $0.background != nil || $0.poster != nil }
+        return withArt.isEmpty ? nil : (Array(withArt.prefix(6)), row.addon.id)
+    }
+
     /// The "Top 10" row: the first popular movie catalog, falling back to any loaded row.
     var topTen: (reference: CatalogReference, items: [MetaPreview])? {
         let loaded = rows.compactMap { row -> (CatalogReference, [MetaPreview])? in
@@ -72,12 +81,15 @@ final class HomeViewModel {
     }
 
     /// Loads every row in parallel. Rows already loaded are kept unless `force` is set.
-    func load(addons: [AddonSource], force: Bool = false) async {
+    func load(addons: [AddonSource], kidsMaxAge: Int? = nil, force: Bool = false) async {
         let rows = addons.flatMap(\.browsableCatalogs)
-        let ids = rows.map(\.id)
+        let ids = rows.map(\.id) + ["kids:\(kidsMaxAge.map(String.init) ?? "-")"]
         guard force || ids != loadedRowIDs else { return }
+        let profileChanged = kidsMaxAge != self.kidsMaxAge
         loadedRowIDs = ids
+        self.kidsMaxAge = kidsMaxAge
         self.rows = rows
+        if profileChanged { states = [:] }
 
         let toLoad = rows.filter { row in
             switch states[row.id] {
@@ -97,11 +109,16 @@ final class HomeViewModel {
             states[row.id] = .loading
         }
         let service = service
+        let kidsMaxAge = kidsMaxAge
         await withTaskGroup(of: (String, RowState).self) { group in
             for row in rows {
                 group.addTask {
                     do {
-                        return (row.id, .loaded(try await service.catalog(row)))
+                        var items = try await service.catalog(row)
+                        if let kidsMaxAge {
+                            items = await KidsRatings.shared.filter(Array(items.prefix(40)), maxAge: kidsMaxAge) { ($0.id, $0.type) }
+                        }
+                        return (row.id, .loaded(items))
                     } catch {
                         return (row.id, .failed(error.localizedDescription))
                     }

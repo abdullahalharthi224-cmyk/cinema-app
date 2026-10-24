@@ -1,0 +1,16 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSFaceIDUsageDescription" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يستخدم Cinema بصمة الوجه لفتح الملفات المقفلة." } }
+      }
+    },
+    "NSLocalNetworkUsageDescription" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يتصل Cinema بالإضافات التي تستضيفها على شبكتك المحلية." } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

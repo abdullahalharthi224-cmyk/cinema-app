@@ -157,7 +157,7 @@ struct BecauseYouWatchedRow: View {
                         let transitionID = "because|\(row.id)|\(title.id)"
                         NavigationLink(value: TMDBTitleRoute(media: row.media, title: title, transitionID: transitionID)) {
                             TMDBPosterCard(title: title, transitionID: transitionID)
-                                .frame(width: 118)
+                                .frame(width: HomeCustomization.shared.width(118))
                         }
                         .buttonStyle(.cardPress)
                     }

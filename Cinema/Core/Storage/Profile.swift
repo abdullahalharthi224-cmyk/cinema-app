@@ -14,6 +14,14 @@ final class Profile {
     var colorHex: String
     var sortIndex: Int
     var createdAt: Date
+    /// Needs Face ID or the passcode to open.
+    var isLocked: Bool = false
+    /// A kids profile only shows titles rated for `kidsMaxAge` and below.
+    var isKids: Bool = false
+    /// 0 (all ages), 7 or 13.
+    var kidsMaxAge: Int = 7
+
+    static let kidsAges = [0, 7, 13]
 
     init(name: String, symbol: String, colorHex: String, sortIndex: Int) {
         id = UUID()
@@ -40,13 +48,37 @@ final class Profile {
 final class ProfileSession {
     static let shared = ProfileSession()
     private static let key = "profile.activeID"
+    private static let kidsKey = "profile.activeKidsMaxAge"
 
     var activeID: UUID? {
         didSet { UserDefaults.standard.set(activeID?.uuidString, forKey: Self.key) }
     }
 
+    /// The active profile's age limit when it's a kids profile, otherwise nil.
+    /// Kept here so every screen can check it without a database query.
+    private(set) var kidsMaxAge: Int? {
+        didSet { UserDefaults.standard.set(kidsMaxAge, forKey: Self.kidsKey) }
+    }
+
+    var isKids: Bool { kidsMaxAge != nil }
+
     private init() {
-        activeID = UserDefaults.standard.string(forKey: Self.key).flatMap(UUID.init(uuidString:))
+        let defaults = UserDefaults.standard
+        activeID = defaults.string(forKey: Self.key).flatMap(UUID.init(uuidString:))
+        kidsMaxAge = defaults.object(forKey: Self.kidsKey) as? Int
+    }
+
+    /// Switches to a profile (and its kids limit, if any).
+    func activate(_ profile: Profile) {
+        activeID = profile.id
+        sync(profile)
+    }
+
+    /// Picks up changes to the active profile's kids settings.
+    func sync(_ profile: Profile?) {
+        guard let profile, profile.id == activeID else { return }
+        let limit: Int? = profile.isKids ? profile.kidsMaxAge : nil
+        if kidsMaxAge != limit { kidsMaxAge = limit }
     }
 }
 
@@ -72,6 +104,7 @@ enum ProfileStore {
         if ProfileSession.shared.activeID != active.id {
             ProfileSession.shared.activeID = active.id
         }
+        ProfileSession.shared.sync(active)
 
         // Adopt history recorded before profiles existed.
         let orphans = (try? context.fetch(FetchDescriptor<WatchHistoryItem>(predicate: #Predicate { $0.profileID == nil }))) ?? []
@@ -107,8 +140,8 @@ enum ProfileStore {
             context.delete(item)
         }
         context.delete(profile)
-        if ProfileSession.shared.activeID == id {
-            ProfileSession.shared.activeID = profiles.first { $0.id != id }?.id
+        if ProfileSession.shared.activeID == id, let next = profiles.first(where: { $0.id != id }) {
+            ProfileSession.shared.activate(next)
         }
         try? context.save()
     }

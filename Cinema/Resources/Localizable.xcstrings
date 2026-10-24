@@ -21,6 +21,16 @@
         }
       }
     },
+    "%@ of %@ digits entered": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أُدخل %@ من %@ أرقام"
+          }
+        }
+      }
+    },
     "%@ used · %@ free": {
       "localizations": {
         "ar": {
@@ -91,12 +101,32 @@
         }
       }
     },
+    "%lld of %lld digits entered": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أُدخل %lld من %lld أرقام"
+          }
+        }
+      }
+    },
     "%lld options": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld خيارات"
+          }
+        }
+      }
+    },
+    "%lld+": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld"
           }
         }
       }
@@ -141,6 +171,16 @@
         }
       }
     },
+    "A 4-digit passcode, with Face ID, to lock Cinema, lock single profiles and keep kids profiles safe.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رمز من ٤ أرقام مع Face ID لقفل Cinema أو قفل ملفات معيّنة وحماية ملفات الأطفال."
+          }
+        }
+      }
+    },
     "A backup keeps your profiles, library and addons safe if you ever reinstall Cinema.": {
       "localizations": {
         "ar": {
@@ -157,6 +197,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "ملف 1080p جيد بحجم معقول. ملفات 4K قد تكون أكبر بعدة أضعاف."
+          }
+        }
+      }
+    },
+    "A grown-up's passcode is needed to leave the kids profile.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الخروج من ملف الأطفال يحتاج رمز أحد الكبار."
+          }
+        }
+      }
+    },
+    "A kids profile shows only titles suitable for the age you choose.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملف الأطفال يعرض فقط الأعمال المناسبة للعمر الذي تختاره."
           }
         }
       }
@@ -361,12 +421,42 @@
         }
       }
     },
+    "Adventure": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مغامرة"
+          }
+        }
+      }
+    },
+    "Age Limit": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حد العمر"
+          }
+        }
+      }
+    },
     "Age Rating": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "التصنيف العمري"
+          }
+        }
+      }
+    },
+    "Age Ratings Need TMDB": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التصنيف العمري يحتاج TMDB"
           }
         }
       }
@@ -401,6 +491,16 @@
         }
       }
     },
+    "All Ages": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كل الأعمار"
+          }
+        }
+      }
+    },
     "All Links": {
       "localizations": {
         "ar": {
@@ -431,6 +531,26 @@
         }
       }
     },
+    "Animated Movies": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفلام رسوم متحركة"
+          }
+        }
+      }
+    },
+    "Animation": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رسوم متحركة"
+          }
+        }
+      }
+    },
     "Anime": {
       "localizations": {
         "ar": {
@@ -441,12 +561,32 @@
         }
       }
     },
+    "App Icon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أيقونة التطبيق"
+          }
+        }
+      }
+    },
     "Appearance": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "المظهر"
+          }
+        }
+      }
+    },
+    "Aqua Glass": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "زجاج الأكوا"
           }
         }
       }
@@ -507,6 +647,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "المسار الصوتي"
+          }
+        }
+      }
+    },
+    "Automatic": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تلقائي"
           }
         }
       }
@@ -661,6 +811,16 @@
         }
       }
     },
+    "Brushed gold, black lacquer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ذهب مصقول بلمسة سوداء لامعة"
+          }
+        }
+      }
+    },
     "Can't Open This Title": {
       "localizations": {
         "ar": {
@@ -721,6 +881,16 @@
         }
       }
     },
+    "Cartoons": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كرتون"
+          }
+        }
+      }
+    },
     "Cast": {
       "localizations": {
         "ar": {
@@ -747,6 +917,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "شمبانيا"
+          }
+        }
+      }
+    },
+    "Change Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تغيير الرمز"
           }
         }
       }
@@ -851,6 +1031,36 @@
         }
       }
     },
+    "Choose a New Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختر رمزًا جديدًا"
+          }
+        }
+      }
+    },
+    "Cinema Is Locked": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cinema مقفل"
+          }
+        }
+      }
+    },
+    "Cinema and locked profiles will open without asking, and anyone can leave kids profiles.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سيفتح Cinema والملفات المقفلة دون سؤال، ويستطيع أي أحد الخروج من ملفات الأطفال."
+          }
+        }
+      }
+    },
     "Cinema plays what your addons provide. Import your Stremio addons or add one by link to get started.": {
       "localizations": {
         "ar": {
@@ -931,6 +1141,16 @@
         }
       }
     },
+    "Confirm Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أكّد الرمز"
+          }
+        }
+      }
+    },
     "Connect to the internet to browse. Your downloads play without a connection.": {
       "localizations": {
         "ar": {
@@ -977,6 +1197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "مرجاني"
+          }
+        }
+      }
+    },
+    "Couldn't Change the Icon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر تغيير الأيقونة"
           }
         }
       }
@@ -1091,6 +1321,16 @@
         }
       }
     },
+    "Create a Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أنشئ رمزًا"
+          }
+        }
+      }
+    },
     "Crime Series": {
       "localizations": {
         "ar": {
@@ -1127,6 +1367,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "سينمائي داكن"
+          }
+        }
+      }
+    },
+    "Daylight": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ضوء النهار"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حذف"
           }
         }
       }
@@ -1461,6 +1721,16 @@
         }
       }
     },
+    "Enter Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أدخل الرمز"
+          }
+        }
+      }
+    },
     "Episode Length": {
       "localizations": {
         "ar": {
@@ -1511,12 +1781,42 @@
         }
       }
     },
+    "Face ID Isn't Available": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face ID غير متاح"
+          }
+        }
+      }
+    },
     "Family": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "عائلي"
+          }
+        }
+      }
+    },
+    "Family Movies": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفلام عائلية"
+          }
+        }
+      }
+    },
+    "Fantasy": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خيال"
           }
         }
       }
@@ -1601,12 +1901,32 @@
         }
       }
     },
+    "Forgot Passcode?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نسيت الرمز؟"
+          }
+        }
+      }
+    },
     "Forward 10 seconds": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "تقديم 10 ثوانٍ"
+          }
+        }
+      }
+    },
+    "Four digits you'll remember. It's never included in backups.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أربعة أرقام تتذكرها. لا يُحفظ في النسخ الاحتياطية أبدًا."
           }
         }
       }
@@ -1721,6 +2041,16 @@
         }
       }
     },
+    "Glossy glass and water blue": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "زجاج لامع بلون الماء"
+          }
+        }
+      }
+    },
     "Go to Downloads": {
       "localizations": {
         "ar": {
@@ -1741,12 +2071,52 @@
         }
       }
     },
+    "Gold on black, the classic look": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ذهبي على أسود، الشكل الكلاسيكي"
+          }
+        }
+      }
+    },
+    "Green Code": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الشيفرة الخضراء"
+          }
+        }
+      }
+    },
+    "Green on black, faint lines of code": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أخضر على أسود مع سطور كود خفيفة"
+          }
+        }
+      }
+    },
     "Health": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الفحص"
+          }
+        }
+      }
+    },
+    "Hero Source": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مصدر الواجهة الكبيرة"
           }
         }
       }
@@ -1911,6 +2281,16 @@
         }
       }
     },
+    "Keep at least one grown-up profile so the passcode can be used to leave kids profiles.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أبقِ ملفًا واحدًا على الأقل للكبار حتى يمكن الخروج من ملفات الأطفال بالرمز."
+          }
+        }
+      }
+    },
     "Keep the file somewhere safe, like iCloud Drive.": {
       "localizations": {
         "ar": {
@@ -1937,6 +2317,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "المفتاح محفوظ"
+          }
+        }
+      }
+    },
+    "Kids": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأطفال"
+          }
+        }
+      }
+    },
+    "Kids Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملف أطفال"
+          }
+        }
+      }
+    },
+    "Kids Shows": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "برامج أطفال"
+          }
+        }
+      }
+    },
+    "Kids profiles check every title's age rating on TMDB. Connect TMDB in a grown-up profile's Settings.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملفات الأطفال تتحقق من التصنيف العمري لكل عمل عبر TMDB. اربط TMDB من إعدادات ملف أحد الكبار."
           }
         }
       }
@@ -2091,6 +2511,36 @@
         }
       }
     },
+    "Lock Cinema": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قفل Cinema"
+          }
+        }
+      }
+    },
+    "Lock Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قفل الملف"
+          }
+        }
+      }
+    },
+    "Look": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المظهر"
+          }
+        }
+      }
+    },
     "Looking for streams…": {
       "localizations": {
         "ar": {
@@ -2221,6 +2671,16 @@
         }
       }
     },
+    "Midnight": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "منتصف الليل"
+          }
+        }
+      }
+    },
     "More": {
       "localizations": {
         "ar": {
@@ -2307,6 +2767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تحتاج إعداداً — اضبطها من موقعها (debrid أو مفتاح API)."
+          }
+        }
+      }
+    },
+    "Neon Glow": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وهج النيون"
           }
         }
       }
@@ -2691,6 +3161,16 @@
         }
       }
     },
+    "Not for This Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "غير متاح لهذا الملف"
+          }
+        }
+      }
+    },
     "Not responding — the server may be down or too slow.": {
       "localizations": {
         "ar": {
@@ -2771,12 +3251,32 @@
         }
       }
     },
+    "On": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مفعّل"
+          }
+        }
+      }
+    },
     "Only gives torrent links — needs a debrid service to play here.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "تعطي روابط تورنت فقط — تحتاج خدمة debrid لتعمل هنا."
+          }
+        }
+      }
+    },
+    "Only titles rated for this profile's age.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فقط الأعمال المصنّفة لعمر هذا الملف."
           }
         }
       }
@@ -2811,12 +3311,32 @@
         }
       }
     },
+    "Opening this profile needs Face ID or your passcode.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح هذا الملف يحتاج Face ID أو الرمز."
+          }
+        }
+      }
+    },
     "Option %lld": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "خيار %lld"
+          }
+        }
+      }
+    },
+    "Original": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأصلي"
           }
         }
       }
@@ -2847,6 +3367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "أخرى"
+          }
+        }
+      }
+    },
+    "Passcode & Face ID": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الرمز و Face ID"
           }
         }
       }
@@ -2907,6 +3437,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الصورة داخل الصورة"
+          }
+        }
+      }
+    },
+    "Pink and orange glow on black": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "توهّج وردي وبرتقالي على أسود"
           }
         }
       }
@@ -3091,6 +3631,16 @@
         }
       }
     },
+    "Poster Size": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حجم البوستر"
+          }
+        }
+      }
+    },
     "Prefer Instant Links": {
       "localizations": {
         "ar": {
@@ -3181,6 +3731,16 @@
         }
       }
     },
+    "Purple and pink, sunset grid": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بنفسجي ووردي مع شبكة الغروب"
+          }
+        }
+      }
+    },
     "Quality": {
       "localizations": {
         "ar": {
@@ -3197,6 +3757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "التقييمات"
+          }
+        }
+      }
+    },
+    "Ratings on Posters": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التقييم على البوسترات"
           }
         }
       }
@@ -3361,6 +3931,16 @@
         }
       }
     },
+    "Reset your Cinema passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعادة تعيين رمز Cinema"
+          }
+        }
+      }
+    },
     "Response time: %lld ms": {
       "localizations": {
         "ar": {
@@ -3441,6 +4021,16 @@
         }
       }
     },
+    "Retro Sunset": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "غروب الثمانينات"
+          }
+        }
+      }
+    },
     "Retry": {
       "localizations": {
         "ar": {
@@ -3477,6 +4067,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "جمهور Rotten Tomatoes"
+          }
+        }
+      }
+    },
+    "Rows": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصفوف"
+          }
+        }
+      }
+    },
+    "Royal Gold": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ذهب ملكي"
           }
         }
       }
@@ -3661,6 +4271,16 @@
         }
       }
     },
+    "Shows only titles rated for this age on TMDB; titles without a rating are hidden. No Settings or addons, and leaving needs your passcode.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعرض فقط الأعمال المصنّفة لهذا العمر في TMDB، وتُخفى الأعمال بلا تصنيف. بدون إعدادات أو إضافات، والخروج يحتاج رمزك."
+          }
+        }
+      }
+    },
     "Sign In & Import": {
       "localizations": {
         "ar": {
@@ -3737,6 +4357,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "فضي"
+          }
+        }
+      }
+    },
+    "Simple and bright": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بسيط وفاتح"
+          }
+        }
+      }
+    },
+    "Simple and dark": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بسيط وداكن"
           }
         }
       }
@@ -4291,6 +4931,16 @@
         }
       }
     },
+    "The hero is the large artwork at the top of Home. Automatic uses the first row with artwork.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الواجهة الكبيرة هي الصور الكبيرة أعلى الرئيسية. «تلقائي» يستخدم أول صف فيه صور."
+          }
+        }
+      }
+    },
     "The key works.": {
       "localizations": {
         "ar": {
@@ -4307,6 +4957,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "ملف الإضافة يعمل، لكن جلب الروابط فشل."
+          }
+        }
+      }
+    },
+    "The passcode can only be reset with Face ID. Turn on Face ID for this iPhone in the Settings app, then try again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا يمكن إعادة تعيين الرمز إلا عبر Face ID. فعّل Face ID من تطبيق الإعدادات ثم حاول مرة أخرى."
           }
         }
       }
@@ -4457,6 +5117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "هذا العمل ليس له معرّف IMDb، لذلك لا تستطيع الإضافات إيجاد روابط له."
+          }
+        }
+      }
+    },
+    "This title isn't rated for this kids profile's age.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا العمل غير مصنّف لعمر ملف الأطفال هذا."
           }
         }
       }
@@ -4671,12 +5341,42 @@
         }
       }
     },
+    "Turn Passcode Off": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إيقاف الرمز"
+          }
+        }
+      }
+    },
+    "Turn Passcode On": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تفعيل الرمز"
+          }
+        }
+      }
+    },
     "Turn on a subtitle first, then come back here to sync it.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "شغّل ترجمة أولًا، ثم ارجع هنا لمزامنتها."
+          }
+        }
+      }
+    },
+    "Turn the passcode off?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إيقاف الرمز؟"
           }
         }
       }
@@ -4707,6 +5407,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "الحجم غير معروف"
+          }
+        }
+      }
+    },
+    "Unlock %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح «%@»"
+          }
+        }
+      }
+    },
+    "Unlock Cinema": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح Cinema"
+          }
+        }
+      }
+    },
+    "Unlock to Change": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "افتح القفل للتعديل"
           }
         }
       }
@@ -4757,6 +5487,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "استخدم مشغّل أبل عند الإمكان"
+          }
+        }
+      }
+    },
+    "Use Face ID": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدام Face ID"
+          }
+        }
+      }
+    },
+    "Use Face ID or enter your passcode.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدم Face ID أو أدخل رمزك."
+          }
+        }
+      }
+    },
+    "Use Optic ID": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدام Optic ID"
+          }
+        }
+      }
+    },
+    "Use Touch ID": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدام Touch ID"
           }
         }
       }
@@ -4887,6 +5657,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "مرحباً بك في Cinema"
+          }
+        }
+      }
+    },
+    "When Cinema is locked, it asks every time it opens. To lock just one profile, open Who's Watching → Edit. Leaving a kids profile always needs the passcode itself.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عند قفل Cinema يطلب الفتح في كل مرة. لقفل ملف واحد فقط افتح «من يشاهد؟» ← تعديل. الخروج من ملف الأطفال يحتاج الرمز نفسه دائمًا."
           }
         }
       }
@@ -5027,6 +5807,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تُستخدم كلمة المرور لتسجيل الدخول فقط ولا تُحفظ أبداً. يحتفظ Cinema بمفتاح جلسة آمن في سلسلة المفاتيح (Keychain)."
+          }
+        }
+      }
+    },
+    "iOS confirms the change with a short message.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يؤكد iOS التغيير برسالة قصيرة."
           }
         }
       }

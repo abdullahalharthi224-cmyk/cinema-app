@@ -19,12 +19,12 @@ enum PosterShape {
         }
     }
 
-    /// Card width in a horizontal row.
+    /// Card width in a horizontal row, at the poster size chosen in Settings.
     var rowWidth: CGFloat {
         switch self {
-        case .poster: return 128
-        case .landscape: return 250
-        case .square: return 150
+        case .poster: return HomeCustomization.shared.width(128)
+        case .landscape: return HomeCustomization.shared.width(250)
+        case .square: return HomeCustomization.shared.width(150)
         }
     }
 }
@@ -44,7 +44,7 @@ struct PosterCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: title, shape: shape, id: item.id)
+            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: title, shape: shape, id: item.id, rating: item.imdbRating)
                 .frame(width: width)
                 .zoomSource(id: transitionID, in: namespace)
 
@@ -72,6 +72,8 @@ struct PosterArtwork: View {
     let title: String
     var shape: PosterShape = .poster
     var id: String? = nil
+    /// Shown in the corner when ratings are turned on in Settings → Home Screen.
+    var rating: String? = nil
 
     private var resolveFromTMDB: (@Sendable () async -> URL?)? {
         guard let id else { return nil }
@@ -98,6 +100,11 @@ struct PosterArtwork: View {
             .overlay(alignment: .topLeading) {
                 if let id, DownloadManager.shared.downloadedMetaIDs.contains(id) {
                     DownloadedBadge().padding(6)
+                }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if HomeCustomization.shared.showsRatings, let rating, !rating.isEmpty, rating != "0", rating != "0.0" {
+                    PosterRatingBadge(rating: rating).padding(6)
                 }
             }
     }

@@ -48,6 +48,25 @@ struct ProfilePickerView: View {
     @State private var session = ProfileSession.shared
     @State private var isEditing = false
     @State private var editing: ProfileEditorTarget?
+    @State private var auth: ProfileAuth?
+
+    /// Opening a profile, editing it, or leaving a kids profile, after the passcode.
+    enum ProfileAuth: Identifiable {
+        case open(Profile)
+        case edit(Profile)
+        case leaveKids(Profile)
+
+        var id: String {
+            switch self {
+            case .open(let profile): return "open" + profile.id.uuidString
+            case .edit(let profile): return "edit" + profile.id.uuidString
+            case .leaveKids(let profile): return "kids" + profile.id.uuidString
+            }
+        }
+    }
+
+    /// Kids can switch between profiles but not add or change them.
+    private var isKidsMode: Bool { session.isKids }
 
     private let columns = [GridItem(.adaptive(minimum: 120), spacing: Theme.Spacing.xl)]
 
@@ -64,7 +83,7 @@ struct ProfilePickerView: View {
                         ForEach(profiles) { profile in
                             Button {
                                 if isEditing {
-                                    editing = .edit(profile)
+                                    beginEditing(profile)
                                 } else {
                                     select(profile)
                                 }
@@ -74,7 +93,7 @@ struct ProfilePickerView: View {
                             .buttonStyle(.cardPress)
                         }
 
-                        if profiles.count < Profile.maxCount {
+                        if profiles.count < Profile.maxCount && !isKidsMode {
                             Button {
                                 editing = .new
                             } label: {
@@ -103,15 +122,20 @@ struct ProfilePickerView: View {
                     }
                     .accessibilityLabel("Close")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(isEditing ? LocalizedStringKey("Done") : "Edit") {
-                        withAnimation(Theme.Motion.spring) { isEditing.toggle() }
+                if !isKidsMode {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(isEditing ? LocalizedStringKey("Done") : "Edit") {
+                            withAnimation(Theme.Motion.spring) { isEditing.toggle() }
+                        }
+                        .fontWeight(.semibold)
                     }
-                    .fontWeight(.semibold)
                 }
             }
             .sheet(item: $editing) { target in
                 ProfileEditorView(target: target)
+            }
+            .sheet(item: $auth) { request in
+                authSheet(request)
             }
         }
         .sensoryFeedback(.selection, trigger: session.activeID)
@@ -138,6 +162,17 @@ struct ProfilePickerView: View {
                         .strokeBorder(Color.primary, lineWidth: isActive && !isEditing ? 3 : 0)
                         .padding(-6)
                 }
+            .overlay(alignment: .bottomTrailing) {
+                if profile.isKids || (profile.isLocked && SecuritySettings.shared.hasPasscode) {
+                    Image(systemName: profile.isKids ? "figure.and.child.holdinghands" : "lock.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .background(profile.isKids ? Color.orange : Color.black.opacity(0.7), in: Circle())
+                        .overlay(Circle().strokeBorder(Theme.background, lineWidth: 2.5))
+                        .offset(x: 4, y: 4)
+                }
+            }
             Text(verbatim: profile.name)
                 .font(.headline)
                 .foregroundStyle(isActive ? .primary : .secondary)
@@ -165,8 +200,64 @@ struct ProfilePickerView: View {
     }
 
     private func select(_ profile: Profile) {
-        withAnimation(Theme.Motion.spring) { session.activeID = profile.id }
+        let hasPasscode = SecuritySettings.shared.hasPasscode
+        if profile.id == session.activeID {
+            dismiss()
+        } else if hasPasscode && session.isKids && !profile.isKids {
+            // Leaving a kids profile always takes the passcode itself, never Face ID.
+            auth = .leaveKids(profile)
+        } else if hasPasscode && profile.isLocked && !LockGate.shared.recentlyUnlocked {
+            auth = .open(profile)
+        } else {
+            activate(profile)
+        }
+    }
+
+    private func activate(_ profile: Profile) {
+        withAnimation(Theme.Motion.spring) { session.activate(profile) }
         dismiss()
+    }
+
+    private func beginEditing(_ profile: Profile) {
+        if SecuritySettings.shared.hasPasscode && profile.isLocked && !LockGate.shared.recentlyUnlocked {
+            auth = .edit(profile)
+        } else {
+            editing = .edit(profile)
+        }
+    }
+
+    @ViewBuilder
+    private func authSheet(_ request: ProfileAuth) -> some View {
+        switch request {
+        case .open(let profile):
+            PasscodeView(mode: .unlock(allowsBiometrics: true), title: "Unlock \(profile.name)", onCancel: { auth = nil }) {
+                LockGate.shared.noteUnlocked()
+                auth = nil
+                activate(profile)
+            }
+            .interactiveDismissDisabled()
+        case .edit(let profile):
+            PasscodeView(mode: .unlock(allowsBiometrics: true), title: "Unlock \(profile.name)", onCancel: { auth = nil }) {
+                LockGate.shared.noteUnlocked()
+                auth = nil
+                Task {
+                    try? await Task.sleep(for: .milliseconds(450))
+                    editing = .edit(profile)
+                }
+            }
+            .interactiveDismissDisabled()
+        case .leaveKids(let profile):
+            PasscodeView(
+                mode: .unlock(allowsBiometrics: false),
+                title: "Enter Passcode",
+                message: "A grown-up's passcode is needed to leave the kids profile.",
+                onCancel: { auth = nil }
+            ) {
+                auth = nil
+                activate(profile)
+            }
+            .interactiveDismissDisabled()
+        }
     }
 }
 
@@ -195,6 +286,21 @@ struct ProfileEditorView: View {
     @State private var symbol = Profile.symbols[0]
     @State private var colorHex = Profile.colors[0]
     @State private var isConfirmingDelete = false
+    @State private var isKids = false
+    @State private var kidsMaxAge = 7
+    @State private var isLocked = false
+    /// Set while a new passcode is being created for the lock or the kids profile.
+    @State private var pendingPasscode: PendingPasscode?
+
+    enum PendingPasscode: String, Identifiable {
+        case kids, lock
+        var id: String { rawValue }
+    }
+
+    /// At least one grown-up profile must stay, or nobody could leave the kids profiles.
+    private var canBeKids: Bool {
+        isKids || profiles.contains { !$0.isKids && $0.id != editedProfile?.id }
+    }
 
     private let symbolColumns = [GridItem(.adaptive(minimum: 52), spacing: Theme.Spacing.m)]
 
@@ -269,6 +375,47 @@ struct ProfileEditorView: View {
                     .padding(.vertical, Theme.Spacing.xs)
                 }
 
+                Section {
+                    Toggle(isOn: Binding(get: { isKids }, set: { setKids($0) })) {
+                        Label {
+                            Text("Kids Profile")
+                        } icon: {
+                            SettingsIcon(systemName: "figure.and.child.holdinghands", color: .orange)
+                        }
+                    }
+                    .disabled(!canBeKids)
+                    if isKids {
+                        Picker("Age Limit", selection: $kidsMaxAge) {
+                            ForEach(Profile.kidsAges, id: \.self) { age in
+                                Text(Self.ageTitle(age)).tag(age)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                } footer: {
+                    if !canBeKids {
+                        Text("Keep at least one grown-up profile so the passcode can be used to leave kids profiles.")
+                    } else if isKids {
+                        Text("Shows only titles rated for this age on TMDB; titles without a rating are hidden. No Settings or addons, and leaving needs your passcode.")
+                    } else {
+                        Text("A kids profile shows only titles suitable for the age you choose.")
+                    }
+                }
+
+                if !isKids {
+                    Section {
+                        Toggle(isOn: Binding(get: { isLocked }, set: { setLocked($0) })) {
+                            Label {
+                                Text("Lock Profile")
+                            } icon: {
+                                SettingsIcon(systemName: "lock.fill", color: .gray)
+                            }
+                        }
+                    } footer: {
+                        Text("Opening this profile needs Face ID or your passcode.")
+                    }
+                }
+
                 if editedProfile != nil, profiles.count > 1 {
                     Section {
                         Button("Delete Profile", role: .destructive) {
@@ -299,12 +446,27 @@ struct ProfileEditorView: View {
             }
             .sensoryFeedback(.selection, trigger: symbol)
             .sensoryFeedback(.selection, trigger: colorHex)
+            .sheet(item: $pendingPasscode) { pending in
+                PasscodeView(mode: .create, onCancel: { pendingPasscode = nil }) {
+                    pendingPasscode = nil
+                    withAnimation(Theme.Motion.spring) {
+                        switch pending {
+                        case .kids: isKids = true
+                        case .lock: isLocked = true
+                        }
+                    }
+                }
+                .interactiveDismissDisabled()
+            }
         }
         .onAppear {
             if let editedProfile {
                 name = editedProfile.name
                 symbol = editedProfile.symbol
                 colorHex = editedProfile.colorHex
+                isKids = editedProfile.isKids
+                kidsMaxAge = editedProfile.kidsMaxAge
+                isLocked = editedProfile.isLocked
             } else {
                 // Suggest a colour and avatar not already taken.
                 colorHex = Profile.colors.first { hex in !profiles.contains { $0.colorHex == hex } } ?? Profile.colors[0]
@@ -319,11 +481,41 @@ struct ProfileEditorView: View {
             editedProfile.name = trimmedName
             editedProfile.symbol = symbol
             editedProfile.colorHex = colorHex
+            apply(to: editedProfile)
             try? context.save()
-        } else {
-            _ = ProfileStore.add(name: trimmedName, symbol: symbol, colorHex: colorHex, in: context)
+            ProfileSession.shared.sync(editedProfile)
+        } else if let profile = ProfileStore.add(name: trimmedName, symbol: symbol, colorHex: colorHex, in: context) {
+            apply(to: profile)
+            try? context.save()
         }
         dismiss()
+    }
+
+    private func apply(to profile: Profile) {
+        profile.isKids = isKids
+        profile.kidsMaxAge = kidsMaxAge
+        profile.isLocked = isLocked && !isKids
+    }
+
+    /// Kids profiles and locks need a passcode; the first time, one is created.
+    private func setKids(_ on: Bool) {
+        if on && !SecuritySettings.shared.hasPasscode {
+            pendingPasscode = .kids
+        } else {
+            withAnimation(Theme.Motion.spring) { isKids = on }
+        }
+    }
+
+    private func setLocked(_ on: Bool) {
+        if on && !SecuritySettings.shared.hasPasscode {
+            pendingPasscode = .lock
+        } else {
+            withAnimation(Theme.Motion.spring) { isLocked = on }
+        }
+    }
+
+    static func ageTitle(_ age: Int) -> LocalizedStringKey {
+        age == 0 ? "All Ages" : "\(age)+"
     }
 }
 
