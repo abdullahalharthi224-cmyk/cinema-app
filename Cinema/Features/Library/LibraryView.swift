@@ -5,7 +5,6 @@ import SwiftUI
 struct LibraryView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
-    @Query(sort: \DownloadItem.createdAt, order: .reverse) private var downloads: [DownloadItem]
     @Query(sort: \WatchHistoryItem.lastWatched, order: .reverse) private var allHistory: [WatchHistoryItem]
     @Query(sort: \WatchlistItem.addedAt, order: .reverse) private var allWatchlist: [WatchlistItem]
     @Query private var allProgress: [PlaybackProgress]
@@ -15,7 +14,22 @@ struct LibraryView: View {
 
     private typealias Filter = LibraryFilter
 
-    private var filter: LibraryFilter { router.libraryFilter }
+    /// Downloads come from the download manager, the one source of truth for them.
+    private var downloads: [DownloadItem] {
+        _ = DownloadManager.shared.revision
+        return DownloadManager.shared.allItems().reversed()
+    }
+
+    /// The chosen section, or everything when that section has nothing in it
+    /// (so the Library is never left blank, e.g. when opened offline).
+    private var filter: LibraryFilter {
+        switch router.libraryFilter {
+        case .downloads where downloads.isEmpty, .myList where watchlist.isEmpty, .watched where history.isEmpty:
+            return .all
+        default:
+            return router.libraryFilter
+        }
+    }
 
     /// Only the active profile's history.
     private var history: [WatchHistoryItem] {
@@ -49,8 +63,9 @@ struct LibraryView: View {
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-                            if [!history.isEmpty, !watchlist.isEmpty, !downloads.isEmpty].filter({ $0 }).count > 1 {
-                                Picker("Show", selection: Bindable(router).libraryFilter) {
+                            if [!history.isEmpty, !watchlist.isEmpty, !downloads.isEmpty].filter({ $0 }).count > 1
+                                || router.libraryFilter != .all {
+                                Picker("Show", selection: Binding(get: { filter }, set: { router.libraryFilter = $0 })) {
                                     Text("All").tag(Filter.all)
                                     if !watchlist.isEmpty { Text("My List").tag(Filter.myList) }
                                     if !history.isEmpty { Text("Watched").tag(Filter.watched) }

@@ -31,8 +31,16 @@ struct PlayerView: View {
             Color.black.ignoresSafeArea()
 
             VideoSurface(kind: model.engineKind) { controller in
-                // Start the engine after this layout pass, not during it.
-                DispatchQueue.main.async { model.attach(to: controller, context: context) }
+                // Start the engine once the screen has turned to landscape, so the
+                // picture is set up for the right shape — downloaded files start
+                // instantly, before the rotation would otherwise finish.
+                Task {
+                    for _ in 0..<30 where !OrientationController.isLandscape {
+                        try? await Task.sleep(for: .milliseconds(50))
+                    }
+                    try? await Task.sleep(for: .milliseconds(250))
+                    model.attach(to: controller, context: context)
+                }
             }
             // A new surface (and engine) if playback moves to the other engine.
             .id(model.engineKind)
