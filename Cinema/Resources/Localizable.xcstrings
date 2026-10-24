@@ -641,6 +641,16 @@
         }
       }
     },
+    "Collections": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مجموعات"
+          }
+        }
+      }
+    },
     "Color": {
       "localizations": {
         "ar": {
@@ -1361,6 +1371,16 @@
         }
       }
     },
+    "New Collections": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مجموعات جديدة"
+          }
+        }
+      }
+    },
     "New Movies": {
       "localizations": {
         "ar": {
@@ -1801,6 +1821,16 @@
         }
       }
     },
+    "Popular Collections": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مجموعات أفلام رائجة"
+          }
+        }
+      }
+    },
     "Popular on this service": {
       "localizations": {
         "ar": {
@@ -1867,6 +1897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الجودة"
+          }
+        }
+      }
+    },
+    "Reading the subtitle…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ قراءة الترجمة…"
           }
         }
       }
@@ -2241,6 +2281,26 @@
         }
       }
     },
+    "Smart Sync": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المزامنة الذكية"
+          }
+        }
+      }
+    },
+    "Smart sync works with subtitles from addons. Pick one in the Subtitles tab, or use the timing buttons in Adjust.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المزامنة الذكية تعمل مع ترجمات الإضافات. اختر ترجمة من تبويب «الترجمة»، أو استخدم أزرار التوقيت في «ضبط»."
+          }
+        }
+      }
+    },
     "Something Went Wrong": {
       "localizations": {
         "ar": {
@@ -2511,6 +2571,16 @@
         }
       }
     },
+    "Tap a line the moment you hear it. The rest of the subtitle follows.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اضغط على الجملة لحظة سماعها، وستتزامن بقية الترجمة تلقائيًا."
+          }
+        }
+      }
+    },
     "Test film: %lld streams (%lld playable)": {
       "localizations": {
         "ar": {
@@ -2671,6 +2741,16 @@
         }
       }
     },
+    "This subtitle couldn't be read. Try another option, or use the timing buttons in Adjust.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّرت قراءة هذه الترجمة. جرّب خيارًا آخر، أو استخدم أزرار التوقيت في «ضبط»."
+          }
+        }
+      }
+    },
     "This title has no IMDb ID, so addons can't find streams for it.": {
       "localizations": {
         "ar": {
@@ -2727,6 +2807,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "أفضل 10 %@"
+          }
+        }
+      }
+    },
+    "Top Rated Collections": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مجموعات الأعلى تقييمًا"
           }
         }
       }
@@ -2817,6 +2907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "جرّب «البحث عن تحديثات» لتنزيل بياناتها من جديد."
+          }
+        }
+      }
+    },
+    "Turn on a subtitle first, then come back here to sync it.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شغّل ترجمة أولًا، ثم ارجع هنا لمزامنتها."
           }
         }
       }

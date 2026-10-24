@@ -21,7 +21,11 @@ final class PlayerViewModel {
     private(set) var isLoadingSubtitles = false
     private(set) var subtitleDelay: Double = 0
     private(set) var subtitleRaise: Double = 40
+    private(set) var sync: SyncState = .idle
     private var controlsVisible = true
+    /// The exact playback time, without the UI throttling applied to `position`.
+    @ObservationIgnored private var precisePosition: Double = 0
+    @ObservationIgnored private var cueCache: [String: [SubtitleCue]] = [:]
     var isScrubbing = false
     var scrubPosition: Double = 0
 
@@ -32,6 +36,17 @@ final class PlayerViewModel {
     private var wasPlayingBeforeBackground = false
     private weak var context: ModelContext?
     private let launcher: PlaybackLauncher
+
+    /// The lines of the subtitle on screen, for tap-to-sync.
+    enum SyncState: Equatable {
+        case idle
+        case loading
+        case ready(url: String, cues: [SubtitleCue])
+        /// Subtitles inside the video file can't be listed.
+        case embeddedOnly
+        case noSubtitle
+        case failed
+    }
 
     static let speeds: [Double] = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
@@ -85,6 +100,8 @@ final class PlayerViewModel {
         subtitleSources = []
         subtitleDelay = 0
         position = session.startPosition
+        precisePosition = session.startPosition
+        sync = .idle
         duration = 0
         lastSavedPosition = session.startPosition
         handle?.setString("start", session.startPosition > 0 ? String(Int(session.startPosition)) : "none")
@@ -147,7 +164,7 @@ final class PlayerViewModel {
 
     /// Positive shows subtitles later, negative earlier (seconds).
     func adjustSubtitleDelay(by step: Double) {
-        setSubtitleDelay(((subtitleDelay + step) * 10).rounded() / 10)
+        setSubtitleDelay(((subtitleDelay + step) * 100).rounded() / 100)
     }
 
     func setSubtitleDelay(_ seconds: Double) {
@@ -167,6 +184,7 @@ final class PlayerViewModel {
         switch event {
         case .position(let value):
             // libmpv reports every frame; a few updates a second is plenty for the UI.
+            precisePosition = value
             if abs(value - position) >= 0.25 || value < position { position = value }
             if abs(value - lastSavedPosition) >= 10 { saveProgress() }
         case .duration(let value):
@@ -251,6 +269,45 @@ final class PlayerViewModel {
         let name = Self.languageName(code) ?? item.lang ?? localized("Subtitles")
         handle?.command(["sub-add", item.url, "select", name, code ?? ""])
         refreshTracks()
+    }
+
+    // MARK: Smart sync
+
+    /// Loads the lines of the subtitle currently showing so the viewer can tap
+    /// one the moment they hear it.
+    func prepareSync() async {
+        guard let url = selectedSubtitleURL else {
+            sync = subtitleTracks.contains(where: \.isSelected) ? .embeddedOnly : .noSubtitle
+            return
+        }
+        if case .ready(let loaded, _) = sync, loaded == url { return }
+        if let cached = cueCache[url] {
+            sync = .ready(url: url, cues: cached)
+            return
+        }
+        guard let address = URL(string: url) else {
+            sync = .failed
+            return
+        }
+        sync = .loading
+        do {
+            let (data, _) = try await URLSession.shared.data(from: address)
+            let cues = await Task.detached { SubtitleParser.parse(data) }.value
+            guard selectedSubtitleURL == url else { return }
+            if cues.isEmpty {
+                sync = .failed
+            } else {
+                cueCache[url] = cues
+                sync = .ready(url: url, cues: cues)
+            }
+        } catch {
+            sync = .failed
+        }
+    }
+
+    /// The viewer heard `cue` right now: shift subtitles so it shows at this moment.
+    func syncSubtitle(to cue: SubtitleCue) {
+        setSubtitleDelay(((precisePosition - cue.start) * 100).rounded() / 100)
     }
 
     // MARK: Controls

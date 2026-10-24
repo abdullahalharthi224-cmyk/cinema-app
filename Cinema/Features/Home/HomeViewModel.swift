@@ -16,12 +16,23 @@ final class HomeViewModel {
     private let service = ContentService()
     private var loadedRowIDs: [String] = []
 
-    /// Rows worth showing: everything except catalogs that came back empty.
+    /// Rows worth showing on Home. Catalogs that came back empty or failed are
+    /// left out (the addon check in Settings explains failures), and so are
+    /// catalogs without artwork, such as debrid libraries listing raw file names.
     var visibleRows: [CatalogReference] {
         rows.filter { row in
-            if case .loaded(let items) = states[row.id], items.isEmpty { return false }
-            return true
+            switch states[row.id] {
+            case .loaded(let items): return Self.isPresentable(items)
+            case .failed: return false
+            case .loading, nil: return true
+            }
         }
+    }
+
+    private static func isPresentable(_ items: [MetaPreview]) -> Bool {
+        guard !items.isEmpty else { return false }
+        let withPoster = items.filter { !($0.poster ?? "").isEmpty }.count
+        return Double(withPoster) / Double(items.count) >= 0.5
     }
 
     var isLoadingFirstRows: Bool {
@@ -43,7 +54,7 @@ final class HomeViewModel {
     /// The "Top 10" row: the first popular movie catalog, falling back to any loaded row.
     var topTen: (reference: CatalogReference, items: [MetaPreview])? {
         let loaded = rows.compactMap { row -> (CatalogReference, [MetaPreview])? in
-            guard case .loaded(let items) = states[row.id], items.count >= 5 else { return nil }
+            guard case .loaded(let items) = states[row.id], items.count >= 5, Self.isPresentable(items) else { return nil }
             return (row, items)
         }
         let pick = loaded.first { $0.0.type == "movie" && $0.0.catalog.id == "top" }

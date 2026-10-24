@@ -30,13 +30,15 @@ enum AddonURL {
         }
 
         components.scheme = scheme
-        var path = components.path
+        // Keep the address exactly as encoded: configuration segments often hold
+        // JSON or base64 whose escapes ("%2F", "%22"…) must survive untouched.
+        var path = components.percentEncodedPath
         // Old-protocol addons have no manifest.json; keep their address as it is.
         if !isLegacyPath(path), !path.hasSuffix("/" + manifestFileName) {
             while path.hasSuffix("/") { path.removeLast() }
             path += "/" + manifestFileName
         }
-        components.path = path
+        components.percentEncodedPath = path
         components.fragment = nil
 
         guard let url = components.url else { throw AddonError.invalidURL(input) }
@@ -46,11 +48,11 @@ enum AddonURL {
     /// `https://host/config/manifest.json` → `https://host/config`
     static func baseURL(fromManifestURL manifestURL: URL) -> URL {
         var components = URLComponents(url: manifestURL, resolvingAgainstBaseURL: false)
-        var path = components?.path ?? ""
+        var path = components?.percentEncodedPath ?? ""
         if path.hasSuffix("/" + manifestFileName) {
             path.removeLast(manifestFileName.count + 1)
         }
-        components?.path = path
+        components?.percentEncodedPath = path
         components?.query = nil
         components?.fragment = nil
         return components?.url ?? manifestURL
@@ -90,6 +92,19 @@ enum AddonURL {
               isLegacyPath(url.path)
         else { return nil }
         return replacements.first { $0.host == host }.flatMap { URL(string: $0.manifest) }
+    }
+
+    /// Some configurable addons only answer catalog requests once their settings
+    /// are part of the address. When one was installed without settings, use the
+    /// defaults its own configure page would produce, in the app's language.
+    static func configuredBaseURL(_ base: URL, manifestID: String, language: String) -> URL {
+        guard manifestID == "org.stremio.tmdbcollections",
+              var components = URLComponents(url: base, resolvingAgainstBaseURL: false),
+              components.percentEncodedPath.trimmingCharacters(in: CharacterSet(charactersIn: "/")).isEmpty
+        else { return base }
+        let config = #"{"language":"\#(language)","enableAdultContent":false,"enableSearch":true,"enableCollectionFromMovie":false}"#
+        components.percentEncodedPath = "/" + encodeComponent(config)
+        return components.url ?? base
     }
 
     /// Addons that only work with the desktop Stremio streaming server.

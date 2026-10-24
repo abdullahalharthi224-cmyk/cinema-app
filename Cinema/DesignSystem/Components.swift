@@ -163,6 +163,7 @@ extension String {
         case "tv": return "Live TV"
         case "anime": return "Anime"
         case "other": return "Other"
+        case "collections": return "Collections"
         default: return LocalizedStringKey(capitalized)
         }
     }
