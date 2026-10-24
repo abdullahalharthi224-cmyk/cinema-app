@@ -1441,6 +1441,16 @@
         }
       }
     },
+    "Movie": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فيلم"
+          }
+        }
+      }
+    },
     "Movies": {
       "localizations": {
         "ar": {
@@ -2767,6 +2777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "أرسل TMDB بيانات لا يستطيع التطبيق قراءتها."
+          }
+        }
+      }
+    },
+    "TV Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسلسل"
           }
         }
       }
