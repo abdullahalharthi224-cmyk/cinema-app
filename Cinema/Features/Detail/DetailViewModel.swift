@@ -196,6 +196,26 @@ final class DetailViewModel {
         return nil
     }
 
+    /// The cast of a collection's films with photos: the people the addon
+    /// lists come first, in its order, then the rest of the main cast.
+    private func collectionCast(_ collection: TMDBCollection, client: TMDBClient, language: String) async -> [TMDBCastMember] {
+        let films = collection.parts.filter { $0.year != nil }.prefix(3).map(\.id)
+        let credits = await withTaskGroup(of: (Int, [TMDBCastMember]).self) { group in
+            for (index, film) in films.enumerated() {
+                group.addTask { (index, (try? await client.credits(media: .movie, tmdbID: film, language: language)) ?? []) }
+            }
+            var results: [(Int, [TMDBCastMember])] = []
+            for await result in group { results.append(result) }
+            return results.sorted { $0.0 < $1.0 }.flatMap { Array($0.1.prefix(10)) }
+        }
+        var seen = Set<Int>()
+        let unique = credits.filter { seen.insert($0.id).inserted }
+        let listed = (meta?.cast ?? []).map { $0.lowercased() }
+        let named = listed.compactMap { name in unique.first { $0.name.lowercased() == name } }
+        let namedIDs = Set(named.map(\.id))
+        return Array((named + unique.filter { !namedIDs.contains($0.id) }).prefix(20))
+    }
+
     /// The IMDb ID, from the addon's ID or else through TMDB.
     private func resolvedIMDbID() async -> String? {
         if let imdbID { return imdbID }
@@ -244,11 +264,13 @@ final class DetailViewModel {
         }
         let match = await tmdbMatch()
         if case .collection(let id) = match {
-            guard language == .arabic,
-                  let details = try? await client.collection(id: id, language: AppLanguage.arabic.tmdbCode)
-            else { return }
+            guard let details = try? await client.collection(id: id, language: language.tmdbCode) else { return }
+            let cast = await collectionCast(details, client: client, language: language.tmdbCode)
             // The addon's logo stays; only the synopsis is translated.
-            withAnimation(Theme.Motion.spring) { localizedOverview = details.overview?.nonEmpty }
+            withAnimation(Theme.Motion.spring) {
+                self.cast = cast
+                if language == .arabic { localizedOverview = details.overview?.nonEmpty }
+            }
             return
         }
         guard case .title(let media, let tmdbID) = match else { return }
