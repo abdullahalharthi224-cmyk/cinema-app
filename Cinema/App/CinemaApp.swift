@@ -13,9 +13,9 @@ struct CinemaApp: App {
 
     var body: some Scene {
         WindowGroup {
+            // The colour scheme follows the theme chosen in Settings (see RootView).
             RootView()
                 .environment(router)
-                .preferredColorScheme(.dark)
         }
         .modelContainer(for: [InstalledAddon.self, WatchHistoryItem.self, Profile.self, PlaybackProgress.self, WatchlistItem.self])
     }

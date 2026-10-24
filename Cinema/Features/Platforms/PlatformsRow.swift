@@ -55,7 +55,6 @@ struct PlatformsRow: View {
                     }
                     .padding(Theme.Spacing.l)
                     .background(.ultraThinMaterial, in: .continuous(Theme.Radius.medium))
-                    .environment(\.colorScheme, .dark)
                 }
                 .buttonStyle(.cardPress)
                 .padding(.horizontal, Theme.Spacing.l)
@@ -99,8 +98,7 @@ struct PlatformCard: View {
                     lineWidth: 0.75
                 )
         }
-        .shadow(color: .black.opacity(0.45), radius: 12, y: 6)
-        .environment(\.colorScheme, .dark)
+        .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: platform.name))
         .accessibilityAddTraits(.isButton)
@@ -109,7 +107,7 @@ struct PlatformCard: View {
     private var name: some View {
         Text(verbatim: platform.name)
             .font(.display(.headline))
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             .padding(.horizontal, Theme.Spacing.s)
