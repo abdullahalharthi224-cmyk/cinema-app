@@ -49,7 +49,7 @@ enum PlaybackProgressStore {
 
     /// Saves the position for the active profile, and mirrors it into Continue Watching.
     static func save(metaID: String, type: String, videoID: String, position: Double, duration: Double, in context: ModelContext) {
-        guard duration > 0 else { return }
+        guard duration > 0, !PrivacySettings.shared.privateMode else { return }
         let profileID = ProfileSession.shared.activeID
         let record = progress(videoID: videoID, in: context) ?? {
             let new = PlaybackProgress(profileID: profileID, metaID: metaID, videoID: videoID)

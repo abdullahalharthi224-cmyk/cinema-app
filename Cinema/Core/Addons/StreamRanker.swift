@@ -130,10 +130,20 @@ enum StreamRanker {
 
     /// The single best stream to start playing right away, if any can be played.
     static func best(in groups: [StreamGroup], preferences: PlaybackPreferences) -> ParsedStream? {
+        best(in: groups, preferences: preferences, excluding: [])
+    }
+
+    /// The best stream whose link isn't in `excluded` — used to try another
+    /// link automatically when one fails.
+    static func best(in groups: [StreamGroup], preferences: PlaybackPreferences, excluding excluded: Set<URL>) -> ParsedStream? {
         let candidates = groups
             .compactMap { try? $0.result.get() }
             .flatMap { $0 }
             .filter { score($0, preferences: preferences) > -.infinity && !$0.info.isUncached }
+            .filter { stream in
+                if case .direct(let url) = stream.stream.kind { return !excluded.contains(url) }
+                return false
+            }
         return sorted(candidates, by: .best, preferences: preferences).first
     }
 }

@@ -545,6 +545,16 @@ final class MPVEngine: NSObject, VideoEngine {
     func setSubtitleFontSize(_ size: Int) { handle.setString("sub-font-size", String(size)) }
     func setSubtitleMargin(_ margin: Int) { handle.setString("sub-margin-y", String(margin)) }
 
+    func setSubtitleStyle(colorHex: String, backgroundColor: String?) {
+        handle.setString("sub-color", colorHex)
+        if let backgroundColor {
+            handle.setString("sub-back-color", backgroundColor)
+            handle.setString("sub-border-style", "background-box")
+        } else {
+            handle.setString("sub-border-style", "outline-and-shadow")
+        }
+    }
+
     func setVideoFill(_ fill: Bool) { handle.setDouble("panscan", fill ? 1 : 0) }
 
     func setVideoEnabled(_ enabled: Bool) {

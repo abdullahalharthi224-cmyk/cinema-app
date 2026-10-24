@@ -6,6 +6,7 @@ struct NextEpisode {
     var videoID: String
     var label: String?
     var history: WatchHistoryEntry?
+    var overview: String? = nil
 }
 
 /// Everything the player needs to start one video.
@@ -27,6 +28,9 @@ struct PlaybackSession: Identifiable {
     /// Subtitles fetched before playback started; `nil` if they weren't ready in time.
     var subtitleSources: [SubtitleSource]?
 
+    /// The episode's or movie's synopsis, for the pause screen.
+    var overview: String? { request.overview }
+
     /// Artwork for the Lock Screen.
     var artwork: URL? {
         request.history.flatMap { Artwork.background(id: $0.metaID, provided: $0.background) }
@@ -46,6 +50,8 @@ final class PlaybackLauncher {
     }
     var session: PlaybackSession?
     var pickerRequest: StreamRequest?
+    /// A title picked from "More Like This" at the end of a movie; opened once the player closes.
+    var suggestedTitle: TMDBTitleRoute?
     var errorMessage: String?
 
     private let service = ContentService()
@@ -92,13 +98,39 @@ final class PlaybackLauncher {
         request.videoID = next.videoID
         request.subtitle = next.label
         request.history = next.history
+        request.overview = next.overview
         request.prefetched = await service.streams(
             type: request.type, id: next.videoID, addons: Self.enabledAddons(in: context)
         )
-        request.next = nil
+        // Keep going through the season: the one after becomes "next".
+        request.next = request.upcoming.first
+        request.upcoming = Array(request.upcoming.dropFirst())
         guard let session = makeSession(for: request, preferring: nil, context: context) else { return nil }
         if let history = request.history { WatchHistoryItem.record(history, in: context) }
         return await prepare(session, context: context)
+    }
+
+    /// Another playable link for the same video, skipping links that already
+    /// failed, picking up at `position`.
+    func alternativeSession(
+        for session: PlaybackSession, excluding failed: Set<URL>, at position: Double, context: ModelContext
+    ) async -> PlaybackSession? {
+        var request = session.request
+        if request.prefetched == nil {
+            request.prefetched = await service.streams(
+                type: request.type, id: request.videoID, addons: Self.enabledAddons(in: context)
+            )
+        }
+        guard let stream = StreamRanker.best(
+            in: request.prefetched ?? [], preferences: PlaybackSettings.shared.preferences, excluding: failed
+        ), case .direct(let url) = stream.stream.kind else { return nil }
+
+        var next = session
+        next.url = url
+        next.request = request
+        next.startPosition = position
+        next.engine = await PlayerEngineKind.choose(for: url, allowApple: PlaybackSettings.shared.useApplePlayer)
+        return next
     }
 
     private func start(_ session: PlaybackSession, request: StreamRequest, context: ModelContext) async {
@@ -200,6 +232,9 @@ private struct PlaybackLauncherModifier: ViewModifier {
             }
             .fullScreenCover(item: $launcher.session) { session in
                 PlayerView(session: session, launcher: launcher)
+            }
+            .navigationDestination(item: $launcher.suggestedTitle) { route in
+                TMDBTitleLoaderView(route: route)
             }
     }
 }

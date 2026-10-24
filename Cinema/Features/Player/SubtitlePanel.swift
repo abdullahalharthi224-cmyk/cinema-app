@@ -291,6 +291,44 @@ struct SubtitlePanel: View {
         }
         .padding(Theme.Spacing.m)
         .background(.white.opacity(0.06), in: .continuous(Theme.Radius.medium))
+
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            Text("Color")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+            HStack(spacing: Theme.Spacing.m) {
+                ForEach(PlaybackSettings.subtitleColors, id: \.self) { hex in
+                    let selected = PlaybackSettings.shared.subtitleColorHex == hex
+                    Button {
+                        model.setSubtitleColor(hex)
+                    } label: {
+                        Circle()
+                            .fill(Color(hex: hex) ?? .white)
+                            .frame(width: 30, height: 30)
+                            .overlay(Circle().strokeBorder(Theme.accent, lineWidth: selected ? 2.5 : 0).padding(-4))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .sensoryFeedback(.selection, trigger: PlaybackSettings.shared.subtitleColorHex)
+
+            Text("Background")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.top, Theme.Spacing.xs)
+            HStack(spacing: Theme.Spacing.m) {
+                Image(systemName: "textformat")
+                    .foregroundStyle(.secondary)
+                Slider(value: Binding(
+                    get: { PlaybackSettings.shared.subtitleBackground },
+                    set: { model.setSubtitleBackground($0) }
+                ), in: 0...0.85)
+                Image(systemName: "rectangle.fill")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(Theme.Spacing.m)
+        .background(.white.opacity(0.06), in: .continuous(Theme.Radius.medium))
     }
 
     private var delayText: String {

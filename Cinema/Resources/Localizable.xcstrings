@@ -311,6 +311,16 @@
         }
       }
     },
+    "Age Rating": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التصنيف العمري"
+          }
+        }
+      }
+    },
     "AirPlay": {
       "localizations": {
         "ar": {
@@ -341,6 +351,16 @@
         }
       }
     },
+    "An MDBList key adds IMDb, Rotten Tomatoes, Metacritic and Letterboxd scores to every title. Without one, TMDB's score is shown.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مفتاح MDBList يضيف تقييمات IMDb وRotten Tomatoes وMetacritic وLetterboxd لكل عمل. وبدونه يظهر تقييم TMDB."
+          }
+        }
+      }
+    },
     "Anime": {
       "localizations": {
         "ar": {
@@ -367,6 +387,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "العربية"
+          }
+        }
+      }
+    },
+    "Arabic When Available": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "العربية إن وُجدت"
           }
         }
       }
@@ -417,6 +447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "رجوع 10 ثوانٍ"
+          }
+        }
+      }
+    },
+    "Background": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الخلفية"
           }
         }
       }
@@ -487,6 +527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "إلغاء"
+          }
+        }
+      }
+    },
+    "Canceled": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أُلغي"
           }
         }
       }
@@ -751,6 +801,16 @@
         }
       }
     },
+    "Couldn't reach MDBList. Check your connection and try again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر الوصول إلى MDBList. تحقّق من الاتصال وحاول مجددًا."
+          }
+        }
+      }
+    },
     "Couldn't reach Stremio. Check your internet connection and try again.": {
       "localizations": {
         "ar": {
@@ -777,6 +837,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تعذّر الوصول إلى الإضافة. تحقّق من اتصالك بالإنترنت وحاول مرة أخرى."
+          }
+        }
+      }
+    },
+    "Country": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بلد الإنتاج"
           }
         }
       }
@@ -846,7 +916,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "التفاصيل"
+            "value": "تفاصيل العمل"
           }
         }
       }
@@ -961,6 +1031,26 @@
         }
       }
     },
+    "Ended": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "انتهى"
+          }
+        }
+      }
+    },
+    "Episode Length": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مدة الحلقة"
+          }
+        }
+      }
+    },
     "Episodes": {
       "localizations": {
         "ar": {
@@ -1061,6 +1151,16 @@
         }
       }
     },
+    "Get a free key from MDBList": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "احصل على مفتاح مجاني من MDBList"
+          }
+        }
+      }
+    },
     "Get a free key from TMDB": {
       "localizations": {
         "ar": {
@@ -1121,6 +1221,16 @@
         }
       }
     },
+    "IMDb": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IMDb"
+          }
+        }
+      }
+    },
     "If Arabic Isn't Available": {
       "localizations": {
         "ar": {
@@ -1157,6 +1267,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "مستوردة من حسابك في Stremio."
+          }
+        }
+      }
+    },
+    "In Production": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قيد الإنتاج"
           }
         }
       }
@@ -1261,6 +1381,16 @@
         }
       }
     },
+    "Letterboxd": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Letterboxd"
+          }
+        }
+      }
+    },
     "Library": {
       "localizations": {
         "ar": {
@@ -1341,6 +1471,26 @@
         }
       }
     },
+    "MDBList API Key": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مفتاح MDBList"
+          }
+        }
+      }
+    },
+    "MDBList didn't accept this key.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يقبل MDBList هذا المفتاح."
+          }
+        }
+      }
+    },
     "MP4 and HLS streams play in Apple's player, with Picture in Picture and full AirPlay. Everything else (like MKV) plays in the built-in player, which handles any format. The controls are the same in both.": {
       "localizations": {
         "ar": {
@@ -1376,7 +1526,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تعليم كغير مُشاهَدة"
+            "value": "إلغاء تعليم المشاهدة"
           }
         }
       }
@@ -1386,7 +1536,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تعليم كمُشاهَدة"
+            "value": "تعليم كمُشاهَد"
           }
         }
       }
@@ -1411,6 +1561,16 @@
         }
       }
     },
+    "Metacritic": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metacritic"
+          }
+        }
+      }
+    },
     "Metadata": {
       "localizations": {
         "ar": {
@@ -1427,6 +1587,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "المزيد"
+          }
+        }
+      }
+    },
+    "More Like This": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أعمال مشابهة"
           }
         }
       }
@@ -1547,6 +1717,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "الحلقة التالية"
+          }
+        }
+      }
+    },
+    "Next episode in %@s": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحلقة التالية خلال %@ ث"
+          }
+        }
+      }
+    },
+    "Next episode in %llds": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحلقة التالية خلال %lld ث"
           }
         }
       }
@@ -1851,6 +2041,26 @@
         }
       }
     },
+    "Original Audio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصوت الأصلي"
+          }
+        }
+      }
+    },
+    "Original Language": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اللغة الأصلية"
+          }
+        }
+      }
+    },
     "Other": {
       "localizations": {
         "ar": {
@@ -1891,12 +2101,32 @@
         }
       }
     },
+    "Paused": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متوقف مؤقتًا"
+          }
+        }
+      }
+    },
     "Picture in Picture": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الصورة داخل الصورة"
+          }
+        }
+      }
+    },
+    "Planned": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مُخطط له"
           }
         }
       }
@@ -1931,12 +2161,42 @@
         }
       }
     },
+    "Play Next Episode Automatically": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تشغيل الحلقة التالية تلقائيًا"
+          }
+        }
+      }
+    },
+    "Play Now": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شغّل الآن"
+          }
+        }
+      }
+    },
     "Play S%lld E%lld": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "تشغيل · م%lld ح%lld"
+          }
+        }
+      }
+    },
+    "Play Trailer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تشغيل الإعلان"
           }
         }
       }
@@ -2031,12 +2291,32 @@
         }
       }
     },
+    "Post Production": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "في مرحلة ما بعد الإنتاج"
+          }
+        }
+      }
+    },
     "Prefer Instant Links": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "تفضيل الروابط الفورية"
+          }
+        }
+      }
+    },
+    "Preferred Audio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصوت المفضّل"
           }
         }
       }
@@ -2071,6 +2351,36 @@
         }
       }
     },
+    "Private": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خاص"
+          }
+        }
+      }
+    },
+    "Private Viewing": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المشاهدة الخاصة"
+          }
+        }
+      }
+    },
+    "Production": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإنتاج"
+          }
+        }
+      }
+    },
     "Profiles": {
       "localizations": {
         "ar": {
@@ -2087,6 +2397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الجودة"
+          }
+        }
+      }
+    },
+    "Ratings": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التقييمات"
           }
         }
       }
@@ -2117,6 +2437,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "شوهد مؤخراً"
+          }
+        }
+      }
+    },
+    "Released": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صدر"
           }
         }
       }
@@ -2157,6 +2487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "إزالة المفتاح"
+          }
+        }
+      }
+    },
+    "Remove MDBList key?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حذف مفتاح MDBList؟"
           }
         }
       }
@@ -2251,6 +2591,46 @@
         }
       }
     },
+    "Returning Series": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مستمر"
+          }
+        }
+      }
+    },
+    "Rotten Tomatoes": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotten Tomatoes"
+          }
+        }
+      }
+    },
+    "Rotten Tomatoes Audience": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جمهور Rotten Tomatoes"
+          }
+        }
+      }
+    },
+    "Runtime": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المدة"
+          }
+        }
+      }
+    },
     "S%lld E%lld": {
       "localizations": {
         "ar": {
@@ -2337,6 +2717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الموسم %lld"
+          }
+        }
+      }
+    },
+    "Seasons": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المواسم"
           }
         }
       }
@@ -2431,6 +2821,16 @@
         }
       }
     },
+    "Sign in at mdblist.com, open Preferences, and copy your API key. It's stored only in this iPhone's Keychain.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سجّل الدخول في mdblist.com وافتح Preferences وانسخ مفتاح API. يُحفظ فقط في سلسلة مفاتيح هذا الجوال."
+          }
+        }
+      }
+    },
     "Sign in at themoviedb.org, open Settings → API, and copy the “API Read Access Token” (the long one). It's stored only in this iPhone's Keychain.": {
       "localizations": {
         "ar": {
@@ -2477,6 +2877,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "الحجم"
+          }
+        }
+      }
+    },
+    "Skip Intro": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تخطّي المقدمة"
+          }
+        }
+      }
+    },
+    "Skip Intros Automatically": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تخطّي المقدمة تلقائيًا"
+          }
+        }
+      }
+    },
+    "Skip Recap": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تخطّي الملخص"
+          }
+        }
+      }
+    },
+    "Skipped intro": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم تخطي المقدمة"
+          }
+        }
+      }
+    },
+    "Skipped recap": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم تخطي الملخص"
           }
         }
       }
@@ -2561,6 +3011,16 @@
         }
       }
     },
+    "Status": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحالة"
+          }
+        }
+      }
+    },
     "Streams": {
       "localizations": {
         "ar": {
@@ -2627,6 +3087,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "حجم الترجمة"
+          }
+        }
+      }
+    },
+    "Subtitle Style": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شكل الترجمة"
           }
         }
       }
@@ -2731,6 +3201,16 @@
         }
       }
     },
+    "TMDB": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TMDB"
+          }
+        }
+      }
+    },
     "TMDB has no information for this title.": {
       "localizations": {
         "ar": {
@@ -2747,6 +3227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "لا توجد أعمال مسجّلة لهذه المنصة في TMDB بعد."
+          }
+        }
+      }
+    },
+    "TMDB only": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TMDB فقط"
           }
         }
       }
@@ -2961,6 +3451,16 @@
         }
       }
     },
+    "This is how subtitles will look.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هكذا ستظهر الترجمة."
+          }
+        }
+      }
+    },
     "This stream couldn't be played (%@). Try another one.": {
       "localizations": {
         "ar": {
@@ -3161,6 +3661,16 @@
         }
       }
     },
+    "Trying another link…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ تجربة رابط آخر…"
+          }
+        }
+      }
+    },
     "Turn on a subtitle first, then come back here to sync it.": {
       "localizations": {
         "ar": {
@@ -3331,6 +3841,16 @@
         }
       }
     },
+    "While on, nothing you watch is added to Continue Watching or your history, and no resume positions are saved.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عند تفعيلها لا يُضاف ما تشاهده إلى «متابعة المشاهدة» أو السجل، ولا تُحفظ مواضع الاستئناف."
+          }
+        }
+      }
+    },
     "Who's Watching?": {
       "localizations": {
         "ar": {
@@ -3437,6 +3957,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تُستخدم كلمة المرور لتسجيل الدخول فقط ولا تُحفظ أبداً. يحتفظ Cinema بمفتاح جلسة آمن في سلسلة المفاتيح (Keychain)."
+          }
+        }
+      }
+    },
+    "it took too long to start": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استغرق وقتًا طويلًا للبدء"
           }
         }
       }

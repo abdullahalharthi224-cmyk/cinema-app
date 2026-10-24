@@ -15,6 +15,8 @@ struct PlayerView: View {
     @State private var zoomNotice: ZoomNotice?
     @State private var zoomNoticeTask: Task<Void, Never>?
     @State private var isClosing = false
+    @State private var showsPauseScreen = false
+    @State private var pauseScreenTask: Task<Void, Never>?
 
     private enum ZoomNotice: Equatable { case fill, fit }
 
@@ -88,12 +90,56 @@ struct PlayerView: View {
                 .transition(.move(edge: .trailing).combined(with: .opacity))
             }
 
-            if model.showsNextEpisode {
-                nextEpisodeButton
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    .padding(.trailing, Theme.Spacing.xxl)
-                    .padding(.bottom, controlsVisible ? 92 : Theme.Spacing.xxl)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            if showsPauseScreen {
+                PauseScreen(session: model.session)
+                    .transition(.opacity)
+                    .onTapGesture { dismissPauseScreen() }
+            }
+
+            // Skip intro, the next-episode countdown and similar titles, above the timeline.
+            if !showsPanel && !showsPauseScreen && model.hasLoaded {
+                VStack(alignment: .trailing, spacing: Theme.Spacing.m) {
+                    if let skip = model.activeSkip, !PlaybackSettings.shared.autoSkipIntro {
+                        Button {
+                            model.skipSegment()
+                        } label: {
+                            Label(skip == .intro ? LocalizedStringKey("Skip Intro") : "Skip Recap", systemImage: "forward.fill")
+                        }
+                        .buttonStyle(.glass)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
+                    if let seconds = model.nextCountdown {
+                        NextEpisodeCountdown(
+                            seconds: seconds, label: model.session.next?.label,
+                            playNow: { model.playNextNow() }, cancel: { model.cancelCountdown() }
+                        )
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                    } else if model.showsNextEpisode {
+                        nextEpisodeButton
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(.trailing, Theme.Spacing.xxl)
+                .padding(.bottom, controlsVisible ? 92 : Theme.Spacing.xxl)
+
+                if model.showsSuggestions {
+                    SuggestionsShelf(titles: model.suggestions, dismiss: { model.dismissSuggestions() }) { title in
+                        model.openSuggestion(title)
+                        closePlayer()
+                    }
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .padding(.bottom, controlsVisible ? 92 : Theme.Spacing.l)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+
+            if let notice = model.notice {
+                NoticeCapsule(notice: notice)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .padding(.top, Theme.Spacing.l)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .allowsHitTesting(false)
             }
 
             if let message = model.errorMessage {
@@ -114,6 +160,10 @@ struct PlayerView: View {
         .persistentSystemOverlays(.hidden)
         .animation(Theme.Motion.spring, value: controlsVisible)
         .animation(Theme.Motion.spring, value: model.showsNextEpisode)
+        .animation(Theme.Motion.spring, value: model.nextCountdown == nil)
+        .animation(Theme.Motion.spring, value: model.activeSkip)
+        .animation(Theme.Motion.spring, value: model.showsSuggestions)
+        .animation(Theme.Motion.gentle, value: showsPauseScreen)
         .animation(Theme.Motion.gentle, value: model.hasLoaded)
         .animation(Theme.Motion.spring, value: zoomNotice)
         .sensoryFeedback(.impact(weight: .medium), trigger: model.videoFill)
@@ -126,7 +176,14 @@ struct PlayerView: View {
             OrientationController.lock(.portrait)
         }
         .onChange(of: model.isPaused) { _, paused in
-            if paused { showControls(autoHide: false) } else { scheduleHide() }
+            if paused {
+                showControls(autoHide: false)
+                schedulePauseScreen()
+            } else {
+                pauseScreenTask?.cancel()
+                showsPauseScreen = false
+                scheduleHide()
+            }
         }
         .onChange(of: controlsVisible && !showsPanel, initial: true) { _, visible in
             model.controlsVisibilityChanged(visible)
@@ -158,6 +215,25 @@ struct PlayerView: View {
                     showZoomNotice(fill ? .fill : .fit)
                 }
         )
+    }
+
+    /// After five seconds paused, the picture dims into a quiet title card.
+    private func schedulePauseScreen() {
+        pauseScreenTask?.cancel()
+        pauseScreenTask = Task {
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled, model.isPaused, !model.isScrubbing, !showsPanel,
+                  !model.isPictureInPictureActive, model.errorMessage == nil
+            else { return }
+            showsPauseScreen = true
+            controlsVisible = false
+        }
+    }
+
+    private func dismissPauseScreen() {
+        showsPauseScreen = false
+        showControls(autoHide: false)
+        schedulePauseScreen()
     }
 
     /// Turns back to portrait first, behind a black curtain, then closes, so
@@ -251,6 +327,15 @@ struct PlayerView: View {
             }
 
             Spacer(minLength: Theme.Spacing.l)
+
+            if PrivacySettings.shared.privateMode {
+                Label("Private", systemImage: "eye.slash.fill")
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .accessibilityLabel("Private Viewing")
+            }
 
             if model.supportsPictureInPicture {
                 Button {
@@ -553,12 +638,19 @@ private struct SubtitleOverlay: View {
             // libmpv sizes subtitles against a 720-line picture; match it.
             let scale = proxy.size.height / 720
             if let text = model.overlayText {
+                let settings = PlaybackSettings.shared
                 Text(verbatim: text)
-                    .font(.system(size: CGFloat(PlaybackSettings.shared.subtitleSize.fontSize) * scale, weight: .bold))
-                    .foregroundStyle(.white)
+                    .font(.system(size: CGFloat(settings.subtitleSize.fontSize) * scale, weight: .bold))
+                    .foregroundStyle(Color(hex: settings.subtitleColorHex) ?? .white)
                     .multilineTextAlignment(.center)
-                    .shadow(color: .black.opacity(0.9), radius: 0, x: 1, y: 1)
-                    .shadow(color: .black.opacity(0.8), radius: 3)
+                    .shadow(color: .black.opacity(settings.subtitleBackground > 0.01 ? 0 : 0.9), radius: 0, x: 1, y: 1)
+                    .shadow(color: .black.opacity(settings.subtitleBackground > 0.01 ? 0 : 0.8), radius: 3)
+                    .padding(.horizontal, settings.subtitleBackground > 0.01 ? 10 * max(scale, 0.5) : 0)
+                    .padding(.vertical, settings.subtitleBackground > 0.01 ? 4 * max(scale, 0.5) : 0)
+                    .background(
+                        Color.black.opacity(settings.subtitleBackground),
+                        in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    )
                     .padding(.horizontal, proxy.size.width * 0.08)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     .padding(.bottom, model.subtitleMargin * scale)
@@ -653,5 +745,196 @@ private struct ScrubPreview: View {
                 .background(.ultraThinMaterial, in: Capsule())
         }
         .animation(Theme.Motion.snappy, value: image != nil)
+    }
+}
+
+/// "Next Episode in 10s", with a ring that runs down, and Play Now / Cancel.
+private struct NextEpisodeCountdown: View {
+    let seconds: Int
+    let label: String?
+    let playNow: () -> Void
+    let cancel: () -> Void
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.m) {
+            Button(action: playNow) {
+                ZStack {
+                    Circle().stroke(.white.opacity(0.25), lineWidth: 3)
+                    Circle()
+                        .trim(from: 0, to: CGFloat(seconds) / 10)
+                        .stroke(Theme.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(.linear(duration: 1), value: seconds)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 16, weight: .bold))
+                }
+                .frame(width: 46, height: 46)
+                .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Play Now")
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Next episode in \(seconds)s")
+                    .font(.subheadline.weight(.bold))
+                    .monospacedDigit()
+                    .contentTransition(.numericText(countsDown: true))
+                if let label {
+                    Text(verbatim: label)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .lineLimit(1)
+                        .environment(\.layoutDirection, AppLanguage.current.isRightToLeft ? .rightToLeft : .leftToRight)
+                }
+            }
+            .frame(maxWidth: 220, alignment: .leading)
+
+            Button("Cancel", action: cancel)
+                .font(.footnote.weight(.semibold))
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .tint(.white)
+        }
+        .padding(.leading, Theme.Spacing.s)
+        .padding(.trailing, Theme.Spacing.m)
+        .padding(.vertical, Theme.Spacing.s)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 0.5))
+        .shadow(color: .black.opacity(0.4), radius: 16)
+        .sensoryFeedback(.selection, trigger: seconds)
+    }
+}
+
+/// "More Like This" over a movie's end credits.
+private struct SuggestionsShelf: View {
+    let titles: [TMDBTitle]
+    let dismiss: () -> Void
+    let open: (TMDBTitle) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            HStack {
+                Text("More Like This")
+                    .font(.headline)
+                Spacer()
+                Button(action: dismiss) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .frame(width: 28, height: 28)
+                        .background(.white.opacity(0.14), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Close")
+            }
+            .padding(.horizontal, Theme.Spacing.xl)
+
+            ScrollView(.horizontal) {
+                HStack(spacing: Theme.Spacing.m) {
+                    ForEach(titles) { title in
+                        Button {
+                            open(title)
+                        } label: {
+                            PosterArtwork(url: TMDBClient.imageURL(title.posterPath, size: "w342"), title: title.title)
+                                .frame(width: 92)
+                        }
+                        .buttonStyle(.cardPress)
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.xl)
+                .padding(.vertical, 4)
+            }
+            .scrollIndicators(.hidden)
+            // Posters read in the app's direction.
+            .environment(\.layoutDirection, AppLanguage.current.isRightToLeft ? .rightToLeft : .leftToRight)
+        }
+        .padding(.vertical, Theme.Spacing.m)
+        .background(
+            LinearGradient(colors: [.clear, .black.opacity(0.85)], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+        )
+    }
+}
+
+/// A small message at the top: "Skipped intro", "Trying another link…".
+private struct NoticeCapsule: View {
+    let notice: PlayerViewModel.Notice
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.s) {
+            switch notice {
+            case .tryingAnother:
+                ProgressView().controlSize(.small).tint(.white)
+                Text("Trying another link…")
+            case .skippedIntro:
+                Image(systemName: "forward.fill")
+                Text("Skipped intro")
+            case .skippedRecap:
+                Image(systemName: "forward.fill")
+                Text("Skipped recap")
+            }
+        }
+        .font(.subheadline.weight(.semibold))
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.vertical, Theme.Spacing.s)
+        .background(.ultraThinMaterial, in: Capsule())
+        .environment(\.layoutDirection, AppLanguage.current.isRightToLeft ? .rightToLeft : .leftToRight)
+    }
+}
+
+/// After a few seconds paused: the picture dims and the title's logo, episode
+/// and synopsis appear, like a film still with its credits.
+private struct PauseScreen: View {
+    let session: PlaybackSession
+
+    @State private var localized: TitleLocalizer.Localized?
+
+    private var metaID: String { session.request.history?.metaID ?? session.metaID }
+
+    private var logo: URL? {
+        if let localized = localized?.logo, let url = localized { return url }
+        return Artwork.logo(id: metaID, provided: session.request.history?.logo)
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(
+                stops: [
+                    .init(color: .black.opacity(0.85), location: 0),
+                    .init(color: .black.opacity(0.55), location: 0.55),
+                    .init(color: .black.opacity(0.15), location: 1),
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                Text("Paused")
+                    .font(.caption.weight(.bold))
+                    .textCase(.uppercase)
+                    .tracking(1.5)
+                    .foregroundStyle(Theme.accent)
+                TitleArtwork(name: localized?.title ?? session.title, logo: logo, maxHeight: 80)
+                    .frame(maxWidth: 300, alignment: .leading)
+                if let subtitle = session.subtitle {
+                    Text(verbatim: subtitle)
+                        .font(.headline)
+                        .foregroundStyle(.white.opacity(0.9))
+                }
+                if let overview = session.overview, !overview.isEmpty {
+                    Text(verbatim: overview)
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.75))
+                        .lineLimit(4)
+                        .lineSpacing(2)
+                        .frame(maxWidth: 440, alignment: .leading)
+                }
+            }
+            .environment(\.layoutDirection, AppLanguage.current.isRightToLeft ? .rightToLeft : .leftToRight)
+            .padding(.horizontal, Theme.Spacing.xxl + Theme.Spacing.l)
+            .padding(.bottom, Theme.Spacing.xxl + Theme.Spacing.l)
+        }
+        .contentShape(Rectangle())
+        .localizedTitle(id: metaID, wantsLogo: true, into: $localized)
     }
 }
