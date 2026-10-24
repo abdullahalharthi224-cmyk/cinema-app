@@ -19,6 +19,9 @@ struct HomeView: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var launcher = PlaybackLauncher()
     @State private var taste = TasteModel()
+    @State private var kidsShelves = KidsShelvesModel()
+    private var kidsMaxAge: Int? { ProfileSession.shared.kidsMaxAge }
+    private static let kidsShelvesID = "kids.shelves"
     @Query private var allProgress: [PlaybackProgress]
     @Query(sort: \WatchlistItem.addedAt, order: .reverse) private var allWatchlist: [WatchlistItem]
 
@@ -49,8 +52,11 @@ struct HomeView: View {
             .playbackLauncher(launcher)
         }
         .environment(\.zoomNamespace, zoom)
-        .task(id: sources.map(\.id)) {
-            await model.load(addons: sources)
+        .task(id: sources.map(\.id) + ["\(kidsMaxAge ?? -1)"]) {
+            await model.load(addons: sources, kidsMaxAge: kidsMaxAge)
+        }
+        .task(id: "\(kidsMaxAge ?? -1)|\(TMDBAccount.shared.isConnected)") {
+            if let kidsMaxAge { await kidsShelves.load(maxAge: kidsMaxAge) }
         }
         .task(id: tasteKey) {
             await loadTaste()
@@ -67,7 +73,7 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
                     Group {
-                        if let hero = model.hero {
+                        if let hero {
                             HeroCarousel(items: hero.items, addonID: hero.addonID, height: heroHeight) { item in
                                 let request = StreamRequest(
                                     type: item.type, videoID: item.id, title: item.name, subtitle: nil,
@@ -76,6 +82,8 @@ struct HomeView: View {
                                 Task { await launcher.smartPlay(request, context: context) }
                             }
                             .transition(.opacity)
+                        } else if kidsMaxAge != nil && !model.isLoadingFirstRows {
+                            KidsHeader()
                         } else {
                             heroSkeleton(height: heroHeight)
                         }
@@ -87,6 +95,13 @@ struct HomeView: View {
                     }
 
                     LazyVStack(alignment: .leading, spacing: Theme.Spacing.xxxl) {
+                        if kidsMaxAge != nil && !TMDBAccount.shared.isConnected {
+                            ContentUnavailableView(
+                                "Age Ratings Need TMDB",
+                                systemImage: "figure.and.child.holdinghands",
+                                description: Text("Kids profiles check every title's age rating on TMDB. Connect TMDB in a grown-up profile's Settings.")
+                            )
+                        }
                         // In the order (and with the rows) chosen in Settings → Home Screen.
                         ForEach(sectionIDs, id: \.self) { id in
                             section(id)
@@ -108,11 +123,25 @@ struct HomeView: View {
                     .padding(.top, 3)
             }
             .refreshable {
-                await model.load(addons: sources, force: true)
+                await model.load(addons: sources, kidsMaxAge: kidsMaxAge, force: true)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .animation(Theme.Motion.spring, value: model.hero?.items.map(\.id))
+        .animation(Theme.Motion.spring, value: hero?.items.map(\.id))
+    }
+
+    /// The hero's titles, from the source chosen in Settings → Home Screen.
+    private var hero: (items: [MetaPreview], addonID: String)? {
+        let source = HomeCustomization.shared.heroSource
+        if source == HomeCustomization.heroMyList {
+            let items = watchlist.prefix(6).map {
+                MetaPreview(id: $0.metaID, type: $0.type, name: $0.name, poster: $0.poster, background: $0.background)
+            }
+            if !items.isEmpty { return (items, watchlist.first?.addonID ?? "") }
+        } else if source != HomeCustomization.heroAutomatic, let picked = model.hero(fromRow: source) {
+            return picked
+        }
+        return model.hero
     }
 
     /// Changes when the profile watches or saves something new.
@@ -137,7 +166,14 @@ struct HomeView: View {
 
     /// Home's rows: the built-in ones and every addon row worth showing.
     private var sectionIDs: [String] {
-        HomeLayoutStore.shared.layout.visible(HomeLayout.builtIns + model.visibleRows.map(\.id))
+        var ids = HomeLayoutStore.shared.layout.visible(HomeLayout.builtIns + model.visibleRows.map(\.id))
+        if kidsMaxAge != nil {
+            // Rows built from other titles' links aren't age-checked, so kids don't get them.
+            ids.removeAll { $0 == HomeLayout.platforms || $0 == HomeLayout.becauseYouWatched }
+            let after = ids.firstIndex(of: HomeLayout.continueWatching).map { $0 + 1 } ?? 0
+            ids.insert(Self.kidsShelvesID, at: min(after, ids.count))
+        }
+        return ids
     }
 
     @ViewBuilder
@@ -169,6 +205,10 @@ struct HomeView: View {
         case HomeLayout.becauseYouWatched:
             ForEach(taste.because) { row in
                 BecauseYouWatchedRow(row: row)
+            }
+        case Self.kidsShelvesID:
+            ForEach(kidsShelves.shelves) { shelf in
+                MoreLikeThisRow(heading: shelf.title, media: shelf.media, titles: shelf.titles)
             }
         case HomeLayout.comingSoon:
             if !taste.comingSoon.isEmpty {

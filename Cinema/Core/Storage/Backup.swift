@@ -14,6 +14,10 @@ struct CinemaBackup: Codable {
         var colorHex: String
         var sortIndex: Int
         var createdAt: Date
+        // Optional so older backups still open. The passcode itself is never in a backup.
+        var isLocked: Bool?
+        var isKids: Bool?
+        var kidsMaxAge: Int?
     }
 
     struct AddonRecord: Codable {
@@ -93,7 +97,7 @@ enum BackupService {
     /// Settings that belong in a backup (by UserDefaults key prefix).
     private static let settingPrefixes = [
         "appearance.", "playback.", "downloads.", "privacy.", "home.", "notifications.",
-        "search.", "stremio.", "profile.", "app.language",
+        "search.", "stremio.", "profile.", "app.language", "security.",
     ]
 
     static let lastBackupKey = "backup.lastDate"
@@ -123,7 +127,10 @@ enum BackupService {
 
         return CinemaBackup(
             createdAt: .now,
-            profiles: profiles.map { .init(id: $0.id, name: $0.name, symbol: $0.symbol, colorHex: $0.colorHex, sortIndex: $0.sortIndex, createdAt: $0.createdAt) },
+            profiles: profiles.map {
+                .init(id: $0.id, name: $0.name, symbol: $0.symbol, colorHex: $0.colorHex, sortIndex: $0.sortIndex,
+                      createdAt: $0.createdAt, isLocked: $0.isLocked, isKids: $0.isKids, kidsMaxAge: $0.kidsMaxAge)
+            },
             addons: addons.map { .init(transportUrl: $0.transportUrl, manifestData: $0.manifestData, isEnabled: $0.isEnabled, sortIndex: $0.sortIndex, sourceRaw: $0.sourceRaw) },
             history: history.map {
                 .init(profileID: $0.profileID, metaID: $0.metaID, type: $0.type, name: $0.name, poster: $0.poster,
@@ -168,6 +175,9 @@ enum BackupService {
             let profile = Profile(name: record.name, symbol: record.symbol, colorHex: record.colorHex, sortIndex: record.sortIndex)
             profile.id = record.id
             profile.createdAt = record.createdAt
+            profile.isLocked = record.isLocked ?? false
+            profile.isKids = record.isKids ?? false
+            profile.kidsMaxAge = record.kidsMaxAge ?? 7
             context.insert(profile)
         }
         for record in backup.addons {
@@ -225,9 +235,14 @@ enum BackupService {
         }
 
         // The active profile and the look change straight away.
-        if let id = defaults.string(forKey: "profile.activeID").flatMap(UUID.init(uuidString:)) {
-            ProfileSession.shared.activeID = id
+        let restoredProfiles = ProfileStore.all(in: context)
+        let activeID = defaults.string(forKey: "profile.activeID").flatMap(UUID.init(uuidString:))
+        if let active = restoredProfiles.first(where: { $0.id == activeID }) ?? restoredProfiles.first {
+            ProfileSession.shared.activate(active)
         }
+        SecuritySettings.shared.reload()
+        HomeCustomization.shared.reload()
+        Task { await AppIconStore.applySaved() }
         if let accent = defaults.string(forKey: "appearance.accentHex") { Appearance.shared.accentHex = accent }
         if let theme = defaults.string(forKey: "appearance.theme").flatMap(AppTheme.init(rawValue:)) { Appearance.shared.theme = theme }
         if let data = defaults.data(forKey: "home.layout"), let layout = try? JSONDecoder().decode(HomeLayout.self, from: data) {

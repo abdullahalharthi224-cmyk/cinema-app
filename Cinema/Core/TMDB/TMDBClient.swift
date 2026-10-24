@@ -87,6 +87,38 @@ struct TMDBClient: Sendable {
         return nil
     }
 
+    /// A title's age certificates by country ("US" → "PG-13").
+    func certifications(media: TMDBMediaType, tmdbID: Int) async throws -> [String: String] {
+        var result: [String: String] = [:]
+        switch media {
+        case .movie:
+            struct Response: Decodable {
+                struct Country: Decodable {
+                    struct Release: Decodable { var certification: String? }
+                    var iso_3166_1: String
+                    var release_dates: [Release]?
+                }
+                var results: [Country]
+            }
+            let response: Response = try await get("movie/\(tmdbID)/release_dates")
+            for country in response.results {
+                if let certificate = country.release_dates?.lazy.compactMap(\.certification).first(where: { !$0.isEmpty }) {
+                    result[country.iso_3166_1] = certificate
+                }
+            }
+        case .tv:
+            struct Response: Decodable {
+                struct Rating: Decodable { var iso_3166_1: String; var rating: String? }
+                var results: [Rating]
+            }
+            let response: Response = try await get("tv/\(tmdbID)/content_ratings")
+            for rating in response.results {
+                if let value = rating.rating, !value.isEmpty { result[rating.iso_3166_1] = value }
+            }
+        }
+        return result
+    }
+
     /// Titles whose name matches the query, most popular first.
     func search(media: TMDBMediaType, query: String, language: String) async throws -> [TMDBTitle] {
         let page: TMDBPage = try await get("search/\(media.rawValue)", query: ["query": query, "language": language])

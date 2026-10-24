@@ -27,6 +27,23 @@ struct AppearanceView: View {
             }
 
             Section {
+                NavigationLink(value: SettingsRoute.appIcon) {
+                    HStack(spacing: Theme.Spacing.m) {
+                        Image(AppIconStore.current.previewImage)
+                            .resizable()
+                            .frame(width: 36, height: 36)
+                            .clipShape(.continuous(8))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("App Icon")
+                            Text(AppIconStore.current.title)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+
+            Section {
                 LazyVGrid(columns: columns, spacing: Theme.Spacing.l) {
                     ForEach(Appearance.presets) { preset in
                         swatch(preset)

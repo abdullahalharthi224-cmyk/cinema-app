@@ -76,11 +76,11 @@ Keep the code organized: `App/`, `Features/<Feature>/`, `Core/Addons/`, `Core/Pl
 Write unit tests for the addon client and Stremio import parsing.
 Never commit secrets. Never hardcode content sources.
 7. Roadmap (agreed with the owner — planned, not built yet)
-Next version:
-Profile lock: a passcode or Face ID per profile, or for the whole app.
-Kids profile limited by age rating (TMDB certification).
-Finish customization: hero source, poster size, show/hide ratings, alternate app icons.
-After that:
+Done:
+Profile lock: Face ID with a 4-digit passcode fallback, per profile or for the whole app (passcode never in backups).
+Kids profile limited by age rating (TMDB certification; unrated titles hidden; no Settings/addons; leaving needs the passcode, not Face ID).
+Customization: hero source, poster size, show/hide ratings, alternate app icons (tools/AppIcons/make_variants.py).
+Next:
 Home Screen widget (last watched, continue with one tap).
 Siri / App Intents ("Continue watching in Cinema").
 Viewing statistics page (hours watched, top genres, most-seen actors).

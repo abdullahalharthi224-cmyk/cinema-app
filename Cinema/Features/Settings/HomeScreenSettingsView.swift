@@ -8,12 +8,56 @@ struct HomeScreenSettingsView: View {
         sort: \InstalledAddon.sortIndex
     ) private var addons: [InstalledAddon]
     @State private var store = HomeLayoutStore.shared
+    @State private var custom = HomeCustomization.shared
 
     private var catalogs: [CatalogReference] { addons.sources.flatMap(\.browsableCatalogs) }
     private var ids: [String] { HomeLayout.builtIns + catalogs.map(\.id) }
 
     var body: some View {
         List {
+            Section {
+                Picker(selection: $custom.heroSource) {
+                    Text("Automatic").tag(HomeCustomization.heroAutomatic)
+                    Text("My List").tag(HomeCustomization.heroMyList)
+                    ForEach(catalogs) { catalog in
+                        Text("\(Text(catalog.displayTitle)) · \(catalog.addon.name)").tag(catalog.id)
+                    }
+                } label: {
+                    Label {
+                        Text("Hero Source")
+                    } icon: {
+                        SettingsIcon(systemName: "sparkles.rectangle.stack.fill", color: .orange)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                    Label {
+                        Text("Poster Size")
+                    } icon: {
+                        SettingsIcon(systemName: "rectangle.portrait.fill", color: .blue)
+                    }
+                    Picker("Poster Size", selection: $custom.posterSize) {
+                        ForEach(HomeCustomization.PosterSize.allCases) { size in
+                            Text(size.title).tag(size)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
+
+                Toggle(isOn: $custom.showsRatings) {
+                    Label {
+                        Text("Ratings on Posters")
+                    } icon: {
+                        SettingsIcon(systemName: "star.fill", color: .yellow)
+                    }
+                }
+            } header: {
+                Text("Look")
+            } footer: {
+                Text("The hero is the large artwork at the top of Home. Automatic uses the first row with artwork.")
+            }
+
             Section {
                 ForEach(store.layout.arranged(ids), id: \.self) { id in
                     row(id)
@@ -23,6 +67,8 @@ struct HomeScreenSettingsView: View {
                         store.layout.move(in: ids, fromOffsets: source, toOffset: destination)
                     }
                 }
+            } header: {
+                Text("Rows")
             } footer: {
                 Text("Drag to reorder. Tap the eye to show or hide a row. Rows from addons that fail or have no artwork are hidden automatically.")
             }
@@ -38,6 +84,7 @@ struct HomeScreenSettingsView: View {
         .navigationTitle("Home Screen")
         .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.selection, trigger: store.layout)
+        .sensoryFeedback(.selection, trigger: custom.posterSize)
     }
 
     private func row(_ id: String) -> some View {

@@ -92,7 +92,7 @@ struct SearchView: View {
                             .font(.display(.title2))
                         LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.Spacing.m), GridItem(.flexible(), spacing: Theme.Spacing.m)],
                                   spacing: Theme.Spacing.m) {
-                            ForEach(BrowseCategory.all) { category in
+                            ForEach(ProfileSession.shared.isKids ? BrowseCategory.kids : BrowseCategory.all) { category in
                                 NavigationLink(value: category) {
                                     CategoryCard(category: category)
                                 }
@@ -206,7 +206,16 @@ struct SearchView: View {
         guard !Task.isCancelled else { return }
 
         do {
-            let sections = try await service.search(text, addons: sources)
+            var sections = try await service.search(text, addons: sources)
+            // A kids profile only sees results rated for its age.
+            if let maxAge = ProfileSession.shared.kidsMaxAge {
+                for index in sections.indices {
+                    sections[index].items = await KidsRatings.shared.filter(
+                        Array(sections[index].items.prefix(30)), maxAge: maxAge
+                    ) { ($0.id, $0.type) }
+                }
+                sections.removeAll { $0.items.isEmpty }
+            }
             guard !Task.isCancelled else { return }
             withAnimation(.smooth) { phase = .results(sections) }
         } catch {

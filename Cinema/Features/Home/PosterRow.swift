@@ -191,8 +191,8 @@ private struct RankedPoster: View {
                 .offset(y: 24)
                 .accessibilityHidden(true)
 
-            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: localized?.title ?? item.name, id: item.id)
-                .frame(width: 118)
+            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: localized?.title ?? item.name, id: item.id, rating: item.imdbRating)
+                .frame(width: HomeCustomization.shared.width(118))
                 .zoomSource(id: transitionID, in: namespace)
         }
         .localizedTitle(id: item.id, into: $localized)

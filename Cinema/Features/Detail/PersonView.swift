@@ -18,7 +18,10 @@ struct PersonView: View {
     @State private var errorMessage: String?
     @State private var isBiographyExpanded = false
 
-    private let columns = [GridItem(.adaptive(minimum: 104, maximum: 160), spacing: Theme.Spacing.m)]
+    private var columns: [GridItem] {
+        let size = HomeCustomization.shared
+        return [GridItem(.adaptive(minimum: size.width(104), maximum: size.width(160)), spacing: Theme.Spacing.m)]
+    }
 
     var body: some View {
         ScrollView {

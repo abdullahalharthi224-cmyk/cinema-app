@@ -131,7 +131,8 @@ struct DetailView: View {
                         .padding(.top, Theme.Spacing.xxl)
                 }
 
-                if let parts = model.collection?.parts.filter({ $0.posterPath != nil }), !parts.isEmpty {
+                // Recommendations aren't age-checked, so kids profiles don't show them.
+                if !ProfileSession.shared.isKids, let parts = model.collection?.parts.filter({ $0.posterPath != nil }), !parts.isEmpty {
                     MoreLikeThisRow(heading: "Films in This Collection", media: .movie, titles: parts)
                         .padding(.top, Theme.Spacing.xxl)
                 }
@@ -146,7 +147,7 @@ struct DetailView: View {
                             .padding(.top, Theme.Spacing.xxl)
                     }
 
-                    if !details.recommendations.isEmpty {
+                    if !details.recommendations.isEmpty && !ProfileSession.shared.isKids {
                         MoreLikeThisRow(media: details.media, titles: details.recommendations)
                             .padding(.top, Theme.Spacing.xxl)
                     }
@@ -592,10 +593,15 @@ struct DetailView: View {
                     ScrollView(.horizontal) {
                         LazyHStack(alignment: .top, spacing: Theme.Spacing.l) {
                             ForEach(model.cast) { member in
-                                NavigationLink(value: PersonRoute(id: member.id, name: member.name, profilePath: member.profilePath)) {
+                                if ProfileSession.shared.isKids {
+                                    // An actor's other work isn't age-checked.
                                     CastBadge(name: member.name, character: member.character, photo: TMDBClient.imageURL(member.profilePath, size: "w185"))
+                                } else {
+                                    NavigationLink(value: PersonRoute(id: member.id, name: member.name, profilePath: member.profilePath)) {
+                                        CastBadge(name: member.name, character: member.character, photo: TMDBClient.imageURL(member.profilePath, size: "w185"))
+                                    }
+                                    .buttonStyle(.cardPress)
                                 }
-                                .buttonStyle(.cardPress)
                             }
                         }
                         .padding(.horizontal, Theme.Spacing.l)

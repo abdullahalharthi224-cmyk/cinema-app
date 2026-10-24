@@ -79,7 +79,9 @@ extension View {
     /// Registers the detail and catalog destinations shared by Home and Search.
     func contentDestinations() -> some View {
         navigationDestination(for: MetaRoute.self) { route in
-            DetailView(route: route)
+            KidsGated(id: route.id, type: route.type) {
+                DetailView(route: route)
+            }
         }
         .navigationDestination(for: CatalogRoute.self) { route in
             CatalogGridView(reference: route.reference)

@@ -15,7 +15,10 @@ struct CatalogGridView: View {
     }
 
     private let service = ContentService()
-    private let columns = [GridItem(.adaptive(minimum: 104, maximum: 160), spacing: Theme.Spacing.m)]
+    private var columns: [GridItem] {
+        let size = HomeCustomization.shared
+        return [GridItem(.adaptive(minimum: size.width(104), maximum: size.width(160)), spacing: Theme.Spacing.m)]
+    }
 
     var body: some View {
         ScrollView {
@@ -116,12 +119,23 @@ struct CatalogGridView: View {
 
     // MARK: Loading
 
+    /// How far into the addon's catalog we've read (kids profiles keep fewer items than that).
+    @State private var fetched = 0
+
+    /// In a kids profile, keeps only titles rated for its age.
+    private func suitable(_ page: [MetaPreview]) async -> [MetaPreview] {
+        guard let maxAge = ProfileSession.shared.kidsMaxAge else { return page }
+        return await KidsRatings.shared.filter(page, maxAge: maxAge) { ($0.id, $0.type) }
+    }
+
     private func reload() async {
         if items.isEmpty { phase = .loading }
         do {
             let page = try await service.catalog(reference, genre: genre)
+            let kept = await suitable(page)
             guard !Task.isCancelled else { return }
-            items = page
+            fetched = page.count
+            items = kept
             canLoadMore = reference.catalog.supportsSkip && !page.isEmpty
             phase = .loaded
         } catch {
@@ -135,11 +149,12 @@ struct CatalogGridView: View {
         isLoadingMore = true
         defer { isLoadingMore = false }
         do {
-            let page = try await service.catalog(reference, skip: items.count, genre: genre)
+            let page = try await service.catalog(reference, skip: fetched, genre: genre)
+            fetched += page.count
             let known = Set(items.map(\.id))
-            let fresh = page.filter { !known.contains($0.id) }
+            let fresh = await suitable(page.filter { !known.contains($0.id) })
             items.append(contentsOf: fresh)
-            canLoadMore = !fresh.isEmpty
+            canLoadMore = !page.isEmpty
         } catch {
             canLoadMore = false
         }
