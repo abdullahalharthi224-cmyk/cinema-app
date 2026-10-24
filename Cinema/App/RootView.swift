@@ -43,7 +43,13 @@ struct RootView: View {
             if !didCheckProfiles {
                 didCheckProfiles = true
                 ProfileStore.ensureActiveProfile(in: context)
-                if ProfileStore.all(in: context).count > 1 { isPickingProfile = true }
+                if ProfileStore.all(in: context).count > 1 {
+                    // Let the launch animation finish first.
+                    while LaunchState.shared.isShowingSplash {
+                        try? await Task.sleep(for: .milliseconds(100))
+                    }
+                    isPickingProfile = true
+                }
             }
             // Swap any old-protocol addons (e.g. the original OpenSubtitles) for their modern versions.
             await AddonStore(context: context).migrateLegacyAddons()
