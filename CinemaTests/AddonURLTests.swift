@@ -71,4 +71,27 @@ final class AddonURLTests: XCTestCase {
         XCTAssertTrue(AddonURL.isLegacy(other))
         XCTAssertFalse(AddonURL.isLegacy(URL(string: "https://x.com/manifest.json")!))
     }
+
+    func testEncodedConfigurationSurvivesUntouched() throws {
+        let input = "https://addon.example.com/%7B%22a%22%3A%22b%2Fc%22%7D/manifest.json"
+        let manifest = try AddonURL.normalizedManifestURL(from: input)
+        XCTAssertEqual(manifest.absoluteString, input)
+        XCTAssertEqual(
+            AddonURL.baseURL(fromManifestURL: manifest).absoluteString,
+            "https://addon.example.com/%7B%22a%22%3A%22b%2Fc%22%7D"
+        )
+    }
+
+    func testUnconfiguredTMDBCollectionsGetsDefaultSettings() {
+        let bare = URL(string: "https://collections.example.com")!
+        let configured = AddonURL.configuredBaseURL(bare, manifestID: "org.stremio.tmdbcollections", language: "ar-SA")
+        XCTAssertEqual(
+            configured.absoluteString,
+            "https://collections.example.com/%7B%22language%22%3A%22ar-SA%22%2C%22enableAdultContent%22%3Afalse%2C%22enableSearch%22%3Atrue%2C%22enableCollectionFromMovie%22%3Afalse%7D"
+        )
+        // Already configured, or a different addon: left alone.
+        let custom = URL(string: "https://collections.example.com/%7B%7D")!
+        XCTAssertEqual(AddonURL.configuredBaseURL(custom, manifestID: "org.stremio.tmdbcollections", language: "en-US"), custom)
+        XCTAssertEqual(AddonURL.configuredBaseURL(bare, manifestID: "other", language: "en-US"), bare)
+    }
 }

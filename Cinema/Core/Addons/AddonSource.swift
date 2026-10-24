@@ -20,7 +20,11 @@ struct AddonSource: Sendable, Hashable, Identifiable {
         self.init(
             id: manifestURL.absoluteString,
             name: manifest.name,
-            baseURL: AddonURL.baseURL(fromManifestURL: manifestURL),
+            baseURL: AddonURL.configuredBaseURL(
+                AddonURL.baseURL(fromManifestURL: manifestURL),
+                manifestID: manifest.id,
+                language: AppLanguage.current.tmdbCode
+            ),
             manifest: manifest
         )
     }

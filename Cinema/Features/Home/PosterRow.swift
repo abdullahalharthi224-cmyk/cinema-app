@@ -345,6 +345,14 @@ extension CatalogReference {
         let name = (catalog.name ?? catalog.id).trimmingCharacters(in: .whitespaces).lowercased()
         let isMovie = type == "movie"
         let isSeries = type == "series"
+        if type == "collections" {
+            switch name {
+            case "popular", "top", "trending": return "Popular Collections"
+            case "top rated", "rating": return "Top Rated Collections"
+            case "new", "latest", "new releases": return "New Collections"
+            default: break
+            }
+        }
         switch name {
         case "popular", "top", "trending":
             if isMovie { return "Trending Movies" }

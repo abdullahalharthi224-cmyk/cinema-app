@@ -8,7 +8,7 @@ struct SubtitlePanel: View {
 
     @State private var tab: Tab = .subtitles
 
-    enum Tab: Hashable { case subtitles, audio, adjust }
+    enum Tab: Hashable { case subtitles, audio, sync, adjust }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
@@ -18,6 +18,7 @@ struct SubtitlePanel: View {
                     if model.audioTracks.count > 1 {
                         Text("Audio").tag(Tab.audio)
                     }
+                    Text("Sync").tag(Tab.sync)
                     Text("Adjust").tag(Tab.adjust)
                 }
                 .pickerStyle(.segmented)
@@ -37,6 +38,7 @@ struct SubtitlePanel: View {
                     switch tab {
                     case .subtitles: subtitlesTab
                     case .audio: audioTab
+                    case .sync: SubtitleSyncView(model: model)
                     case .adjust: adjustTab
                     }
                 }
@@ -197,7 +199,7 @@ struct SubtitlePanel: View {
     private var delayText: String {
         let value = model.subtitleDelay
         if value == 0 { return "0.0s" }
-        return String(format: "%+.1fs", value)
+        return String(format: "%+.2fs", value)
     }
 
     private var delayHint: LocalizedStringKey {
