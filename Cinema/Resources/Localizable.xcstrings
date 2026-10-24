@@ -1551,6 +1551,16 @@
         }
       }
     },
+    "Films in This Collection": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفلام هذه السلسلة"
+          }
+        }
+      }
+    },
     "Find Something to Watch": {
       "localizations": {
         "ar": {

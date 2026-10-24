@@ -87,6 +87,23 @@ struct TMDBClient: Sendable {
         return nil
     }
 
+    /// Titles whose name matches the query, most popular first.
+    func search(media: TMDBMediaType, query: String, language: String) async throws -> [TMDBTitle] {
+        let page: TMDBPage = try await get("search/\(media.rawValue)", query: ["query": query, "language": language])
+        return page.results
+    }
+
+    /// Film collections (like a trilogy) whose name matches the query.
+    func searchCollections(query: String, language: String) async throws -> [TMDBTitle] {
+        let page: TMDBPage = try await get("search/collection", query: ["query": query, "language": language])
+        return page.results
+    }
+
+    /// A collection's name, synopsis and its films.
+    func collection(id: Int, language: String) async throws -> TMDBCollection {
+        try await get("collection/\(id)", query: ["language": language])
+    }
+
     /// A title's localized name and artwork, looked up by IMDb ID in one request.
     func findLocalized(imdbID: String, language: String) async throws -> TMDBFindResult? {
         struct Response: Decodable {
@@ -606,6 +623,37 @@ enum TMDBError: Error, Equatable, LocalizedError {
             return localized("TMDB sent data this app can't read.")
         }
     }
+}
+
+/// A set of films, like a trilogy.
+struct TMDBCollection: Decodable, Sendable {
+    var id: Int
+    var name: String
+    var overview: String?
+    var posterPath: String?
+    var backdropPath: String?
+    /// The films in release order, unreleased ones last.
+    var parts: [TMDBTitle]
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, overview, parts
+        case posterPath = "poster_path", backdropPath = "backdrop_path"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        name = c.lenient(String.self, forKey: .name) ?? ""
+        overview = c.lenient(String.self, forKey: .overview)
+        posterPath = c.lenient(String.self, forKey: .posterPath)
+        backdropPath = c.lenient(String.self, forKey: .backdropPath)
+        let parts = c.lossyArray(TMDBTitle.self, forKey: .parts) ?? []
+        self.parts = parts.sorted { ($0.date?.nonEmptyDate ?? "9999") < ($1.date?.nonEmptyDate ?? "9999") }
+    }
+}
+
+private extension String {
+    var nonEmptyDate: String? { isEmpty ? nil : self }
 }
 
 struct TMDBFindResult: Sendable {

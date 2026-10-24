@@ -98,10 +98,14 @@ struct MetaItem: Decodable, Hashable, Sendable, Identifiable {
     var director: [String]
     var videos: [MetaVideo]
     var trailers: [Trailer]
+    /// IDs some addons add when their own ID isn't an IMDb one.
+    var imdbID: String?
+    var tmdbID: String?
 
     enum CodingKeys: String, CodingKey {
         case id, type, name, poster, background, logo, description, releaseInfo, imdbRating, runtime
         case genres, cast, director, videos, trailers
+        case imdbID = "imdb_id", imdbIDCamel = "imdbId", tmdbID = "tmdb_id", moviedbID = "moviedb_id"
     }
 
     init(from decoder: Decoder) throws {
@@ -121,6 +125,8 @@ struct MetaItem: Decodable, Hashable, Sendable, Identifiable {
         director = c.lossyArray(String.self, forKey: .director) ?? []
         videos = c.lossyArray(MetaVideo.self, forKey: .videos) ?? []
         trailers = c.lossyArray(Trailer.self, forKey: .trailers) ?? []
+        imdbID = c.flexibleString(forKey: .imdbID) ?? c.flexibleString(forKey: .imdbIDCamel)
+        tmdbID = c.flexibleString(forKey: .tmdbID) ?? c.flexibleString(forKey: .moviedbID)
     }
 }
 
