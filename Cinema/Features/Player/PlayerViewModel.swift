@@ -46,7 +46,6 @@ final class PlayerViewModel {
     @ObservationIgnored private var subtitlesDecided = false
     @ObservationIgnored private var userPickedSubtitle = false
     @ObservationIgnored private var lifecycleObservers: [NSObjectProtocol] = []
-    @ObservationIgnored private var wasPlayingBeforeBackground = false
     @ObservationIgnored private var thumbnailTask: Task<Void, Never>?
     @ObservationIgnored private var overlayTask: Task<Void, Never>?
     @ObservationIgnored private weak var context: ModelContext?
@@ -160,26 +159,25 @@ final class PlayerViewModel {
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
-    /// Pauses in the background (unless playing in Picture in Picture) and
-    /// restores the picture on return.
+    /// Keeps playing in the background: in Picture in Picture when it's open,
+    /// otherwise as sound only (with Lock Screen controls). The picture comes
+    /// back on return.
     private func observeAppLifecycle() {
         let center = NotificationCenter.default
         lifecycleObservers = [
             center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
-                    guard let self, let engine = self.engine, !engine.isPictureInPictureActive else { return }
-                    self.wasPlayingBeforeBackground = !self.isPaused
-                    engine.setPaused(true)
-                    engine.setVideoEnabled(false)
+                    guard let self, let engine = self.engine else { return }
                     self.saveProgress()
+                    self.updateNowPlaying()
+                    guard !engine.isPictureInPictureActive else { return }
+                    engine.setVideoEnabled(false)
                 }
             },
             center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self, let engine = self.engine, !engine.isPictureInPictureActive else { return }
                     engine.setVideoEnabled(true)
-                    if self.wasPlayingBeforeBackground { engine.setPaused(false) }
-                    self.wasPlayingBeforeBackground = false
                 }
             },
         ]

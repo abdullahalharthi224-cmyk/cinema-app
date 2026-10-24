@@ -18,6 +18,7 @@ final class NowPlayingController {
 
     func activate(title: String, subtitle: String?, artwork: URL?, actions: Actions) {
         deactivateCommands()
+        UIApplication.shared.beginReceivingRemoteControlEvents()
         let center = MPRemoteCommandCenter.shared()
 
         func add(_ command: MPRemoteCommand, _ handler: @escaping (MPRemoteCommandEvent) -> Void) {
