@@ -56,6 +56,9 @@ final class MPVHandle: @unchecked Sendable {
             "demuxer-readahead-secs": "30",
             "network-timeout": "30",
             "ytdl": "no",
+            // Without this, iOS audio is "mixable with other apps", and iOS only
+            // shows Lock Screen / Control Center controls for audio that isn't.
+            "audio-exclusive": "yes",
             // Subtitles stay inside the picture (not in the black bars), in a clean
             // white with a soft dark edge that reads well on any scene.
             "sub-use-margins": "no",
@@ -448,6 +451,15 @@ final class MPVEngine: NSObject, VideoEngine {
     private var restoreOutputOnForeground = false
     /// Read by Picture in Picture from any thread.
     nonisolated(unsafe) private var pausedForPictureInPicture = false
+    nonisolated(unsafe) private var durationForPictureInPicture: Double = 0
+    private var isBuffering = false
+    private var speed: Double = 1
+    /// The floating window's clock: it shows elapsed and remaining time from it.
+    private let timebase: CMTimebase? = {
+        var timebase: CMTimebase?
+        CMTimebaseCreateWithSourceClock(allocator: kCFAllocatorDefault, sourceClock: CMClockGetHostTimeClock(), timebaseOut: &timebase)
+        return timebase
+    }()
 
     init?(controller: MPVVideoViewController, options: [String: String]) {
         guard let handle = MPVHandle(layer: controller.metalLayer, options: options) else { return nil }
@@ -456,13 +468,39 @@ final class MPVEngine: NSObject, VideoEngine {
         super.init()
         handle.onEvent = { [weak self] event in
             guard let self else { return }
-            if case .paused(let paused) = event {
-                self.pausedForPictureInPicture = paused
-                self.pictureInPicture?.invalidatePlaybackState()
-            }
+            self.updatePictureInPictureClock(for: event)
             self.onEvent?(event)
         }
         setUpPictureInPicture()
+    }
+
+    /// Keeps the floating window's timeline in step with playback.
+    private func updatePictureInPictureClock(for event: PlayerEvent) {
+        guard let timebase else { return }
+        switch event {
+        case .position(let seconds):
+            // Only correct real jumps (seeks); the clock runs on its own in between.
+            if abs(CMTimebaseGetTime(timebase).seconds - seconds) > 0.75 {
+                CMTimebaseSetTime(timebase, time: CMTime(seconds: seconds, preferredTimescale: 600))
+            }
+        case .duration(let seconds):
+            durationForPictureInPicture = seconds
+            pictureInPicture?.invalidatePlaybackState()
+        case .paused(let paused):
+            pausedForPictureInPicture = paused
+            updateClockRate()
+            pictureInPicture?.invalidatePlaybackState()
+        case .buffering(let buffering):
+            isBuffering = buffering
+            updateClockRate()
+        default:
+            break
+        }
+    }
+
+    private func updateClockRate() {
+        guard let timebase else { return }
+        CMTimebaseSetRate(timebase, rate: pausedForPictureInPicture || isBuffering ? 0 : speed)
     }
 
     /// Picture in Picture shows the sample-buffer layer. libmpv switches to
@@ -470,7 +508,8 @@ final class MPVEngine: NSObject, VideoEngine {
     private func setUpPictureInPicture() {
         guard handle.supportsSoftwareOutput, AVPictureInPictureController.isPictureInPictureSupported() else { return }
         // The layer needs content before Picture in Picture counts as possible.
-        if let black = Self.blackFrame() { Self.enqueue(black, on: displayLayer) }
+        displayLayer.controlTimebase = timebase
+        if let black = Self.blackFrame() { Self.enqueue(black, on: displayLayer, timebase: timebase) }
         let source = AVPictureInPictureController.ContentSource(sampleBufferDisplayLayer: displayLayer, playbackDelegate: self)
         let controller = AVPictureInPictureController(contentSource: source)
         controller.delegate = self
@@ -488,7 +527,11 @@ final class MPVEngine: NSObject, VideoEngine {
     func setPaused(_ paused: Bool) { handle.setFlag("pause", paused) }
     func seek(to seconds: Double) { handle.command(["seek", String(seconds), "absolute"]) }
     func seek(by seconds: Double) { handle.command(["seek", String(seconds), "relative"]) }
-    func setSpeed(_ speed: Double) { handle.setDouble("speed", speed) }
+    func setSpeed(_ speed: Double) {
+        self.speed = speed
+        handle.setDouble("speed", speed)
+        updateClockRate()
+    }
 
     func fetchTracks(_ completion: @escaping ([PlayerTrack]) -> Void) { handle.fetchTracks(completion) }
     func selectAudio(id: Int) { handle.setString("aid", String(id)) }
@@ -535,9 +578,10 @@ final class MPVEngine: NSObject, VideoEngine {
 
     private func startSoftwareOutput() {
         let layer = displayLayer
+        let timebase = timebase
         let sink: @Sendable (CVPixelBuffer) -> Void = { [weak layer] buffer in
             guard let layer else { return }
-            MPVEngine.enqueue(buffer, on: layer)
+            MPVEngine.enqueue(buffer, on: layer, timebase: timebase)
         }
         handle.setSoftwareOutput(true, sink: sink)
     }
@@ -552,12 +596,14 @@ final class MPVEngine: NSObject, VideoEngine {
     }
 
     /// Wraps a frame so the layer shows it right away.
-    nonisolated static func enqueue(_ buffer: CVPixelBuffer, on layer: AVSampleBufferDisplayLayer) {
+    nonisolated static func enqueue(_ buffer: CVPixelBuffer, on layer: AVSampleBufferDisplayLayer, timebase: CMTimebase?) {
         var format: CMVideoFormatDescription?
         CMVideoFormatDescriptionCreateForImageBuffer(allocator: kCFAllocatorDefault, imageBuffer: buffer, formatDescriptionOut: &format)
         guard let format else { return }
         var timing = CMSampleTimingInfo(
-            duration: .invalid, presentationTimeStamp: CMClockGetTime(CMClockGetHostTimeClock()), decodeTimeStamp: .invalid
+            duration: .invalid,
+            presentationTimeStamp: timebase.map { CMTimebaseGetTime($0) } ?? CMClockGetTime(CMClockGetHostTimeClock()),
+            decodeTimeStamp: .invalid
         )
         var sample: CMSampleBuffer?
         CMSampleBufferCreateReadyWithImageBuffer(
@@ -640,8 +686,10 @@ extension MPVEngine: AVPictureInPictureSampleBufferPlaybackDelegate {
     }
 
     nonisolated func pictureInPictureControllerTimeRangeForPlayback(_ controller: AVPictureInPictureController) -> CMTimeRange {
-        // No timeline in the floating window: just play/pause and skip.
-        CMTimeRange(start: .negativeInfinity, duration: .positiveInfinity)
+        let duration = durationForPictureInPicture
+        // Until the length is known, behave like a live stream.
+        guard duration > 0 else { return CMTimeRange(start: .negativeInfinity, duration: .positiveInfinity) }
+        return CMTimeRange(start: .zero, duration: CMTime(seconds: duration, preferredTimescale: 600))
     }
 
     nonisolated func pictureInPictureControllerIsPlaybackPaused(_ controller: AVPictureInPictureController) -> Bool {
