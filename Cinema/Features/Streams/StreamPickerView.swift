@@ -239,14 +239,14 @@ struct StreamPickerView: View {
                         .font(.rounded(.caption, weight: .bold))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 1)
-                        .background(isSelected ? Color.black.opacity(0.12) : Color.white.opacity(0.12), in: Capsule())
+                        .background(Color.primary.opacity(0.12), in: Capsule())
                 }
             }
             .font(.subheadline.weight(.semibold))
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .foregroundStyle(isSelected ? Color.black : Color.primary)
-            .background(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(.ultraThinMaterial), in: Capsule())
+            .foregroundStyle(isSelected ? Theme.background : Color.primary)
+            .background(isSelected ? AnyShapeStyle(Color.primary) : AnyShapeStyle(.ultraThinMaterial), in: Capsule())
             .opacity(isEmpty && !isSelected ? 0.5 : 1)
         }
         .buttonStyle(.plain)
@@ -581,7 +581,7 @@ private struct StreamRow: View {
             }
         }
             .font(.rounded(.subheadline, weight: .heavy))
-            .foregroundStyle(isPremium ? Color.black : Color.white)
+            .foregroundStyle(isPremium ? Color.black : Color.primary)
             .lineLimit(1)
             .fixedSize()
             .padding(.horizontal, 10)
@@ -590,8 +590,8 @@ private struct StreamRow: View {
                 if isPremium {
                     Capsule().fill(Theme.accent.gradient)
                 } else {
-                    Capsule().fill(Color.white.opacity(0.08))
-                        .overlay(Capsule().strokeBorder(Color.white.opacity(0.22), lineWidth: 0.75))
+                    Capsule().fill(Color.primary.opacity(0.08))
+                        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.22), lineWidth: 0.75))
                 }
             }
     }

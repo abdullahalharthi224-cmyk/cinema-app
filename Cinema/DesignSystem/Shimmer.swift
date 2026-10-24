@@ -13,9 +13,9 @@ struct ShimmerModifier: ViewModifier {
                         LinearGradient(
                             stops: [
                                 .init(color: .clear, location: 0),
-                                .init(color: .white.opacity(0.06), location: 0.35),
-                                .init(color: .white.opacity(0.16), location: 0.5),
-                                .init(color: .white.opacity(0.06), location: 0.65),
+                                .init(color: Color.primary.opacity(0.06), location: 0.35),
+                                .init(color: Color.primary.opacity(0.16), location: 0.5),
+                                .init(color: Color.primary.opacity(0.06), location: 0.65),
                                 .init(color: .clear, location: 1),
                             ],
                             startPoint: .leading,
@@ -47,7 +47,7 @@ struct ShimmerPlaceholder: View {
         Rectangle()
             .fill(
                 LinearGradient(
-                    colors: [Color.white.opacity(0.07), Color.white.opacity(0.04)],
+                    colors: [Color.primary.opacity(0.07), Color.primary.opacity(0.04)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -63,7 +63,7 @@ struct SkeletonBar: View {
 
     var body: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.07))
+            .fill(Color.primary.opacity(0.07))
             .frame(width: width, height: height)
             .shimmering()
             .clipShape(Capsule())

@@ -25,17 +25,15 @@ enum Theme {
         static let large: CGFloat = 22
     }
 
-    /// Deep, true black — artwork glows against it, and it's gentle on OLED screens.
-    static let background = Color(red: 0.012, green: 0.012, blue: 0.016)
+    /// The page background of the chosen theme.
+    static var background: Color { Appearance.shared.theme.background }
 
-    /// A barely lifted black for cards and grouped surfaces.
-    static let surface = Color(white: 0.085)
+    /// Cards and grouped surfaces, slightly lifted from the background.
+    static var surface: Color { Appearance.shared.theme.surface }
 
-    static let backgroundGradient = LinearGradient(
-        colors: [Color(white: 0.06), background],
-        startPoint: .top,
-        endPoint: .bottom
-    )
+    static var backgroundGradient: LinearGradient {
+        LinearGradient(colors: [surface, background], startPoint: .top, endPoint: .bottom)
+    }
 
     enum Motion {
         /// The default, soft spring used for nearly every transition.
@@ -60,6 +58,45 @@ extension Font {
     }
 }
 
+// MARK: - Themes
+
+enum AppTheme: String, CaseIterable, Identifiable {
+    /// Deep near-black: artwork glows against it. The default.
+    case cinematic
+    /// Pure black, for OLED screens.
+    case oled
+    /// Bright and airy, with frosted glass.
+    case light
+
+    var id: String { rawValue }
+
+    var colorScheme: ColorScheme { self == .light ? .light : .dark }
+
+    var background: Color {
+        switch self {
+        case .cinematic: return Color(red: 0.012, green: 0.012, blue: 0.016)
+        case .oled: return .black
+        case .light: return Color(red: 0.95, green: 0.95, blue: 0.97)
+        }
+    }
+
+    var surface: Color {
+        switch self {
+        case .cinematic: return Color(white: 0.085)
+        case .oled: return Color(white: 0.06)
+        case .light: return .white
+        }
+    }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .cinematic: return "Dark Cinematic"
+        case .oled: return "OLED Black"
+        case .light: return "Light Glass"
+        }
+    }
+}
+
 // MARK: - Accent colour
 
 /// User-chosen appearance settings, persisted in `UserDefaults`.
@@ -69,6 +106,7 @@ final class Appearance {
 
     static let defaultAccentHex = "#C9A962"
     private static let accentKey = "appearance.accentHex"
+    private static let themeKey = "appearance.theme"
 
     struct Preset: Identifiable {
         let name: LocalizedStringKey
@@ -94,6 +132,10 @@ final class Appearance {
 
     var accent: Color { Color(hex: accentHex) ?? Color(hex: Self.defaultAccentHex)! }
 
+    var theme: AppTheme {
+        didSet { UserDefaults.standard.set(theme.rawValue, forKey: Self.themeKey) }
+    }
+
     /// The app's own language, independent of the iPhone's.
     var language: AppLanguage {
         didSet {
@@ -105,6 +147,7 @@ final class Appearance {
 
     private init() {
         accentHex = UserDefaults.standard.string(forKey: Self.accentKey) ?? Self.defaultAccentHex
+        theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: Self.themeKey) ?? "") ?? .cinematic
         language = AppLanguage.current
     }
 }

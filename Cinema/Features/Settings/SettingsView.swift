@@ -90,6 +90,14 @@ struct SettingsView: View {
                         }
                     }
 
+                    NavigationLink(value: SettingsRoute.homeScreen) {
+                        Label {
+                            Text("Home Screen")
+                        } icon: {
+                            SettingsIcon(systemName: "square.grid.3x1.below.line.grid.1x2.fill", color: .green)
+                        }
+                    }
+
                     NavigationLink(value: SettingsRoute.appearance) {
                         LabeledContent {
                             Circle()
@@ -149,6 +157,8 @@ struct SettingsView: View {
                     TMDBSettingsView()
                 case .playback:
                     PlaybackSettingsView()
+                case .homeScreen:
+                    HomeScreenSettingsView()
                 case .addon(let addon):
                     AddonDetailView(addon: addon)
                 }

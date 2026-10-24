@@ -301,6 +301,16 @@
         }
       }
     },
+    "AirPlay": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirPlay"
+          }
+        }
+      }
+    },
     "All": {
       "localizations": {
         "ar": {
@@ -781,6 +791,16 @@
         }
       }
     },
+    "Dark Cinematic": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سينمائي داكن"
+          }
+        }
+      }
+    },
     "Delete Profile": {
       "localizations": {
         "ar": {
@@ -857,6 +877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تم"
+          }
+        }
+      }
+    },
+    "Drag to reorder. Tap the eye to show or hide a row. Rows from addons that fail or have no artwork are hidden automatically.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسحب لإعادة الترتيب، واضغط على العين لإظهار الصف أو إخفائه. صفوف الإضافات التي لا تعمل أو ليس لها صور تُخفى تلقائيًا."
           }
         }
       }
@@ -951,6 +981,16 @@
         }
       }
     },
+    "Fill Screen": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملء الشاشة"
+          }
+        }
+      }
+    },
     "Find Something to Watch": {
       "localizations": {
         "ar": {
@@ -967,6 +1007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "جارٍ اختيار أفضل رابط…"
+          }
+        }
+      }
+    },
+    "Fit to Screen": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصورة كاملة"
           }
         }
       }
@@ -1021,12 +1071,42 @@
         }
       }
     },
+    "Hide": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إخفاء"
+          }
+        }
+      }
+    },
     "Home": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الرئيسية"
+          }
+        }
+      }
+    },
+    "Home Screen": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الشاشة الرئيسية"
+          }
+        }
+      }
+    },
+    "If Arabic Isn't Available": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إن لم تتوفر العربية"
           }
         }
       }
@@ -1171,6 +1251,16 @@
         }
       }
     },
+    "Light Glass": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "زجاجي فاتح"
+          }
+        }
+      }
+    },
     "Link": {
       "localizations": {
         "ar": {
@@ -1227,6 +1317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "جارٍ البحث عن ترجمات…"
+          }
+        }
+      }
+    },
+    "MP4 and HLS streams play in Apple's player, with Picture in Picture and full AirPlay. Everything else (like MKV) plays in the built-in player, which handles any format. The controls are the same in both.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "روابط MP4 وHLS تعمل بمشغّل أبل، مع الصورة داخل الصورة وAirPlay كامل. وباقي الصيغ (مثل MKV) تعمل بالمشغّل المدمج الذي يشغّل كل الصيغ. وأزرار التحكم نفسها في الحالتين."
           }
         }
       }
@@ -1461,6 +1561,16 @@
         }
       }
     },
+    "No Subtitles": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بدون ترجمة"
+          }
+        }
+      }
+    },
     "No playable stream was found for the next episode.": {
       "localizations": {
         "ar": {
@@ -1631,6 +1741,16 @@
         }
       }
     },
+    "OLED Black": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أسود OLED"
+          }
+        }
+      }
+    },
     "Ocean": {
       "localizations": {
         "ar": {
@@ -1741,6 +1861,16 @@
         }
       }
     },
+    "Picture in Picture": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصورة داخل الصورة"
+          }
+        }
+      }
+    },
     "Platforms": {
       "localizations": {
         "ar": {
@@ -1821,6 +1951,26 @@
         }
       }
     },
+    "Player": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المشغّل"
+          }
+        }
+      }
+    },
+    "Playing in Picture in Picture": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعمل في وضع الصورة داخل الصورة"
+          }
+        }
+      }
+    },
     "Popular Collections": {
       "localizations": {
         "ar": {
@@ -1867,6 +2017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الجودة المفضلة"
+          }
+        }
+      }
+    },
+    "Preparing subtitles…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ تجهيز الترجمة…"
           }
         }
       }
@@ -2007,6 +2167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "إعادة ضبط"
+          }
+        }
+      }
+    },
+    "Reset to Default": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعادة الترتيب الافتراضي"
           }
         }
       }
@@ -2187,6 +2357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الإعدادات"
+          }
+        }
+      }
+    },
+    "Show": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إظهار"
           }
         }
       }
@@ -2701,6 +2881,16 @@
         }
       }
     },
+    "Theme": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المظهر"
+          }
+        }
+      }
+    },
     "This addon needs to be configured on its website first.": {
       "localizations": {
         "ar": {
@@ -2807,6 +2997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "ستظهر هنا الأعمال التي تبدأ بمشاهدتها."
+          }
+        }
+      }
+    },
+    "Top 10": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفضل 10"
           }
         }
       }
@@ -2977,6 +3177,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "قريباً"
+          }
+        }
+      }
+    },
+    "Use Apple Player When Possible": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدم مشغّل أبل عند الإمكان"
           }
         }
       }

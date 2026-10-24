@@ -29,7 +29,7 @@ struct PersonView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text(biography)
                             .font(.body)
-                            .foregroundStyle(.white.opacity(0.75))
+                            .foregroundStyle(.secondary)
                             .lineSpacing(2)
                             .lineLimit(isBiographyExpanded ? nil : 5)
                         if biography.count > 260 {

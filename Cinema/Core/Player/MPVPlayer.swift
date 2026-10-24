@@ -2,33 +2,6 @@ import Foundation
 import Libmpv
 import UIKit
 
-/// Something that happened in the player, delivered on the main thread.
-enum MPVEvent {
-    case position(Double)
-    case duration(Double)
-    case paused(Bool)
-    case buffering(Bool)
-    case endReached(Bool)
-    case fileLoaded
-    case tracksChanged
-    case loadFailed(String)
-}
-
-/// One audio, subtitle or video track of the playing file.
-struct MPVTrack: Identifiable, Hashable {
-    enum Kind: String { case audio, sub, video }
-
-    var id: Int
-    var kind: Kind
-    var title: String?
-    var language: String?
-    var codec: String?
-    var isSelected: Bool
-    var isExternal: Bool
-    /// For subtitles added from an addon: the URL they were loaded from.
-    var externalFilename: String?
-}
-
 /// Owns a libmpv instance. libmpv's client API is thread-safe; events are
 /// drained on a private serial queue, which is also where the instance is
 /// destroyed, so an event callback can never touch a freed handle.
@@ -41,7 +14,7 @@ final class MPVHandle: @unchecked Sendable {
     private(set) var isAlive = true
 
     /// Called on the main thread.
-    var onEvent: ((MPVEvent) -> Void)?
+    var onEvent: ((PlayerEvent) -> Void)?
 
     init?(layer: CAMetalLayer, options: [String: String]) {
         guard let mpv = mpv_create() else { return nil }
@@ -57,7 +30,10 @@ final class MPVHandle: @unchecked Sendable {
             "hwdec": "videotoolbox",
             "video-rotate": "no",
             "keep-open": "yes",
-            "subs-fallback": "yes",
+            // Never fall back to some other language's subtitles (e.g. English when
+            // Arabic is preferred); the view model decides what to show instead.
+            "subs-fallback": "no",
+            "subs-fallback-forced": "no",
             "sub-auto": "no",
             "cache": "yes",
             "demuxer-max-bytes": "150MiB",
@@ -150,7 +126,7 @@ final class MPVHandle: @unchecked Sendable {
     }
 
     /// Reads the track list off the main thread and delivers it on main.
-    func fetchTracks(_ completion: @escaping ([MPVTrack]) -> Void) {
+    func fetchTracks(_ completion: @escaping ([PlayerTrack]) -> Void) {
         perform { mpv in
             let tracks = Self.readTracks(mpv)
             DispatchQueue.main.async { completion(tracks) }
@@ -163,14 +139,14 @@ final class MPVHandle: @unchecked Sendable {
         return String(cString: cString)
     }
 
-    private static func readTracks(_ mpv: OpaquePointer) -> [MPVTrack] {
+    private static func readTracks(_ mpv: OpaquePointer) -> [PlayerTrack] {
         let count = Int(string(mpv, "track-list/count") ?? "") ?? 0
         return (0..<count).compactMap { index in
             let prefix = "track-list/\(index)/"
-            guard let kind = string(mpv, prefix + "type").flatMap(MPVTrack.Kind.init(rawValue:)),
+            guard let kind = string(mpv, prefix + "type").flatMap(PlayerTrack.Kind.init(rawValue:)),
                   let id = Int(string(mpv, prefix + "id") ?? "")
             else { return nil }
-            return MPVTrack(
+            return PlayerTrack(
                 id: id,
                 kind: kind,
                 title: string(mpv, prefix + "title"),
@@ -202,7 +178,7 @@ final class MPVHandle: @unchecked Sendable {
     private func drainEvents() {
         queue.async { [self] in
             guard !destroyed else { return }
-            var events: [MPVEvent] = []
+            var events: [PlayerEvent] = []
             while true {
                 guard let event = mpv_wait_event(mpv, 0) else { break }
                 let id = event.pointee.event_id
@@ -217,7 +193,7 @@ final class MPVHandle: @unchecked Sendable {
         }
     }
 
-    private func parse(_ event: mpv_event) -> MPVEvent? {
+    private func parse(_ event: mpv_event) -> PlayerEvent? {
         switch event.event_id {
         case MPV_EVENT_PROPERTY_CHANGE:
             guard let data = event.data else { return nil }
@@ -305,4 +281,54 @@ final class MPVVideoViewController: UIViewController {
         metalLayer.drawableSize = CGSize(width: size.width * scale, height: size.height * scale)
         CATransaction.commit()
     }
+}
+
+/// libmpv behind the common engine interface.
+@MainActor
+final class MPVEngine: VideoEngine {
+    let kind = PlayerEngineKind.mpv
+    var onEvent: ((PlayerEvent) -> Void)?
+    let drawsExternalSubtitles = true
+    // libmpv draws into Metal, which Picture in Picture can't show.
+    let supportsPictureInPicture = false
+    let isPictureInPictureActive = false
+
+    private let handle: MPVHandle
+
+    init?(controller: MPVVideoViewController, options: [String: String]) {
+        guard let handle = MPVHandle(layer: controller.metalLayer, options: options) else { return nil }
+        self.handle = handle
+        handle.onEvent = { [weak self] event in self?.onEvent?(event) }
+    }
+
+    func load(url: URL, start: Double) {
+        handle.setString("start", start > 0 ? String(Int(start)) : "none")
+        handle.setDouble("sub-delay", 0)
+        handle.command(["loadfile", url.absoluteString, "replace"])
+        handle.setFlag("pause", false)
+    }
+
+    func setPaused(_ paused: Bool) { handle.setFlag("pause", paused) }
+    func seek(to seconds: Double) { handle.command(["seek", String(seconds), "absolute"]) }
+    func seek(by seconds: Double) { handle.command(["seek", String(seconds), "relative"]) }
+    func setSpeed(_ speed: Double) { handle.setDouble("speed", speed) }
+
+    func fetchTracks(_ completion: @escaping ([PlayerTrack]) -> Void) { handle.fetchTracks(completion) }
+    func selectAudio(id: Int) { handle.setString("aid", String(id)) }
+    func selectSubtitle(id: Int?) { handle.setString("sid", id.map(String.init) ?? "no") }
+
+    func addExternalSubtitle(url: String, title: String, language: String?) {
+        handle.command(["sub-add", url, "select", title, language ?? ""])
+    }
+
+    func setSubtitleDelay(_ seconds: Double) { handle.setDouble("sub-delay", seconds) }
+    func setSubtitleFontSize(_ size: Int) { handle.setString("sub-font-size", String(size)) }
+    func setSubtitleMargin(_ margin: Int) { handle.setString("sub-margin-y", String(margin)) }
+
+    func setVideoFill(_ fill: Bool) { handle.setDouble("panscan", fill ? 1 : 0) }
+    func setVideoEnabled(_ enabled: Bool) { handle.setString("vid", enabled ? "auto" : "no") }
+    func togglePictureInPicture() {}
+    func thumbnail(at seconds: Double) async -> UIImage? { nil }
+
+    func destroy() { handle.destroy() }
 }

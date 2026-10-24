@@ -1,3 +1,4 @@
+import AVKit
 import SwiftUI
 
 /// The full-screen player. It always plays in landscape, with Apple TV-style controls.
@@ -11,6 +12,10 @@ struct PlayerView: View {
     @State private var hideTask: Task<Void, Never>?
     @State private var skipPulse: SkipPulse?
     @State private var showsPanel = false
+    @State private var zoomNotice: ZoomNotice?
+    @State private var zoomNoticeTask: Task<Void, Never>?
+
+    private enum ZoomNotice: Equatable { case fill, fit }
 
     private enum SkipPulse: Equatable { case back, forward }
 
@@ -22,13 +27,39 @@ struct PlayerView: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            VideoSurface { controller in
-                // Start libmpv after this layout pass, not during it.
+            VideoSurface(kind: model.engineKind) { controller in
+                // Start the engine after this layout pass, not during it.
                 DispatchQueue.main.async { model.attach(to: controller, context: context) }
             }
+            // A new surface (and engine) if playback moves to the other engine.
+            .id(model.engineKind)
             .ignoresSafeArea()
 
+            if model.overlayCues != nil {
+                SubtitleOverlay(model: model)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
+
             gestureLayer
+
+            if model.isPictureInPictureActive {
+                pictureInPicturePlaceholder
+            }
+
+            if let zoomNotice {
+                Label(
+                    zoomNotice == .fill ? LocalizedStringKey("Fill Screen") : "Fit to Screen",
+                    systemImage: zoomNotice == .fill
+                        ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left"
+                )
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.vertical, Theme.Spacing.m)
+                .background(.ultraThinMaterial, in: Capsule())
+                .transition(.scale(scale: 0.9).combined(with: .opacity))
+                .allowsHitTesting(false)
+            }
 
             if !model.hasLoaded && model.errorMessage == nil {
                 LoadingCurtain(session: model.session)
@@ -76,6 +107,8 @@ struct PlayerView: View {
         .animation(Theme.Motion.spring, value: controlsVisible)
         .animation(Theme.Motion.spring, value: model.showsNextEpisode)
         .animation(Theme.Motion.gentle, value: model.hasLoaded)
+        .animation(Theme.Motion.spring, value: zoomNotice)
+        .sensoryFeedback(.impact(weight: .medium), trigger: model.videoFill)
         .onAppear {
             OrientationController.lock(.landscape)
             scheduleHide()
@@ -94,7 +127,8 @@ struct PlayerView: View {
 
     // MARK: Gestures
 
-    /// Tap to show or hide the controls; double-tap either side to skip 10 seconds.
+    /// Tap to show or hide the controls; double-tap either side to skip 10
+    /// seconds; pinch to fill the screen or fit the picture.
     private var gestureLayer: some View {
         HStack(spacing: 0) {
             Color.clear
@@ -107,6 +141,39 @@ struct PlayerView: View {
                 .onTapGesture { toggleControls() }
         }
         .ignoresSafeArea()
+        .simultaneousGesture(
+            MagnifyGesture(minimumScaleDelta: 0.04)
+                .onEnded { value in
+                    let fill = value.magnification > 1
+                    guard fill != model.videoFill else { return }
+                    model.setVideoFill(fill)
+                    showZoomNotice(fill ? .fill : .fit)
+                }
+        )
+    }
+
+    private func showZoomNotice(_ notice: ZoomNotice) {
+        zoomNotice = notice
+        zoomNoticeTask?.cancel()
+        zoomNoticeTask = Task {
+            try? await Task.sleep(for: .seconds(1.2))
+            guard !Task.isCancelled else { return }
+            zoomNotice = nil
+        }
+    }
+
+    private var pictureInPicturePlaceholder: some View {
+        VStack(spacing: Theme.Spacing.m) {
+            Image(systemName: "pip")
+                .font(.system(size: 44, weight: .light))
+            Text("Playing in Picture in Picture")
+                .font(.headline)
+        }
+        .foregroundStyle(.white.opacity(0.7))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black)
+        .ignoresSafeArea()
+        .onTapGesture { toggleControls() }
     }
 
     // MARK: Controls
@@ -164,6 +231,20 @@ struct PlayerView: View {
 
             Spacer(minLength: Theme.Spacing.l)
 
+            if model.supportsPictureInPicture {
+                Button {
+                    model.togglePictureInPicture()
+                } label: {
+                    Image(systemName: model.isPictureInPictureActive ? "pip.exit" : "pip.enter")
+                }
+                .buttonStyle(GlassCircleButtonStyle(size: 40))
+                .accessibilityLabel("Picture in Picture")
+            }
+            AirPlayButton()
+                .frame(width: 40, height: 40)
+                .background(.ultraThinMaterial, in: Circle())
+                .overlay(Circle().strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
+                .accessibilityLabel("AirPlay")
             audioAndSubtitlesButton
             speedMenu
         }
@@ -261,7 +342,7 @@ struct PlayerView: View {
         }
     }
 
-    private func trackName(_ track: MPVTrack) -> String {
+    private func trackName(_ track: PlayerTrack) -> String {
         var parts: [String] = []
         if let name = PlayerViewModel.languageName(SubtitleLanguage.code(for: track.language)) {
             parts.append(name)
@@ -407,17 +488,72 @@ private struct PressScaleStyle: ButtonStyle {
     }
 }
 
-/// The video layer, bridged from UIKit.
+/// The video layer for the current engine, bridged from UIKit.
 private struct VideoSurface: UIViewControllerRepresentable {
-    var onReady: (MPVVideoViewController) -> Void
+    var kind: PlayerEngineKind
+    var onReady: (UIViewController) -> Void
 
-    func makeUIViewController(context: Context) -> MPVVideoViewController {
-        let controller = MPVVideoViewController()
-        controller.onReady = onReady
-        return controller
+    func makeUIViewController(context: Context) -> UIViewController {
+        switch kind {
+        case .apple:
+            let controller = AVVideoViewController()
+            controller.onReady = { onReady($0) }
+            return controller
+        case .mpv:
+            let controller = MPVVideoViewController()
+            controller.onReady = { onReady($0) }
+            return controller
+        }
     }
 
-    func updateUIViewController(_ controller: MPVVideoViewController, context: Context) {}
+    func updateUIViewController(_ controller: UIViewController, context: Context) {}
+}
+
+/// The system AirPlay button: Apple's player sends the video to the TV; the
+/// built-in player sends the sound (use Screen Mirroring for its picture).
+private struct AirPlayButton: UIViewRepresentable {
+    func makeUIView(context: Context) -> AVRoutePickerView {
+        let picker = AVRoutePickerView()
+        picker.prioritizesVideoDevices = true
+        picker.tintColor = .white
+        picker.activeTintColor = UIColor(Theme.accent)
+        return picker
+    }
+
+    func updateUIView(_ picker: AVRoutePickerView, context: Context) {}
+}
+
+/// Addon subtitles drawn over Apple's player, matching the built-in player's
+/// look, size, position and timing.
+private struct SubtitleOverlay: View {
+    @Bindable var model: PlayerViewModel
+
+    var body: some View {
+        GeometryReader { proxy in
+            // libmpv sizes subtitles against a 720-line picture; match it.
+            let scale = proxy.size.height / 720
+            if let text = model.overlayText {
+                Text(verbatim: text)
+                    .font(.system(size: CGFloat(PlaybackSettings.shared.subtitleSize.fontSize) * scale, weight: .bold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .shadow(color: .black.opacity(0.9), radius: 0, x: 1, y: 1)
+                    .shadow(color: .black.opacity(0.8), radius: 3)
+                    .padding(.horizontal, proxy.size.width * 0.08)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .padding(.bottom, model.subtitleMargin * scale)
+                    // Arabic lines keep their natural direction.
+                    .environment(\.layoutDirection, text.containsArabic ? .rightToLeft : .leftToRight)
+            }
+        }
+        .animation(.easeOut(duration: 0.12), value: model.subtitleMargin)
+    }
+}
+
+private extension String {
+    var containsArabic: Bool {
+        unicodeScalars.contains { (0x0600...0x06FF).contains($0.value) || (0x0750...0x077F).contains($0.value) }
+    }
 }
 
 /// A thin timeline that thickens while you drag it, like the TV app's.
@@ -446,6 +582,7 @@ private struct Scrubber: View {
                         }
                         let ratio = min(max(value.location.x / proxy.size.width, 0), 1)
                         model.scrubPosition = ratio * model.duration
+                        model.requestThumbnail()
                     }
                     .onEnded { _ in
                         guard model.isScrubbing else { return }
@@ -454,11 +591,52 @@ private struct Scrubber: View {
                     }
             )
             .animation(Theme.Motion.snappy, value: model.isScrubbing)
+            .overlay(alignment: .bottomLeading) {
+                if model.isScrubbing {
+                    let width: CGFloat = model.scrubThumbnail == nil ? 84 : 172
+                    let x = min(max(proxy.size.width * fraction - width / 2, 0), max(proxy.size.width - width, 0))
+                    ScrubPreview(time: model.scrubPosition, image: model.scrubThumbnail)
+                        .frame(width: width)
+                        .offset(x: x, y: -36)
+                        .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottom)))
+                        .allowsHitTesting(false)
+                }
+            }
         }
         .frame(height: 28)
         .sensoryFeedback(.selection, trigger: model.isScrubbing)
         .accessibilityElement()
         .accessibilityLabel("Timeline")
         .accessibilityValue(Text(verbatim: PlayerViewModel.format(model.displayedPosition)))
+    }
+}
+
+/// The time (and a frame, when available) above the finger while scrubbing.
+private struct ScrubPreview: View {
+    let time: Double
+    let image: UIImage?
+
+    var body: some View {
+        VStack(spacing: 6) {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(16 / 9, contentMode: .fill)
+                    .frame(width: 172, height: 97)
+                    .clipShape(.continuous(Theme.Radius.small))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                            .strokeBorder(.white.opacity(0.3), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.5), radius: 10)
+            }
+            Text(verbatim: PlayerViewModel.format(time))
+                .font(.rounded(.subheadline, weight: .bold))
+                .monospacedDigit()
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .background(.ultraThinMaterial, in: Capsule())
+        }
+        .animation(Theme.Motion.snappy, value: image != nil)
     }
 }
