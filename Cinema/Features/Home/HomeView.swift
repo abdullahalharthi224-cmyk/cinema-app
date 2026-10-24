@@ -79,29 +79,9 @@ struct HomeView: View {
                     }
 
                     LazyVStack(alignment: .leading, spacing: Theme.Spacing.xxxl) {
-                        if !history.isEmpty {
-                            ContinueWatchingRow(items: Array(history.prefix(15))) { item in
-                                withAnimation(Theme.Motion.spring) {
-                                    context.delete(item)
-                                    try? context.save()
-                                }
-                            }
-                        }
-
-                        if !watchlist.isEmpty {
-                            WatchlistRow(items: watchlist)
-                        }
-
-                        if let topTen = model.topTen {
-                            TopTenRow(reference: topTen.reference, items: topTen.items)
-                        }
-
-                        PlatformsRow()
-
-                        ForEach(model.visibleRows) { row in
-                            PosterRow(reference: row, content: model.content(for: row)) {
-                                Task { await model.retry(row) }
-                            }
+                        // In the order (and with the rows) chosen in Settings → Home Screen.
+                        ForEach(sectionIDs, id: \.self) { id in
+                            section(id)
                         }
                     }
                     .padding(.bottom, Theme.Spacing.xxl)
@@ -125,6 +105,42 @@ struct HomeView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .animation(Theme.Motion.spring, value: model.hero?.items.map(\.id))
+    }
+
+    /// Home's rows: the built-in ones and every addon row worth showing.
+    private var sectionIDs: [String] {
+        HomeLayoutStore.shared.layout.visible(HomeLayout.builtIns + model.visibleRows.map(\.id))
+    }
+
+    @ViewBuilder
+    private func section(_ id: String) -> some View {
+        switch id {
+        case HomeLayout.continueWatching:
+            if !history.isEmpty {
+                ContinueWatchingRow(items: Array(history.prefix(15))) { item in
+                    withAnimation(Theme.Motion.spring) {
+                        context.delete(item)
+                        try? context.save()
+                    }
+                }
+            }
+        case HomeLayout.myList:
+            if !watchlist.isEmpty {
+                WatchlistRow(items: watchlist)
+            }
+        case HomeLayout.topTen:
+            if let topTen = model.topTen {
+                TopTenRow(reference: topTen.reference, items: topTen.items)
+            }
+        case HomeLayout.platforms:
+            PlatformsRow()
+        default:
+            if let row = model.visibleRows.first(where: { $0.id == id }) {
+                PosterRow(reference: row, content: model.content(for: row)) {
+                    Task { await model.retry(row) }
+                }
+            }
+        }
     }
 
     /// 0 while the hero is in view, rising to 1 as it scrolls away.
@@ -205,12 +221,11 @@ struct GlassTopBar: View {
                 Rectangle()
                     .fill(.ultraThinMaterial)
                     .overlay(alignment: .bottom) {
-                        Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5)
+                        Rectangle().fill(Color.primary.opacity(0.08)).frame(height: 0.5)
                     }
                     .ignoresSafeArea(edges: .top)
                     .opacity(progress)
             }
-            .environment(\.colorScheme, .dark)
             .allowsHitTesting(false)
             .accessibilityHidden(progress < 0.5)
     }

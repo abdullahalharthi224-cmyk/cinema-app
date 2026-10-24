@@ -280,7 +280,7 @@ struct SubtitlePanel: View {
         .buttonStyle(.plain)
     }
 
-    private func trackName(_ track: MPVTrack) -> String {
+    private func trackName(_ track: PlayerTrack) -> String {
         var parts: [String] = []
         if let name = PlayerViewModel.languageName(SubtitleLanguage.code(for: track.language)) {
             parts.append(name)

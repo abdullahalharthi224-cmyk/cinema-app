@@ -217,7 +217,7 @@ private struct RankNumeral: View {
             numeral
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [Color(white: 0.1), Theme.background],
+                        colors: [Theme.surface, Theme.background],
                         startPoint: .top,
                         endPoint: .bottom
                     )

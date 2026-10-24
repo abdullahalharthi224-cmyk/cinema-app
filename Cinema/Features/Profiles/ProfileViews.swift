@@ -135,7 +135,7 @@ struct ProfilePickerView: View {
                 }
                 .overlay {
                     Circle()
-                        .strokeBorder(Color.white, lineWidth: isActive && !isEditing ? 3 : 0)
+                        .strokeBorder(Color.primary, lineWidth: isActive && !isEditing ? 3 : 0)
                         .padding(-6)
                 }
             Text(verbatim: profile.name)
@@ -151,7 +151,7 @@ struct ProfilePickerView: View {
     private var addTile: some View {
         VStack(spacing: Theme.Spacing.m) {
             Circle()
-                .strokeBorder(.white.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [6, 6]))
+                .strokeBorder(Color.primary.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [6, 6]))
                 .frame(width: 104, height: 104)
                 .overlay {
                     Image(systemName: "plus")
@@ -236,7 +236,7 @@ struct ProfileEditorView: View {
                                         .frame(width: 36, height: 36)
                                         .overlay {
                                             Circle()
-                                                .strokeBorder(.white, lineWidth: hex == colorHex ? 2.5 : 0)
+                                                .strokeBorder(Color.primary, lineWidth: hex == colorHex ? 2.5 : 0)
                                                 .padding(-4)
                                         }
                                 }

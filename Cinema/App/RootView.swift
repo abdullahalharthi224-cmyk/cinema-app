@@ -31,6 +31,8 @@ struct RootView: View {
         .sensoryFeedback(.selection, trigger: router.selectedTab)
         // Reading the accent here re-tints the whole app the moment it changes.
         .tint(Theme.accent)
+        // The theme switches the whole app between dark and light instantly.
+        .preferredColorScheme(Appearance.shared.theme.colorScheme)
         // The in-app language: strings, number/date formats and right-to-left layout
         // all follow it immediately. Rebuilding the tree makes every screen pick it up.
         .environment(\.locale, language.locale)

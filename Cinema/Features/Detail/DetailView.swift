@@ -92,10 +92,10 @@ struct DetailView: View {
                             ForEach(model.genres, id: \.self) { genre in
                                 Text(LocalizedStringKey(genre))
                                     .font(.footnote.weight(.semibold))
-                                    .foregroundStyle(.white.opacity(0.85))
+                                    .foregroundStyle(.primary.opacity(0.85))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(.white.opacity(0.08), in: Capsule())
+                                    .background(Color.primary.opacity(0.08), in: Capsule())
                             }
                         }
                     }
@@ -335,7 +335,7 @@ struct DetailView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             Text(text)
                 .font(.body)
-                .foregroundStyle(.white.opacity(0.75))
+                .foregroundStyle(.secondary)
                 .lineSpacing(2)
                 .lineLimit(isDescriptionExpanded ? nil : 4)
             if text.count > 220 {
@@ -646,7 +646,7 @@ private struct CastBadge: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color.white.opacity(0.14), Color.white.opacity(0.04)],
+                        colors: [Color.primary.opacity(0.14), Color.primary.opacity(0.04)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -654,7 +654,7 @@ private struct CastBadge: View {
                 .overlay {
                     Text(initials)
                         .font(.rounded(.title3, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(.secondary)
                 }
                 .overlay {
                     if let photo {
@@ -662,7 +662,7 @@ private struct CastBadge: View {
                             .clipShape(Circle())
                     }
                 }
-                .overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 0.5))
+                .overlay(Circle().strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
                 .frame(width: 76, height: 76)
                 .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
             Text(name)

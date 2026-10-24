@@ -63,7 +63,8 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        UIUserInterfaceStyle: Dark
+        # Picture in Picture, AirPlay and Lock Screen controls keep playing in the background.
+        UIBackgroundModes: [audio]
         # Personal addons are sometimes self-hosted on plain HTTP (e.g. on a home network).
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true

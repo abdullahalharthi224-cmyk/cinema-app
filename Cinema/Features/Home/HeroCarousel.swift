@@ -59,7 +59,7 @@ struct HeroCarousel: View {
         HStack(spacing: 6) {
             ForEach(items) { item in
                 Capsule()
-                    .fill(item.id == currentID ? Color.white : Color.white.opacity(0.3))
+                    .fill(item.id == currentID ? Color.primary : Color.primary.opacity(0.3))
                     .frame(width: item.id == currentID ? 20 : 6, height: 6)
             }
         }
@@ -227,7 +227,7 @@ struct MetadataLine: View {
             }
         }
         .font(.subheadline.weight(.semibold))
-        .foregroundStyle(.white.opacity(0.75))
+        .foregroundStyle(.primary.opacity(0.75))
         .lineLimit(1)
     }
 

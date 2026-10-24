@@ -25,6 +25,12 @@ struct PlaybackSettingsView: View {
                     Text(verbatim: "English").tag(PlaybackSettings.SubtitleChoice.english)
                     Text("Off").tag(PlaybackSettings.SubtitleChoice.off)
                 }
+                if settings.subtitles == .arabic {
+                    Picker("If Arabic Isn't Available", selection: $settings.subtitleFallback) {
+                        Text("No Subtitles").tag(PlaybackSettings.SubtitleFallback.off)
+                        Text(verbatim: "English").tag(PlaybackSettings.SubtitleFallback.english)
+                    }
+                }
                 Picker("Subtitle Size", selection: $settings.subtitleSize) {
                     ForEach(PlaybackSettings.SubtitleSize.allCases) { size in
                         Text(size.title).tag(size)
@@ -34,6 +40,14 @@ struct PlaybackSettingsView: View {
                 Text("Subtitles")
             } footer: {
                 Text("Subtitles in this language are turned on automatically — from the video itself or from subtitle addons like OpenSubtitles.")
+            }
+
+            Section {
+                Toggle("Use Apple Player When Possible", isOn: $settings.useApplePlayer)
+            } header: {
+                Text("Player")
+            } footer: {
+                Text("MP4 and HLS streams play in Apple's player, with Picture in Picture and full AirPlay. Everything else (like MKV) plays in the built-in player, which handles any format. The controls are the same in both.")
             }
         }
         .navigationTitle("Playback")

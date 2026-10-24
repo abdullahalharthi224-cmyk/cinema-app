@@ -12,7 +12,7 @@ it himself through his signing store.
 Do NOT write scrapers or built-in providers for any streaming/piracy site. The app is only a client
 for addons the owner adds.
 2. Tech stack (decided)
-Swift 5.10+, SwiftUI, iOS 17 minimum, iPhone first (iPad layout later).
+Swift 5.10+, SwiftUI, iOS 17 minimum, iPhone only (no iPad version is planned).
 Project generated with XcodeGen (`project.yml`) so it builds on CI without opening Xcode.
 Persistence: SwiftData (library, continue watching, settings). Secrets in Keychain.
 Networking: async/await + URLSession, Codable models.
@@ -53,7 +53,7 @@ Phase 4 – Luxury & customization
 Themes: Dark Cinematic (default), OLED Black, Light Glass; custom accent color.
 Reorder / hide Home rows, choose hero source, poster size, show/hide ratings.
 Multiple local profiles with avatar, each with its own library and history.
-Optional Trakt sync. App icon variants.
+Optional Trakt sync (postponed by the owner). App icon variants.
 Haptics, matchedGeometryEffect transitions, `.ultraThinMaterial` surfaces,
 SF Pro / SF Pro Rounded, SF Symbols, smooth skeleton loading states, Dynamic Type support.
 4. Design rules

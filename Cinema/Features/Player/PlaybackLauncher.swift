@@ -22,6 +22,15 @@ struct PlaybackSession: Identifiable {
     var next: NextEpisode?
     /// The stream request this came from, for "Other Streams" in the player.
     var request: StreamRequest
+    /// Which engine plays it.
+    var engine: PlayerEngineKind = .mpv
+    /// Subtitles fetched before playback started; `nil` if they weren't ready in time.
+    var subtitleSources: [SubtitleSource]?
+
+    /// Artwork for the Lock Screen.
+    var artwork: URL? {
+        request.history.flatMap { Artwork.background(id: $0.metaID, provided: $0.background) }
+    }
 }
 
 /// Starts playback: picks the best stream automatically, or shows the list.
@@ -30,6 +39,11 @@ struct PlaybackSession: Identifiable {
 @Observable
 final class PlaybackLauncher {
     var isResolving = false
+    var status: Status = .findingStream
+
+    enum Status {
+        case findingStream, preparing
+    }
     var session: PlaybackSession?
     var pickerRequest: StreamRequest?
     var errorMessage: String?
@@ -41,6 +55,7 @@ final class PlaybackLauncher {
     func smartPlay(_ request: StreamRequest, context: ModelContext) async {
         guard !isResolving else { return }
         isResolving = true
+        status = .findingStream
         defer { isResolving = false }
 
         var request = request
@@ -53,16 +68,21 @@ final class PlaybackLauncher {
             pickerRequest = request
             return
         }
-        start(session, request: request, context: context)
+        await start(session, request: request, context: context)
     }
 
     /// Plays a stream the user chose from the list.
     func play(_ stream: ParsedStream, for request: StreamRequest, context: ModelContext) {
-        guard let session = makeSession(for: request, preferring: stream, context: context) else { return }
-        // Let the stream list finish closing before the player covers the screen.
+        guard let session = makeSession(for: request, preferring: stream, context: context), !isResolving else { return }
+        isResolving = true
         Task {
+            defer { isResolving = false }
+            // Subtitles load while the stream list closes, so the player never covers it mid-animation.
+            async let prepared = prepare(session, context: context)
             try? await Task.sleep(for: .milliseconds(450))
-            start(session, request: request, context: context)
+            let ready = await prepared
+            if let history = request.history { WatchHistoryItem.record(history, in: context) }
+            self.session = ready
         }
     }
 
@@ -78,12 +98,53 @@ final class PlaybackLauncher {
         request.next = nil
         guard let session = makeSession(for: request, preferring: nil, context: context) else { return nil }
         if let history = request.history { WatchHistoryItem.record(history, in: context) }
+        return await prepare(session, context: context)
+    }
+
+    private func start(_ session: PlaybackSession, request: StreamRequest, context: ModelContext) async {
+        let ready = await prepare(session, context: context)
+        if let history = request.history { WatchHistoryItem.record(history, in: context) }
+        self.session = ready
+    }
+
+    /// Picks the engine and fetches subtitles in the preferred language in
+    /// parallel, waiting at most a few seconds for subtitles so playback starts
+    /// with the right ones instead of switching a moment later.
+    private func prepare(_ session: PlaybackSession, context: ModelContext) async -> PlaybackSession {
+        status = .preparing
+        var session = session
+        let settings = PlaybackSettings.shared
+        let url = session.url
+        let allowApple = settings.useApplePlayer
+        async let engine = PlayerEngineKind.choose(for: url, allowApple: allowApple)
+
+        if settings.preferredSubtitleLanguage != nil {
+            let service = service
+            let type = session.type, id = session.videoID
+            let addons = Self.enabledAddons(in: context)
+            let languages = settings.subtitleLanguages
+            session.subtitleSources = await Self.withTimeout(seconds: 3.5) {
+                await service.subtitleSources(type: type, id: id, addons: addons, preferredLanguages: languages)
+            }
+        }
+        session.engine = await engine
         return session
     }
 
-    private func start(_ session: PlaybackSession, request: StreamRequest, context: ModelContext) {
-        if let history = request.history { WatchHistoryItem.record(history, in: context) }
-        self.session = session
+    /// The work's result, or `nil` if it takes longer than `seconds`.
+    private static func withTimeout<T: Sendable>(
+        seconds: Double, _ work: @escaping @Sendable () async -> T
+    ) async -> T? {
+        await withTaskGroup(of: T?.self) { group in
+            group.addTask { await work() }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(seconds))
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
     }
 
     private func makeSession(for request: StreamRequest, preferring chosen: ParsedStream?, context: ModelContext) -> PlaybackSession? {
@@ -127,7 +188,7 @@ private struct PlaybackLauncherModifier: ViewModifier {
         content
             .overlay {
                 if launcher.isResolving {
-                    ResolvingIndicator()
+                    ResolvingIndicator(status: launcher.status)
                         .transition(.opacity.combined(with: .scale(scale: 0.9)))
                 }
             }
@@ -144,13 +205,22 @@ private struct PlaybackLauncherModifier: ViewModifier {
 }
 
 private struct ResolvingIndicator: View {
+    let status: PlaybackLauncher.Status
+
     var body: some View {
         VStack(spacing: Theme.Spacing.m) {
             ProgressView()
                 .controlSize(.large)
                 .tint(.white)
-            Text("Finding the best stream…")
-                .font(.subheadline.weight(.semibold))
+            Group {
+                switch status {
+                case .findingStream: Text("Finding the best stream…")
+                case .preparing: Text("Preparing subtitles…")
+                }
+            }
+            .font(.subheadline.weight(.semibold))
+            .contentTransition(.opacity)
+            .animation(Theme.Motion.snappy, value: status)
         }
         .padding(.horizontal, Theme.Spacing.xl)
         .padding(.vertical, Theme.Spacing.l)

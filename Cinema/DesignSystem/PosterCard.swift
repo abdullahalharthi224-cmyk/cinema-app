@@ -193,15 +193,15 @@ struct QualityCapsule: View {
         Text(verbatim: text)
             .font(.rounded(.caption2, weight: .heavy))
             .tracking(0.4)
-            .foregroundStyle(highlighted ? Color.black : Color.white.opacity(0.9))
+            .foregroundStyle(highlighted ? Color.black : Color.primary.opacity(0.9))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background {
                 if highlighted {
                     Capsule().fill(Theme.accent.gradient)
                 } else {
-                    Capsule().fill(.white.opacity(0.08))
-                        .overlay(Capsule().strokeBorder(.white.opacity(0.22), lineWidth: 0.75))
+                    Capsule().fill(Color.primary.opacity(0.08))
+                        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.22), lineWidth: 0.75))
                 }
             }
     }

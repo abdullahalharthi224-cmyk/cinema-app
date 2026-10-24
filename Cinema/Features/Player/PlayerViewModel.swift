@@ -7,14 +7,16 @@ import SwiftUI
 @Observable
 final class PlayerViewModel {
     private(set) var session: PlaybackSession
+    /// Which engine is playing. Switches to libmpv if Apple's player can't open a stream.
+    private(set) var engineKind: PlayerEngineKind
     private(set) var position: Double = 0
     private(set) var duration: Double = 0
     private(set) var isPaused = false
     private(set) var isBuffering = true
     private(set) var hasLoaded = false
     private(set) var errorMessage: String?
-    private(set) var audioTracks: [MPVTrack] = []
-    private(set) var subtitleTracks: [MPVTrack] = []
+    private(set) var audioTracks: [PlayerTrack] = []
+    private(set) var subtitleTracks: [PlayerTrack] = []
     private(set) var speed: Double = 1
     private(set) var isLoadingNext = false
     private(set) var subtitleSources: [SubtitleSource] = []
@@ -22,20 +24,33 @@ final class PlayerViewModel {
     private(set) var subtitleDelay: Double = 0
     private(set) var subtitleRaise: Double = 40
     private(set) var sync: SyncState = .idle
+    private(set) var supportsPictureInPicture = false
+    private(set) var isPictureInPictureActive = false
+    private(set) var videoFill = false
+    private(set) var scrubThumbnail: UIImage?
+    /// Addon subtitles the player screen draws itself (Apple's player).
+    private(set) var overlayCues: [SubtitleCue]?
+    /// The playback time for drawn subtitles, updated ten times a second.
+    private(set) var subtitleClock: Double = 0
     private var controlsVisible = true
-    /// The exact playback time, without the UI throttling applied to `position`.
-    @ObservationIgnored private var precisePosition: Double = 0
-    @ObservationIgnored private var cueCache: [String: [SubtitleCue]] = [:]
     var isScrubbing = false
     var scrubPosition: Double = 0
 
-    private var handle: MPVHandle?
-    private var lastSavedPosition: Double = 0
-    private var addedSubtitles = false
-    private var lifecycleObservers: [NSObjectProtocol] = []
-    private var wasPlayingBeforeBackground = false
-    private weak var context: ModelContext?
-    private let launcher: PlaybackLauncher
+    @ObservationIgnored private var engine: VideoEngine?
+    @ObservationIgnored private let nowPlaying = NowPlayingController()
+    /// The exact playback time, without the UI throttling applied to `position`.
+    @ObservationIgnored private var precisePosition: Double = 0
+    @ObservationIgnored private var cueCache: [String: [SubtitleCue]] = [:]
+    @ObservationIgnored private var lastSavedPosition: Double = 0
+    @ObservationIgnored private var sourcesLoaded = false
+    @ObservationIgnored private var subtitlesDecided = false
+    @ObservationIgnored private var userPickedSubtitle = false
+    @ObservationIgnored private var lifecycleObservers: [NSObjectProtocol] = []
+    @ObservationIgnored private var wasPlayingBeforeBackground = false
+    @ObservationIgnored private var thumbnailTask: Task<Void, Never>?
+    @ObservationIgnored private var overlayTask: Task<Void, Never>?
+    @ObservationIgnored private weak var context: ModelContext?
+    @ObservationIgnored private let launcher: PlaybackLauncher
 
     /// The lines of the subtitle on screen, for tap-to-sync.
     enum SyncState: Equatable {
@@ -52,6 +67,7 @@ final class PlayerViewModel {
 
     init(session: PlaybackSession, launcher: PlaybackLauncher) {
         self.session = session
+        self.engineKind = session.engine
         self.launcher = launcher
     }
 
@@ -66,48 +82,67 @@ final class PlayerViewModel {
 
     // MARK: Lifecycle
 
-    func attach(to controller: MPVVideoViewController, context: ModelContext) {
-        guard handle == nil else { return }
+    /// Called once the video surface for `engineKind` is on screen.
+    func attach(to controller: UIViewController, context: ModelContext) {
+        guard engine == nil else { return }
         self.context = context
-        let languages = PlaybackSettings.shared.subtitleLanguages
-        var options: [String: String] = [:]
-        options["sub-font-size"] = String(PlaybackSettings.shared.subtitleSize.fontSize)
-        if languages.isEmpty {
-            options["sid"] = "no"
+
+        let engine: VideoEngine?
+        if let controller = controller as? AVVideoViewController {
+            engine = AVPlayerEngine(controller: controller)
+        } else if let controller = controller as? MPVVideoViewController {
+            engine = MPVEngine(controller: controller, options: mpvOptions())
         } else {
-            // Embedded subtitles in the preferred language are picked automatically.
-            options["slang"] = languages.flatMap { [$0, Self.threeLetterCode($0)] }.joined(separator: ",")
+            engine = nil
         }
-        guard let handle = MPVHandle(layer: controller.metalLayer, options: options) else {
+        guard let engine else {
             errorMessage = localized("The player couldn't start.")
             return
         }
-        handle.onEvent = { [weak self] event in self?.process(event) }
-        self.handle = handle
+        engine.onEvent = { [weak self] event in self?.process(event) }
+        self.engine = engine
+        supportsPictureInPicture = engine.supportsPictureInPicture
+        engine.setVideoFill(videoFill)
 
-        observeAppLifecycle()
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
-        try? AVAudioSession.sharedInstance().setActive(true)
-        UIApplication.shared.isIdleTimerDisabled = true
-
+        if lifecycleObservers.isEmpty {
+            observeAppLifecycle()
+            try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, policy: .longFormVideo)
+            try? AVAudioSession.sharedInstance().setActive(true)
+            UIApplication.shared.isIdleTimerDisabled = true
+            activateNowPlaying()
+        }
         load(session)
+    }
+
+    /// Subtitles in the preferred language only: libmpv must never pick another
+    /// language on its own (the view model handles the fallback).
+    private func mpvOptions() -> [String: String] {
+        var options: [String: String] = [:]
+        options["sub-font-size"] = String(PlaybackSettings.shared.subtitleSize.fontSize)
+        if let language = PlaybackSettings.shared.preferredSubtitleLanguage {
+            options["slang"] = "\(language),\(Self.threeLetterCode(language))"
+        } else {
+            options["sid"] = "no"
+        }
+        return options
     }
 
     private func load(_ session: PlaybackSession) {
         hasLoaded = false
         isBuffering = true
-        addedSubtitles = false
-        subtitleSources = []
+        subtitlesDecided = false
+        userPickedSubtitle = false
+        sourcesLoaded = session.subtitleSources != nil
+        subtitleSources = session.subtitleSources ?? []
         subtitleDelay = 0
+        overlayCues = nil
+        sync = .idle
         position = session.startPosition
         precisePosition = session.startPosition
-        sync = .idle
         duration = 0
         lastSavedPosition = session.startPosition
-        handle?.setString("start", session.startPosition > 0 ? String(Int(session.startPosition)) : "none")
-        handle?.setDouble("sub-delay", 0)
-        handle?.command(["loadfile", session.url.absoluteString, "replace"])
-        handle?.setFlag("pause", false)
+        engine?.load(url: session.url, start: session.startPosition)
+        engine?.setSpeed(speed)
     }
 
     func close() {
@@ -116,35 +151,70 @@ final class PlayerViewModel {
         }
         lifecycleObservers = []
         saveProgress()
-        handle?.destroy()
-        handle = nil
+        thumbnailTask?.cancel()
+        overlayTask?.cancel()
+        nowPlaying.deactivate()
+        engine?.destroy()
+        engine = nil
         UIApplication.shared.isIdleTimerDisabled = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
-    /// Pauses in the background and restores the picture on return (the GPU
-    /// surface is lost while the app is in the background).
+    /// Pauses in the background (unless playing in Picture in Picture) and
+    /// restores the picture on return.
     private func observeAppLifecycle() {
         let center = NotificationCenter.default
         lifecycleObservers = [
             center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
-                    guard let self else { return }
+                    guard let self, let engine = self.engine, !engine.isPictureInPictureActive else { return }
                     self.wasPlayingBeforeBackground = !self.isPaused
-                    self.handle?.setFlag("pause", true)
-                    self.handle?.setString("vid", "no")
+                    engine.setPaused(true)
+                    engine.setVideoEnabled(false)
                     self.saveProgress()
                 }
             },
             center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.handle?.setString("vid", "auto")
-                    if self.wasPlayingBeforeBackground { self.handle?.setFlag("pause", false) }
+                    guard let self, let engine = self.engine, !engine.isPictureInPictureActive else { return }
+                    engine.setVideoEnabled(true)
+                    if self.wasPlayingBeforeBackground { engine.setPaused(false) }
+                    self.wasPlayingBeforeBackground = false
                 }
             },
         ]
     }
+
+    /// Apple's player couldn't open the stream: hand it to libmpv instead. The
+    /// player screen swaps the video surface and calls `attach` again.
+    private func switchToMPV() {
+        engine?.destroy()
+        engine = nil
+        hasLoaded = false
+        errorMessage = nil
+        session.startPosition = max(position, session.startPosition)
+        engineKind = .mpv
+    }
+
+    // MARK: Lock Screen
+
+    private func activateNowPlaying() {
+        nowPlaying.activate(
+            title: session.title, subtitle: session.subtitle, artwork: session.artwork,
+            actions: .init(
+                setPaused: { [weak self] paused in self?.engine?.setPaused(paused) },
+                togglePlay: { [weak self] in self?.togglePlay() },
+                skip: { [weak self] seconds in self?.skip(seconds) },
+                seek: { [weak self] seconds in self?.seek(to: seconds) }
+            )
+        )
+    }
+
+    private func updateNowPlaying() {
+        nowPlaying.update(position: precisePosition, duration: duration, rate: isPaused ? 0 : speed)
+    }
+
+    // MARK: Picture
 
     /// Lifts subtitles above the controls while they're on screen.
     func controlsVisibilityChanged(_ visible: Bool) {
@@ -152,14 +222,16 @@ final class PlayerViewModel {
         applySubtitleMargin()
     }
 
+    /// The bottom margin of subtitles, in libmpv's units (pixels of a 720-line picture).
+    var subtitleMargin: Double { subtitleRaise + (controlsVisible ? 110 : 0) }
+
     private func applySubtitleMargin() {
-        let margin = subtitleRaise + (controlsVisible ? 110 : 0)
-        handle?.setString("sub-margin-y", String(Int(margin)))
+        engine?.setSubtitleMargin(Int(subtitleMargin))
     }
 
     func setSubtitleSize(_ size: PlaybackSettings.SubtitleSize) {
         PlaybackSettings.shared.subtitleSize = size
-        handle?.setString("sub-font-size", String(size.fontSize))
+        engine?.setSubtitleFontSize(size.fontSize)
     }
 
     /// Positive shows subtitles later, negative earlier (seconds).
@@ -169,7 +241,7 @@ final class PlayerViewModel {
 
     func setSubtitleDelay(_ seconds: Double) {
         subtitleDelay = seconds
-        handle?.setDouble("sub-delay", seconds)
+        engine?.setSubtitleDelay(seconds)
     }
 
     /// How high subtitles sit above the bottom of the picture.
@@ -178,46 +250,77 @@ final class PlayerViewModel {
         applySubtitleMargin()
     }
 
+    /// Pinch out to fill the screen, pinch in to see the whole picture.
+    func setVideoFill(_ fill: Bool) {
+        guard fill != videoFill else { return }
+        videoFill = fill
+        engine?.setVideoFill(fill)
+    }
+
+    func togglePictureInPicture() {
+        engine?.togglePictureInPicture()
+    }
+
     // MARK: Events
 
-    private func process(_ event: MPVEvent) {
+    private func process(_ event: PlayerEvent) {
         switch event {
         case .position(let value):
-            // libmpv reports every frame; a few updates a second is plenty for the UI.
             precisePosition = value
+            if overlayCues != nil { subtitleClock = value }
+            // Updates arrive many times a second; a few a second is plenty for the UI.
             if abs(value - position) >= 0.25 || value < position { position = value }
-            if abs(value - lastSavedPosition) >= 10 { saveProgress() }
+            if abs(value - lastSavedPosition) >= 10 {
+                saveProgress()
+                updateNowPlaying()
+            }
         case .duration(let value):
             duration = value
+            updateNowPlaying()
         case .paused(let paused):
+            guard paused != isPaused else { return }
             isPaused = paused
             if paused { saveProgress() }
+            updateNowPlaying()
         case .buffering(let buffering):
             isBuffering = buffering
         case .endReached(let ended):
             if ended {
                 saveProgress()
                 isPaused = true
+                updateNowPlaying()
             }
         case .fileLoaded:
             hasLoaded = true
             isBuffering = false
+            applySubtitleMargin()
             refreshTracks { [weak self] in
-                Task { await self?.loadSubtitleSources() }
+                guard let self else { return }
+                self.decideSubtitles()
+                if !self.sourcesLoaded {
+                    Task { await self.loadSubtitleSources() }
+                }
             }
         case .tracksChanged:
             refreshTracks()
+        case .pictureInPicture(let active):
+            isPictureInPictureActive = active
         case .loadFailed(let reason):
-            errorMessage = localized("This stream couldn't be played (%@). Try another one.", reason)
+            if engineKind == .apple && !hasLoaded {
+                switchToMPV()
+            } else {
+                errorMessage = localized("This stream couldn't be played (%@). Try another one.", reason)
+            }
         }
     }
 
     private func refreshTracks(then completion: (() -> Void)? = nil) {
-        guard let handle else { return }
-        handle.fetchTracks { [weak self] tracks in
+        guard let engine else { return }
+        engine.fetchTracks { [weak self] tracks in
             guard let self else { return }
-            audioTracks = tracks.filter { $0.kind == .audio }
-            subtitleTracks = tracks.filter { $0.kind == .sub }
+            self.audioTracks = tracks.filter { $0.kind == .audio }
+            self.subtitleTracks = tracks.filter { $0.kind == .sub }
+            self.updateOverlay()
             completion?()
         }
     }
@@ -225,7 +328,7 @@ final class PlayerViewModel {
     // MARK: Subtitles
 
     /// Subtitles inside the video file.
-    var embeddedSubtitles: [MPVTrack] { subtitleTracks.filter { !$0.isExternal } }
+    var embeddedSubtitles: [PlayerTrack] { subtitleTracks.filter { !$0.isExternal } }
 
     var isSubtitleOff: Bool { subtitleTracks.allSatisfy { !$0.isSelected } }
 
@@ -234,11 +337,54 @@ final class PlayerViewModel {
         subtitleTracks.first { $0.isSelected && $0.isExternal }?.externalFilename
     }
 
-    /// Fetches what every subtitle addon offers. If the file has nothing in the
-    /// preferred language, the best match is turned on automatically.
+    /// Chooses the subtitles to start with: the preferred language from the
+    /// video, then from addons; failing that, the fallback language from
+    /// Settings, or none. Never another language by accident.
+    private func decideSubtitles() {
+        guard !subtitlesDecided, !userPickedSubtitle else { return }
+        let settings = PlaybackSettings.shared
+        guard let preferred = settings.preferredSubtitleLanguage else {
+            subtitlesDecided = true
+            engine?.selectSubtitle(id: nil)
+            return
+        }
+        if show(language: preferred) {
+            subtitlesDecided = true
+            return
+        }
+        // Still waiting for addons: keep whatever the engine picked out of the
+        // way until we know whether there's one in the preferred language.
+        guard sourcesLoaded else {
+            if !isSubtitleOff { engine?.selectSubtitle(id: nil) }
+            return
+        }
+        subtitlesDecided = true
+        if let fallback = settings.fallbackSubtitleLanguage, show(language: fallback) { return }
+        engine?.selectSubtitle(id: nil)
+        refreshTracks()
+    }
+
+    /// Shows subtitles in `language`, from the video if it has them, otherwise
+    /// from an addon. Returns whether any were found.
+    private func show(language: String) -> Bool {
+        if let track = embeddedSubtitles.first(where: { SubtitleLanguage.code(for: $0.language) == language }) {
+            if !track.isSelected {
+                engine?.selectSubtitle(id: track.id)
+                refreshTracks()
+            }
+            return true
+        }
+        if let item = subtitleSources.lazy.flatMap(\.items).first(where: { SubtitleLanguage.code(for: $0.lang) == language }) {
+            showExternal(item)
+            return true
+        }
+        return false
+    }
+
+    /// Fetches what every subtitle addon offers, when it wasn't ready before playback.
     private func loadSubtitleSources() async {
-        guard !addedSubtitles, let context else { return }
-        addedSubtitles = true
+        guard !sourcesLoaded, let context else { return }
+        sourcesLoaded = true
         isLoadingSubtitles = true
         defer { isLoadingSubtitles = false }
 
@@ -248,27 +394,64 @@ final class PlayerViewModel {
             addons: PlaybackLauncher.enabledAddons(in: context),
             preferredLanguages: languages.isEmpty ? ["ar", "en"] : languages
         )
-        guard handle != nil else { return }
+        guard engine != nil else { return }
         subtitleSources = sources
+        decideSubtitles()
+    }
 
-        guard let preferred = languages.first else { return }
-        let embeddedPreferred = embeddedSubtitles.contains { SubtitleLanguage.code(for: $0.language) == preferred }
-        if !embeddedPreferred,
-           let best = sources.lazy.flatMap(\.items).first(where: { SubtitleLanguage.code(for: $0.lang) == preferred }) {
-            selectExternalSubtitle(best)
+    /// Shows a subtitle from an addon (picked by the viewer).
+    func selectExternalSubtitle(_ item: SubtitleItem) {
+        userPickedSubtitle = true
+        showExternal(item)
+    }
+
+    private func showExternal(_ item: SubtitleItem) {
+        if let loaded = subtitleTracks.first(where: { $0.externalFilename == item.url }) {
+            engine?.selectSubtitle(id: loaded.id)
+        } else {
+            let code = SubtitleLanguage.code(for: item.lang)
+            let name = Self.languageName(code) ?? item.lang ?? localized("Subtitles")
+            engine?.addExternalSubtitle(url: item.url, title: name, language: code)
+        }
+        refreshTracks()
+    }
+
+    /// With Apple's player, addon subtitles are drawn by the player screen.
+    private func updateOverlay() {
+        guard let engine, !engine.drawsExternalSubtitles else { return }
+        guard let url = selectedSubtitleURL else {
+            overlayTask?.cancel()
+            overlayCues = nil
+            return
+        }
+        overlayTask?.cancel()
+        overlayTask = Task {
+            let cues = await cues(for: url)
+            guard !Task.isCancelled, selectedSubtitleURL == url else { return }
+            subtitleClock = precisePosition
+            overlayCues = cues
         }
     }
 
-    /// Shows a subtitle from an addon, loading it the first time it's picked.
-    func selectExternalSubtitle(_ item: SubtitleItem) {
-        if let loaded = subtitleTracks.first(where: { $0.externalFilename == item.url }) {
-            selectSubtitle(loaded)
-            return
-        }
-        let code = SubtitleLanguage.code(for: item.lang)
-        let name = Self.languageName(code) ?? item.lang ?? localized("Subtitles")
-        handle?.command(["sub-add", item.url, "select", name, code ?? ""])
-        refreshTracks()
+    /// The subtitle line to draw right now, if any.
+    var overlayText: String? {
+        guard let cues = overlayCues else { return nil }
+        let time = subtitleClock - subtitleDelay
+        guard let index = cues.activeIndex(at: time, tolerance: 0) else { return nil }
+        let cue = cues[index]
+        return cue.start <= time && time <= cue.end ? cue.text : nil
+    }
+
+    /// Downloads and reads a subtitle file once, for drawing and for tap-to-sync.
+    private func cues(for url: String) async -> [SubtitleCue]? {
+        if let cached = cueCache[url] { return cached }
+        guard let address = URL(string: url),
+              let (data, _) = try? await URLSession.shared.data(from: address)
+        else { return nil }
+        let cues = await Task.detached { SubtitleParser.parse(data) }.value
+        guard !cues.isEmpty else { return nil }
+        cueCache[url] = cues
+        return cues
     }
 
     // MARK: Smart sync
@@ -281,26 +464,12 @@ final class PlayerViewModel {
             return
         }
         if case .ready(let loaded, _) = sync, loaded == url { return }
-        if let cached = cueCache[url] {
-            sync = .ready(url: url, cues: cached)
-            return
-        }
-        guard let address = URL(string: url) else {
-            sync = .failed
-            return
-        }
-        sync = .loading
-        do {
-            let (data, _) = try await URLSession.shared.data(from: address)
-            let cues = await Task.detached { SubtitleParser.parse(data) }.value
-            guard selectedSubtitleURL == url else { return }
-            if cues.isEmpty {
-                sync = .failed
-            } else {
-                cueCache[url] = cues
-                sync = .ready(url: url, cues: cues)
-            }
-        } catch {
+        if cueCache[url] == nil { sync = .loading }
+        let cues = await cues(for: url)
+        guard selectedSubtitleURL == url else { return }
+        if let cues {
+            sync = .ready(url: url, cues: cues)
+        } else {
             sync = .failed
         }
     }
@@ -313,33 +482,57 @@ final class PlayerViewModel {
     // MARK: Controls
 
     func togglePlay() {
-        handle?.setFlag("pause", !isPaused)
+        engine?.setPaused(!isPaused)
     }
 
     func skip(_ seconds: Double) {
-        handle?.command(["seek", String(seconds), "relative"])
+        engine?.seek(by: seconds)
         position = min(max(position + seconds, 0), duration)
+        precisePosition = position
+        updateNowPlaying()
+    }
+
+    func seek(to seconds: Double) {
+        engine?.seek(to: seconds)
+        position = seconds
+        precisePosition = seconds
+        updateNowPlaying()
     }
 
     func commitScrub() {
-        handle?.command(["seek", String(scrubPosition), "absolute"])
-        position = scrubPosition
+        seek(to: scrubPosition)
         isScrubbing = false
+        thumbnailTask?.cancel()
+        scrubThumbnail = nil
         saveProgress()
+    }
+
+    /// Fetches a preview frame for the timeline while scrubbing, if the engine can.
+    func requestThumbnail() {
+        guard let engine, engine.kind == .apple else { return }
+        thumbnailTask?.cancel()
+        let time = scrubPosition
+        thumbnailTask = Task {
+            try? await Task.sleep(for: .milliseconds(120))
+            guard !Task.isCancelled, let image = await engine.thumbnail(at: time), !Task.isCancelled, isScrubbing else { return }
+            scrubThumbnail = image
+        }
     }
 
     func setSpeed(_ value: Double) {
         speed = value
-        handle?.setDouble("speed", value)
+        engine?.setSpeed(value)
+        updateNowPlaying()
     }
 
-    func selectAudio(_ track: MPVTrack) {
-        handle?.setString("aid", String(track.id))
+    func selectAudio(_ track: PlayerTrack) {
+        engine?.selectAudio(id: track.id)
         refreshTracks()
     }
 
-    func selectSubtitle(_ track: MPVTrack?) {
-        handle?.setString("sid", track.map { String($0.id) } ?? "no")
+    func selectSubtitle(_ track: PlayerTrack?) {
+        userPickedSubtitle = true
+        engine?.selectSubtitle(id: track?.id)
         refreshTracks()
     }
 
@@ -354,17 +547,18 @@ final class PlayerViewModel {
         }
         session = nextSession
         errorMessage = nil
+        activateNowPlaying()
         load(nextSession)
     }
 
     // MARK: Progress
 
     func saveProgress() {
-        guard let context, duration > 0, position > 0 else { return }
-        lastSavedPosition = position
+        guard let context, duration > 0, precisePosition > 0 else { return }
+        lastSavedPosition = precisePosition
         PlaybackProgressStore.save(
             metaID: session.metaID, type: session.type, videoID: session.videoID,
-            position: position, duration: duration, in: context
+            position: precisePosition, duration: duration, in: context
         )
     }
 
