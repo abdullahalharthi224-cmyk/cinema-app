@@ -183,6 +183,7 @@ private struct RankedPoster: View {
     let transitionID: String
 
     @Environment(\.zoomNamespace) private var namespace
+    @State private var localized: TitleLocalizer.Localized?
 
     var body: some View {
         HStack(alignment: .bottom, spacing: -30) {
@@ -190,10 +191,11 @@ private struct RankedPoster: View {
                 .offset(y: 24)
                 .accessibilityHidden(true)
 
-            PosterArtwork(url: item.poster?.asURL, title: item.name)
+            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: localized?.title ?? item.name)
                 .frame(width: 118)
                 .zoomSource(id: transitionID, in: namespace)
         }
+        .localizedTitle(id: item.id, into: $localized)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("\(rank). \(item.name)"))
     }
@@ -360,5 +362,63 @@ extension CatalogReference {
             break
         }
         return LocalizedStringKey(catalog.displayName)
+    }
+}
+
+// MARK: - My List
+
+/// The active profile's saved titles.
+struct WatchlistRow: View {
+    let items: [WatchlistItem]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+            RowHeader(title: Text("My List"))
+                .padding(.horizontal, Theme.Spacing.l)
+
+            ScrollView(.horizontal) {
+                LazyHStack(alignment: .top, spacing: Theme.Spacing.m) {
+                    ForEach(items) { item in
+                        NavigationLink(value: item.route) {
+                            WatchlistPoster(item: item, width: PosterShape.poster.rowWidth)
+                        }
+                        .buttonStyle(.cardPress)
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.bottom, Theme.Spacing.l)
+                .scrollTargetLayout()
+            }
+            .scrollIndicators(.hidden)
+            .scrollTargetBehavior(.viewAligned)
+        }
+    }
+}
+
+struct WatchlistPoster: View {
+    let item: WatchlistItem
+    var width: CGFloat? = nil
+
+    @State private var localized: TitleLocalizer.Localized?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: localized?.title ?? item.name)
+                .frame(width: width)
+            Text(localized?.title ?? item.name)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .frame(width: width, alignment: .leading)
+        }
+        .localizedTitle(id: item.metaID, into: $localized)
+    }
+}
+
+extension WatchlistItem {
+    var route: MetaRoute {
+        var route = MetaRoute(type: type, id: metaID, name: name, poster: poster, background: background)
+        route.addonID = addonID
+        return route
     }
 }

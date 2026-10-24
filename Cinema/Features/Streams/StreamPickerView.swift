@@ -7,6 +7,8 @@ import UIKit
 @MainActor
 struct StreamPickerView: View {
     let request: StreamRequest
+    /// Plays a chosen stream in the built-in player. Without it, streams open in other apps.
+    var onPlay: ((ParsedStream) -> Void)? = nil
 
     @Query(
         filter: #Predicate<InstalledAddon> { $0.isEnabled },
@@ -21,6 +23,7 @@ struct StreamPickerView: View {
     @State private var filter: QualityFilter = .all
     /// `nil` shows every source; otherwise only this addon's streams.
     @State private var sourceFilter: String?
+    @State private var sort: StreamSort = .best
     @State private var selected: ParsedStream?
     @State private var toastMessage: String?
     @State private var errorMessage: String?
@@ -50,6 +53,18 @@ struct StreamPickerView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Picker("Sort By", selection: $sort) {
+                            ForEach(StreamSort.allCases) { option in
+                                Text(option.title).tag(option)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down")
+                    }
+                    .accessibilityLabel("Sort By")
+                }
             }
         }
         .presentationDragIndicator(.visible)
@@ -71,7 +86,7 @@ struct StreamPickerView: View {
                 }
             }
         } message: { _ in
-            Text("Cinema's own player arrives in the next update. For now, you can open this stream in another player app.")
+            Text("Open this stream in another player app.")
         }
         .toast($toastMessage)
         .errorAlert($errorMessage)
@@ -275,7 +290,9 @@ struct StreamPickerView: View {
             }
 
         case .success(let streams)?:
-            let filtered = streams.filter { filter.matches($0.info) }
+            let filtered = StreamRanker.sorted(
+                streams.filter { filter.matches($0.info) }, by: sort, preferences: PlaybackSettings.shared.preferences
+            )
             if filtered.isEmpty {
                 Text(streams.isEmpty ? LocalizedStringKey("No streams found.") : "No streams match this quality.")
                     .foregroundStyle(.secondary)
@@ -287,6 +304,31 @@ struct StreamPickerView: View {
                         StreamRow(stream: stream)
                     }
                     .disabled(!stream.stream.isSupported)
+                    .contextMenu {
+                        if case .direct(let url) = stream.stream.kind {
+                            if onPlay != nil {
+                                Button {
+                                    select(stream)
+                                } label: {
+                                    Label("Play", systemImage: "play.fill")
+                                }
+                            }
+                            ForEach(ExternalPlayer.allCases) { player in
+                                Button {
+                                    open(url, in: player)
+                                } label: {
+                                    Label(LocalizedStringKey("Open in \(player.name)"), systemImage: "arrow.up.forward.app")
+                                }
+                            }
+                            Button {
+                                recordHistory()
+                                UIPasteboard.general.url = url
+                                toastMessage = localized("Link copied")
+                            } label: {
+                                Label("Copy Link", systemImage: "doc.on.doc")
+                            }
+                        }
+                    }
                 }
             }
 
@@ -342,7 +384,12 @@ struct StreamPickerView: View {
     private func select(_ stream: ParsedStream) {
         switch stream.stream.kind {
         case .direct:
-            selected = stream
+            if let onPlay {
+                dismiss()
+                onPlay(stream)
+            } else {
+                selected = stream
+            }
         case .youtube(let id):
             recordHistory()
             if let url = URL(string: "https://www.youtube.com/watch?v=\(id)") { openURL(url) }
@@ -424,6 +471,17 @@ enum ExternalPlayer: String, CaseIterable, Identifiable {
     }
 }
 
+extension StreamSort {
+    var title: LocalizedStringKey {
+        switch self {
+        case .best: return "Best Match"
+        case .quality: return "Quality"
+        case .size: return "Size"
+        case .seeders: return "Sources"
+        }
+    }
+}
+
 private struct StreamRow: View {
     let stream: ParsedStream
 
@@ -433,33 +491,48 @@ private struct StreamRow: View {
         HStack(alignment: .top, spacing: Theme.Spacing.m) {
             qualityBadge
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 7) {
                 let tags = featureTags
-                if !tags.isEmpty {
+                if info.isCached || info.hasArabic || !tags.isEmpty {
                     FlowLayout(spacing: 5) {
+                        if info.isCached {
+                            Label("Instant", systemImage: "bolt.fill")
+                                .font(.rounded(.caption2, weight: .heavy))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.green.gradient, in: Capsule())
+                        }
+                        if info.hasArabic {
+                            Text("Arabic")
+                                .font(.rounded(.caption2, weight: .heavy))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Theme.accent.gradient, in: Capsule())
+                        }
                         ForEach(tags, id: \.self) { tag in
                             QualityCapsule(text: tag)
                         }
                     }
                 }
 
-                ForEach(Array(info.details.prefix(3).enumerated()), id: \.offset) { _, line in
+                // Only what the badges below don't already say (no duplicate size/seeders/flags).
+                ForEach(Array(info.cleanDetails.prefix(2).enumerated()), id: \.offset) { _, line in
                     Text(verbatim: line)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
 
-                let facts = factLine
-                if !facts.isEmpty {
-                    HStack(spacing: Theme.Spacing.m) {
-                        ForEach(facts, id: \.text) { fact in
-                            Label(fact.text, systemImage: fact.symbol)
-                        }
-                    }
-                    .font(.caption2.weight(.medium))
+                facts
+                    .font(.rounded(.caption2, weight: .semibold))
                     .foregroundStyle(.tertiary)
-                    .labelStyle(.titleAndIcon)
+
+                if info.isUncached {
+                    Label("Not cached yet — may take a while to start.", systemImage: "hourglass")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.orange)
                 }
 
                 if !stream.stream.isSupported {
@@ -474,6 +547,39 @@ private struct StreamRow: View {
         .padding(.vertical, 4)
         .opacity(stream.stream.isSupported ? 1 : 0.55)
         .contentShape(Rectangle())
+    }
+
+    private var facts: some View {
+        HStack(spacing: Theme.Spacing.m) {
+            if let size = info.sizeBytes {
+                Label {
+                    Text(verbatim: ByteCountFormatter.string(fromByteCount: size, countStyle: .binary))
+                } icon: {
+                    Image(systemName: "internaldrive")
+                }
+            }
+            if let seeders = info.seeders {
+                Label {
+                    Text(seeders, format: .number)
+                } icon: {
+                    Image(systemName: "person.2.fill")
+                }
+            }
+            if info.languages.count > 1 {
+                // Many flags collapse into one "multi-language" mark with a count.
+                Label {
+                    Text(info.languages.count, format: .number)
+                } icon: {
+                    Image(systemName: "globe")
+                }
+                .accessibilityLabel(Text("\(info.languages.count) languages"))
+            }
+            if let provider = info.provider {
+                Text(verbatim: provider)
+                    .lineLimit(1)
+            }
+        }
+        .labelStyle(.titleAndIcon)
     }
 
     private var qualityBadge: some View {
@@ -502,17 +608,6 @@ private struct StreamRow: View {
         if info.isHEVC { tags.append("HEVC") }
         tags.append(contentsOf: info.audio.prefix(2))
         return tags
-    }
-
-    private var factLine: [(text: String, symbol: String)] {
-        var facts: [(text: String, symbol: String)] = []
-        if let size = info.sizeBytes {
-            facts.append((ByteCountFormatter.string(fromByteCount: size, countStyle: .binary), "internaldrive"))
-        }
-        if let seeders = info.seeders {
-            facts.append((seeders.formatted(), "person.2.fill"))
-        }
-        return facts
     }
 
     private var unsupportedReason: LocalizedStringKey {

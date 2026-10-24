@@ -32,6 +32,19 @@ struct StreamInfo: Sendable, Hashable {
     var seeders: Int?
     /// The descriptive text, with whitespace normalised, for display.
     var details: [String] = []
+    /// `details` with the facts shown elsewhere (size, seeders, source, flags)
+    /// removed, so a card doesn't repeat them.
+    var cleanDetails: [String] = []
+    /// ISO 639-1 codes of languages mentioned via flags or words ("ar", "en"…).
+    var languages: [String] = []
+    /// Where a torrent was found, e.g. "ThePirateBay" (after ⚙️ / 🔍).
+    var provider: String?
+    /// Already cached on a debrid service, so it starts instantly ("[RD+]", "⚡").
+    var isCached = false
+    /// A debrid link that still needs downloading first ("[RD download]").
+    var isUncached = false
+
+    var hasArabic: Bool { languages.contains("ar") }
 
     init(stream: StreamItem) {
         let parts = [stream.name, stream.title, stream.description, stream.behaviorHints?.filename]
@@ -43,6 +56,7 @@ struct StreamInfo: Sendable, Hashable {
             .flatMap { $0.components(separatedBy: .newlines) }
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
+        cleanDetails = details.compactMap(Self.cleanLine)
     }
 
     init(text: String) {
@@ -90,6 +104,87 @@ struct StreamInfo: Sendable, Hashable {
 
         sizeBytes = Self.parseSize(text)
         seeders = Self.parseSeeders(text)
+        languages = Self.parseLanguages(text)
+        provider = Self.parseProvider(text)
+        isUncached = Self.matches(lower, #"\[(rd|ad|pm|tb|dl|ed|oc)[ -]?download\]|uncached|⏳"#)
+        isCached = !isUncached && (Self.matches(lower, #"\[(rd|ad|pm|tb|dl|ed|oc)\+\]|\b(rd|ad|pm|tb)\+"#) || text.contains("⚡"))
+    }
+
+    // MARK: Languages, provider and cleanup
+
+    /// Country flags addons use for audio/subtitle languages, mapped to a language.
+    private static let flagLanguages: [String: String] = [
+        "SA": "ar", "AE": "ar", "EG": "ar", "KW": "ar", "QA": "ar", "BH": "ar", "OM": "ar", "JO": "ar",
+        "LB": "ar", "SY": "ar", "IQ": "ar", "MA": "ar", "DZ": "ar", "TN": "ar", "LY": "ar", "PS": "ar", "YE": "ar",
+        "GB": "en", "US": "en", "AU": "en", "CA": "en", "FR": "fr", "ES": "es", "MX": "es", "AR": "es",
+        "DE": "de", "IT": "it", "PT": "pt", "BR": "pt", "RU": "ru", "UA": "uk", "JP": "ja", "KR": "ko",
+        "CN": "zh", "TW": "zh", "HK": "zh", "IN": "hi", "TR": "tr", "NL": "nl", "PL": "pl", "SE": "sv",
+        "NO": "no", "DK": "da", "FI": "fi", "GR": "el", "IL": "he", "IR": "fa", "TH": "th", "VN": "vi",
+        "ID": "id", "MY": "ms", "PH": "tl", "CZ": "cs", "HU": "hu", "RO": "ro", "BG": "bg", "RS": "sr", "HR": "hr",
+    ]
+
+    private static let languageWords: [(pattern: String, code: String)] = [
+        (#"\b(arabic|arab|ara)\b"#, "ar"), (#"\b(english|eng)\b"#, "en"), (#"\b(french|fre|fra)\b"#, "fr"),
+        (#"\b(spanish|spa|castellano|latino)\b"#, "es"), (#"\b(german|ger|deu)\b"#, "de"),
+        (#"\b(italian|ita)\b"#, "it"), (#"\b(turkish|tur)\b"#, "tr"), (#"\b(hindi|hin)\b"#, "hi"),
+    ]
+
+    static func parseLanguages(_ text: String) -> [String] {
+        var codes: [String] = []
+        func add(_ code: String) { if !codes.contains(code) { codes.append(code) } }
+
+        // Flags are pairs of "regional indicator" letters, e.g. 🇸🇦 = S + A.
+        var pending: Character?
+        for scalar in text.unicodeScalars {
+            guard (0x1F1E6...0x1F1FF).contains(scalar.value) else {
+                pending = nil
+                continue
+            }
+            let letter = Character(UnicodeScalar(scalar.value - 0x1F1E6 + 65)!)
+            if let first = pending {
+                if let code = flagLanguages[String([first, letter])] { add(code) }
+                pending = nil
+            } else {
+                pending = letter
+            }
+        }
+
+        let lower = text.lowercased()
+        for word in languageWords where matches(lower, word.pattern) {
+            add(word.code)
+        }
+        return codes
+    }
+
+    static func parseProvider(_ text: String) -> String? {
+        guard let regex = try? NSRegularExpression(pattern: #"(?:⚙️|⚙|🔍)\s*([^\n|👤💾🌐⚙🔍]+)"#),
+              let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+              let range = Range(match.range(at: 1), in: text)
+        else { return nil }
+        let value = text[range].trimmingCharacters(in: .whitespaces)
+        return value.isEmpty ? nil : value
+    }
+
+    /// Strips size, seeders, provider and flag fragments from a line; returns
+    /// `nil` if nothing meaningful is left.
+    static func cleanLine(_ line: String) -> String? {
+        var text = line
+        let patterns = [
+            #"👤\s*\d+"#,
+            #"💾\s*\d+(?:[.,]\d+)?\s*(?:tb|tib|gb|gib|mb|mib)"#,
+            #"(?:⚙️|⚙|🔍)\s*[^\n|]+"#,
+            #"🌐"#,
+            #"[\x{1F1E6}-\x{1F1FF}]"#,
+            #"\s*/\s*(?=\s|$)"#,
+        ]
+        for pattern in patterns {
+            text = text.replacingOccurrences(of: pattern, with: " ", options: [.regularExpression, .caseInsensitive])
+        }
+        text = text.replacingOccurrences(of: #"\s{2,}"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet.whitespaces.union(CharacterSet(charactersIn: "|·-/")))
+        // Nothing but punctuation or a lone number left.
+        guard text.rangeOfCharacter(from: .letters) != nil else { return nil }
+        return text
     }
 
     // MARK: Parsing helpers

@@ -21,6 +21,9 @@ final class WatchHistoryItem {
     var addonID: String?
     /// 0...1, or 0 when unknown.
     var progress: Double
+    /// Seconds into `videoID`, and its length, from the built-in player.
+    var position: Double = 0
+    var duration: Double = 0
     var lastWatched: Date
 
     init(

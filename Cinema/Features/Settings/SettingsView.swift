@@ -70,6 +70,14 @@ struct SettingsView: View {
                         }
                     }
 
+                    NavigationLink(value: SettingsRoute.playback) {
+                        Label {
+                            Text("Playback")
+                        } icon: {
+                            SettingsIcon(systemName: "play.rectangle.fill", color: .red)
+                        }
+                    }
+
                     NavigationLink(value: SettingsRoute.tmdb) {
                         LabeledContent {
                             Text(TMDBAccount.shared.isConnected ? LocalizedStringKey("Connected") : "Not connected")
@@ -139,6 +147,8 @@ struct SettingsView: View {
                     AppearanceView()
                 case .tmdb:
                     TMDBSettingsView()
+                case .playback:
+                    PlaybackSettingsView()
                 case .addon(let addon):
                     AddonDetailView(addon: addon)
                 }

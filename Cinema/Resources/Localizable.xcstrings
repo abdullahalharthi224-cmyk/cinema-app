@@ -51,6 +51,16 @@
         }
       }
     },
+    "%lld languages": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld لغات"
+          }
+        }
+      }
+    },
     "%lld min": {
       "localizations": {
         "ar": {
@@ -167,6 +177,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "إضافة عبر رابط"
+          }
+        }
+      }
+    },
+    "Add titles to My List with the + button, and the ones you start watching will appear here too.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أضف أعمالاً إلى قائمتي بزر +، وستظهر هنا أيضاً الأعمال التي تبدأ بمشاهدتها."
+          }
+        }
+      }
+    },
+    "Add to My List": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إضافة إلى قائمتي"
           }
         }
       }
@@ -301,6 +331,26 @@
         }
       }
     },
+    "Arabic": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "العربية"
+          }
+        }
+      }
+    },
+    "Audio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصوت"
+          }
+        }
+      }
+    },
     "Available Catalogs": {
       "localizations": {
         "ar": {
@@ -317,6 +367,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "الصورة الرمزية"
+          }
+        }
+      }
+    },
+    "Back 10 seconds": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رجوع 10 ثوانٍ"
+          }
+        }
+      }
+    },
+    "Best Available": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفضل جودة متاحة"
+          }
+        }
+      }
+    },
+    "Best Match": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأفضل"
           }
         }
       }
@@ -487,6 +567,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "جارٍ الفحص…"
+          }
+        }
+      }
+    },
+    "Choose Stream": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختيار رابط"
           }
         }
       }
@@ -841,6 +931,26 @@
         }
       }
     },
+    "Finding the best stream…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ اختيار أفضل رابط…"
+          }
+        }
+      }
+    },
+    "Forward 10 seconds": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تقديم 10 ثوانٍ"
+          }
+        }
+      }
+    },
     "From Stremio": {
       "localizations": {
         "ar": {
@@ -941,12 +1051,32 @@
         }
       }
     },
+    "Instant": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فوري"
+          }
+        }
+      }
+    },
     "Key saved": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "المفتاح محفوظ"
+          }
+        }
+      }
+    },
+    "Known For": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أشهر أعماله"
           }
         }
       }
@@ -1051,6 +1181,26 @@
         }
       }
     },
+    "Mark as Unwatched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعليم كغير مُشاهَدة"
+          }
+        }
+      }
+    },
+    "Mark as Watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعليم كمُشاهَدة"
+          }
+        }
+      }
+    },
     "Me": {
       "localizations": {
         "ar": {
@@ -1111,6 +1261,16 @@
         }
       }
     },
+    "My List": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قائمتي"
+          }
+        }
+      }
+    },
     "Name": {
       "localizations": {
         "ar": {
@@ -1161,6 +1321,16 @@
         }
       }
     },
+    "Next Episode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحلقة التالية"
+          }
+        }
+      }
+    },
     "No Addons Yet": {
       "localizations": {
         "ar": {
@@ -1197,6 +1367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "لا توجد إضافات روابط تشغيل"
+          }
+        }
+      }
+    },
+    "No playable stream was found for the next episode.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يُعثر على رابط قابل للتشغيل للحلقة التالية."
           }
         }
       }
@@ -1281,6 +1461,16 @@
         }
       }
     },
+    "Not cached yet — may take a while to start.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "غير جاهز بعد — قد يتأخر في البدء."
+          }
+        }
+      }
+    },
     "Not connected": {
       "localizations": {
         "ar": {
@@ -1351,6 +1541,16 @@
         }
       }
     },
+    "Off": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إيقاف"
+          }
+        }
+      }
+    },
     "Only gives torrent links — needs a debrid service to play here.": {
       "localizations": {
         "ar": {
@@ -1367,6 +1567,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "تعمل مع تطبيق Stremio على الكمبيوتر فقط."
+          }
+        }
+      }
+    },
+    "Open in %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح في %@"
+          }
+        }
+      }
+    },
+    "Open this stream in another player app.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "افتح هذا الرابط في تطبيق مشغّل آخر."
           }
         }
       }
@@ -1401,6 +1621,16 @@
         }
       }
     },
+    "Pause": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إيقاف مؤقت"
+          }
+        }
+      }
+    },
     "Platforms": {
       "localizations": {
         "ar": {
@@ -1417,6 +1647,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تشغيل"
+          }
+        }
+      }
+    },
+    "Play Button": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "زر التشغيل"
           }
         }
       }
@@ -1441,12 +1681,62 @@
         }
       }
     },
+    "Play picks the best stream for you: your preferred quality, links already cached on your debrid service first, and a sensible file size. Use the list button to choose one yourself.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "زر التشغيل يختار لك أفضل رابط: بجودتك المفضلة، والروابط الجاهزة على خدمة debrid أولاً، وبحجم معقول. استخدم زر القائمة لتختار بنفسك."
+          }
+        }
+      }
+    },
+    "Playback": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التشغيل"
+          }
+        }
+      }
+    },
+    "Playback Speed": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سرعة التشغيل"
+          }
+        }
+      }
+    },
     "Popular on this service": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الأكثر مشاهدة على هذه المنصة"
+          }
+        }
+      }
+    },
+    "Prefer Instant Links": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تفضيل الروابط الفورية"
+          }
+        }
+      }
+    },
+    "Preferred Quality": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الجودة المفضلة"
           }
         }
       }
@@ -1561,12 +1851,42 @@
         }
       }
     },
+    "Remove from My List": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة من قائمتي"
+          }
+        }
+      }
+    },
     "Response time: %lld ms": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "زمن الاستجابة: %lld ملّي ثانية"
+          }
+        }
+      }
+    },
+    "Resume": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استئناف"
+          }
+        }
+      }
+    },
+    "Resume S%lld E%lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استئناف م%lld · ح%lld"
           }
         }
       }
@@ -1781,6 +2101,16 @@
         }
       }
     },
+    "Size": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحجم"
+          }
+        }
+      }
+    },
     "Something Went Wrong": {
       "localizations": {
         "ar": {
@@ -1797,6 +2127,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "قريباً ستتمكن من البحث في كل الإضافات التي تدعم البحث دفعة واحدة."
+          }
+        }
+      }
+    },
+    "Sort By": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ترتيب حسب"
+          }
+        }
+      }
+    },
+    "Sources": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المصادر"
           }
         }
       }
@@ -1861,12 +2211,32 @@
         }
       }
     },
+    "Subtitle Language": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لغة الترجمة"
+          }
+        }
+      }
+    },
     "Subtitles": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الترجمات"
+          }
+        }
+      }
+    },
+    "Subtitles in this language are turned on automatically — from the video itself or from subtitle addons like OpenSubtitles.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تُفعّل الترجمة بهذه اللغة تلقائياً — من الفيديو نفسه أو من إضافات الترجمة مثل OpenSubtitles."
           }
         }
       }
@@ -2071,6 +2441,16 @@
         }
       }
     },
+    "The player couldn't start.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر تشغيل المشغّل."
+          }
+        }
+      }
+    },
     "The server returned an error (code %lld).": {
       "localizations": {
         "ar": {
@@ -2111,6 +2491,16 @@
         }
       }
     },
+    "This stream couldn't be played (%@). Try another one.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر تشغيل هذا الرابط (%@). جرّب رابطاً آخر."
+          }
+        }
+      }
+    },
     "This stream type isn't supported.": {
       "localizations": {
         "ar": {
@@ -2127,6 +2517,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "هذا العمل ليس له معرّف IMDb، لذلك لا تستطيع الإضافات إيجاد روابط له."
+          }
+        }
+      }
+    },
+    "Timeline": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شريط التقدّم"
           }
         }
       }
@@ -2187,6 +2587,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "روابط التورنت غير مدعومة. استخدم إضافة تدعم خدمات Debrid للحصول على روابط مباشرة."
+          }
+        }
+      }
+    },
+    "Track %lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسار %lld"
           }
         }
       }
@@ -2357,6 +2767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "شاهد الآن"
+          }
+        }
+      }
+    },
+    "Watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تمت المشاهدة"
           }
         }
       }

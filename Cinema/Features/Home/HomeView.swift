@@ -17,7 +17,13 @@ struct HomeView: View {
 
     @State private var model = HomeViewModel()
     @State private var scrollOffset: CGFloat = 0
-    @State private var streamRequest: StreamRequest?
+    @State private var launcher = PlaybackLauncher()
+    @Query(sort: \WatchlistItem.addedAt, order: .reverse) private var allWatchlist: [WatchlistItem]
+
+    /// This profile's "My List".
+    private var watchlist: [WatchlistItem] {
+        allWatchlist.filter { $0.profileID == ProfileSession.shared.activeID }
+    }
     @Namespace private var zoom
 
     private var sources: [AddonSource] { addons.sources }
@@ -40,9 +46,7 @@ struct HomeView: View {
         .task(id: sources.map(\.id)) {
             await model.load(addons: sources)
         }
-        .sheet(item: $streamRequest) { request in
-            StreamPickerView(request: request)
-        }
+        .playbackLauncher(launcher)
     }
 
     // MARK: Feed
@@ -57,10 +61,11 @@ struct HomeView: View {
                     Group {
                         if let hero = model.hero {
                             HeroCarousel(items: hero.items, addonID: hero.addonID, height: heroHeight) { item in
-                                streamRequest = StreamRequest(
+                                let request = StreamRequest(
                                     type: item.type, videoID: item.id, title: item.name, subtitle: nil,
                                     history: MetaRoute(preview: item, addonID: hero.addonID).historyEntryBase
                                 )
+                                Task { await launcher.smartPlay(request, context: context) }
                             }
                             .transition(.opacity)
                         } else {
@@ -81,6 +86,10 @@ struct HomeView: View {
                                     try? context.save()
                                 }
                             }
+                        }
+
+                        if !watchlist.isEmpty {
+                            WatchlistRow(items: watchlist)
                         }
 
                         if let topTen = model.topTen {

@@ -84,6 +84,59 @@ struct TMDBClient: Sendable {
         return nil
     }
 
+    /// A title's localized name and artwork, looked up by IMDb ID in one request.
+    func findLocalized(imdbID: String, language: String) async throws -> TMDBFindResult? {
+        struct Response: Decodable {
+            var movie_results: [TMDBTitle]
+            var tv_results: [TMDBTitle]
+        }
+        let response: Response = try await get(
+            "find/\(imdbID)", query: ["external_source": "imdb_id", "language": language]
+        )
+        if let movie = response.movie_results.first { return TMDBFindResult(media: .movie, title: movie) }
+        if let show = response.tv_results.first { return TMDBFindResult(media: .tv, title: show) }
+        return nil
+    }
+
+    /// The main cast, with photos.
+    func credits(media: TMDBMediaType, tmdbID: Int, language: String) async throws -> [TMDBCastMember] {
+        struct Response: Decodable {
+            var cast: [TMDBCastMember]?
+            enum CodingKeys: String, CodingKey { case cast }
+            init(from decoder: Decoder) throws {
+                cast = try decoder.container(keyedBy: CodingKeys.self).lossyArray(TMDBCastMember.self, forKey: .cast)
+            }
+        }
+        let path = media == .tv ? "tv/\(tmdbID)/aggregate_credits" : "movie/\(tmdbID)/credits"
+        let response: Response = try await get(path, query: ["language": language])
+        return Array((response.cast ?? []).prefix(20))
+    }
+
+    func person(id: Int, language: String) async throws -> TMDBPerson {
+        var person: TMDBPerson = try await get("person/\(id)", query: ["language": language])
+        if person.biography?.isEmpty ?? true, language != "en-US" {
+            let english: TMDBPerson = try await get("person/\(id)", query: ["language": "en-US"])
+            person.biography = english.biography
+        }
+        return person
+    }
+
+    /// Everything a person acted in, most popular first.
+    func personCredits(id: Int, language: String) async throws -> [TMDBPersonCredit] {
+        struct Response: Decodable {
+            var cast: [TMDBPersonCredit]?
+            enum CodingKeys: String, CodingKey { case cast }
+            init(from decoder: Decoder) throws {
+                cast = try decoder.container(keyedBy: CodingKeys.self).lossyArray(TMDBPersonCredit.self, forKey: .cast)
+            }
+        }
+        let response: Response = try await get("person/\(id)/combined_credits", query: ["language": language])
+        var seen = Set<String>()
+        return (response.cast ?? [])
+            .filter { $0.posterPath != nil && seen.insert("\($0.media.rawValue)/\($0.title.id)").inserted }
+            .sorted { ($0.popularity ?? 0) > ($1.popularity ?? 0) }
+    }
+
     /// Title, overview and genres in the requested language. An empty overview
     /// falls back to English, since many titles have no translated synopsis.
     func localizedDetails(media: TMDBMediaType, tmdbID: Int, language: String) async throws -> TMDBLocalizedDetails {
@@ -310,5 +363,81 @@ enum TMDBError: Error, Equatable, LocalizedError {
         case .invalidResponse:
             return localized("TMDB sent data this app can't read.")
         }
+    }
+}
+
+struct TMDBFindResult: Sendable {
+    var media: TMDBMediaType
+    var title: TMDBTitle
+}
+
+struct TMDBCastMember: Decodable, Hashable, Sendable, Identifiable {
+    var id: Int
+    var name: String
+    var character: String?
+    var profilePath: String?
+
+    enum CodingKeys: String, CodingKey { case id, name, character, roles, profilePath = "profile_path" }
+
+    private struct Role: Decodable { var character: String? }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        name = c.lenient(String.self, forKey: .name) ?? ""
+        // Series list characters per role ("aggregate_credits").
+        character = c.lenient(String.self, forKey: .character)
+            ?? c.lossyArray(Role.self, forKey: .roles)?.first?.character
+        profilePath = c.lenient(String.self, forKey: .profilePath)
+    }
+}
+
+struct TMDBPerson: Decodable, Sendable {
+    var id: Int
+    var name: String
+    var biography: String?
+    var profilePath: String?
+    var birthday: String?
+    var placeOfBirth: String?
+    var knownFor: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, biography, birthday
+        case profilePath = "profile_path", placeOfBirth = "place_of_birth", knownFor = "known_for_department"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        name = c.lenient(String.self, forKey: .name) ?? ""
+        biography = c.lenient(String.self, forKey: .biography)
+        profilePath = c.lenient(String.self, forKey: .profilePath)
+        birthday = c.lenient(String.self, forKey: .birthday)
+        placeOfBirth = c.lenient(String.self, forKey: .placeOfBirth)
+        knownFor = c.lenient(String.self, forKey: .knownFor)
+    }
+}
+
+/// A movie or show in a person's filmography.
+struct TMDBPersonCredit: Decodable, Hashable, Sendable, Identifiable {
+    var media: TMDBMediaType
+    var title: TMDBTitle
+    var character: String?
+    var popularity: Double?
+
+    var id: String { "\(media.rawValue)/\(title.id)" }
+    var posterPath: String? { title.posterPath }
+
+    enum CodingKeys: String, CodingKey { case mediaType = "media_type", character, popularity }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        guard let media = TMDBMediaType(rawValue: c.lenient(String.self, forKey: .mediaType) ?? "") else {
+            throw DecodingError.dataCorruptedError(forKey: .mediaType, in: c, debugDescription: "Not a movie or show")
+        }
+        self.media = media
+        title = try TMDBTitle(from: decoder)
+        character = c.lenient(String.self, forKey: .character)
+        popularity = c.lenient(Double.self, forKey: .popularity)
     }
 }
