@@ -2491,6 +2491,16 @@
         }
       }
     },
+    "Synced": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تمت المزامنة"
+          }
+        }
+      }
+    },
     "Synced %lld addons": {
       "localizations": {
         "ar": {

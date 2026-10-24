@@ -110,4 +110,16 @@ extension Array where Element == SubtitleCue {
         }
         return low
     }
+
+    /// The line being spoken at `time`: the last one that has started, with a
+    /// little tolerance so a line isn't missed because the clock lags slightly.
+    func activeIndex(at time: Double, tolerance: Double = 0.3) -> Int? {
+        guard !isEmpty else { return nil }
+        var low = 0, high = count
+        while low < high {
+            let mid = (low + high) / 2
+            if self[mid].start <= time + tolerance { low = mid + 1 } else { high = mid }
+        }
+        return Swift.max(low - 1, 0)
+    }
 }

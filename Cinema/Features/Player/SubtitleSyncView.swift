@@ -51,6 +51,12 @@ struct SubtitleSyncView: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(Theme.accent.opacity(0.22), in: Capsule())
+                if syncedCueID != nil {
+                    Label("Synced", systemImage: "checkmark")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .transition(.opacity)
+                }
                 Spacer()
                 if model.subtitleDelay != 0 {
                     Button("Reset") {
@@ -67,22 +73,33 @@ struct SubtitleSyncView: View {
     }
 
     private func cueList(_ cues: [SubtitleCue]) -> some View {
-        // The cue the subtitle is showing (or about to show) with the current delay.
-        let current = cues.nearestIndex(to: model.position - model.subtitleDelay) ?? 0
-        let range = max(current - 40, 0)..<min(current + 60, cues.count)
+        // The line being spoken, given the current delay.
+        let current = cues.activeIndex(at: model.position - model.subtitleDelay) ?? 0
+        let window = cues[max(current - 30, 0)..<min(current + 31, cues.count)]
 
         return ScrollViewReader { proxy in
-            LazyVStack(alignment: .leading, spacing: 2) {
-                ForEach(cues[range]) { cue in
-                    cueRow(cue, isCurrent: cue.id == current)
-                        .id(cue.id)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(window) { cue in
+                        cueRow(cue, isCurrent: cue.id == current)
+                            .id(cue.id)
+                    }
                 }
+                .padding(.vertical, Theme.Spacing.xl)
             }
+            .scrollIndicators(.hidden)
             .simultaneousGesture(DragGesture(minimumDistance: 4).onChanged { _ in lastInteraction = .now })
+            .mask {
+                LinearGradient(
+                    stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.08),
+                            .init(color: .black, location: 0.92), .init(color: .clear, location: 1)],
+                    startPoint: .top, endPoint: .bottom
+                )
+            }
             .onAppear { proxy.scrollTo(current, anchor: .center) }
             .onChange(of: current) { _, index in
                 // Follow the video, unless the viewer is looking around.
-                guard Date.now.timeIntervalSince(lastInteraction) > 4 else { return }
+                guard Date.now.timeIntervalSince(lastInteraction) > 3 else { return }
                 withAnimation(.smooth) { proxy.scrollTo(index, anchor: .center) }
             }
         }
@@ -91,7 +108,7 @@ struct SubtitleSyncView: View {
     private func cueRow(_ cue: SubtitleCue, isCurrent: Bool) -> some View {
         Button {
             model.syncSubtitle(to: cue)
-            syncedCueID = cue.id
+            withAnimation(Theme.Motion.spring) { syncedCueID = cue.id }
             syncCount += 1
             lastInteraction = .distantPast
         } label: {
@@ -99,29 +116,25 @@ struct SubtitleSyncView: View {
                 Text(verbatim: PlayerViewModel.format(cue.start))
                     .font(.caption2.weight(.medium))
                     .monospacedDigit()
-                    .foregroundStyle(.tertiary)
-                    .frame(width: 48, alignment: .leading)
+                    .foregroundStyle(Color.white.opacity(0.4))
+                    .frame(width: 44, alignment: .leading)
                 Text(verbatim: cue.text)
                     .font(.subheadline.weight(isCurrent ? .semibold : .regular))
-                    .foregroundStyle(isCurrent ? .primary : .secondary)
+                    .foregroundStyle(Color.white.opacity(isCurrent ? 1 : 0.62))
                     .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if syncedCueID == cue.id {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(Theme.accent)
-                        .transition(.scale.combined(with: .opacity))
                 }
             }
             .padding(.horizontal, Theme.Spacing.m)
             .padding(.vertical, 10)
-            .background(
-                isCurrent ? AnyShapeStyle(Color.white.opacity(0.12)) : AnyShapeStyle(Color.clear),
-                in: .continuous(Theme.Radius.medium)
-            )
+            .background(Color.white.opacity(isCurrent ? 0.14 : 0), in: .continuous(Theme.Radius.medium))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .animation(.smooth(duration: 0.25), value: isCurrent)
     }
 
     private func message(_ symbol: String, _ text: LocalizedStringKey) -> some View {

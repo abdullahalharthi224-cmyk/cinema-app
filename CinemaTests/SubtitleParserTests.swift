@@ -43,4 +43,13 @@ final class SubtitleParserTests: XCTestCase {
         XCTAssertEqual(cues.nearestIndex(to: 99), 1)
         XCTAssertNil([SubtitleCue]().nearestIndex(to: 1))
     }
+
+    func testActiveIndexPrefersTheLineThatStarted() {
+        let cues = SubtitleParser.parse("1\n00:00:01,000 --> 00:00:04,990\nA\n\n2\n00:00:05,000 --> 00:00:06,000\nB\n")
+        XCTAssertEqual(cues.activeIndex(at: 0), 0)
+        XCTAssertEqual(cues.activeIndex(at: 2), 0)
+        // Just before B starts (clock lag) counts as B.
+        XCTAssertEqual(cues.activeIndex(at: 4.8), 1)
+        XCTAssertEqual(cues.activeIndex(at: 50), 1)
+    }
 }

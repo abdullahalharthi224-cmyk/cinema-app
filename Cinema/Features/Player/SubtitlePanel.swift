@@ -33,19 +33,24 @@ struct SubtitlePanel: View {
                 .accessibilityLabel("Close")
             }
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: Theme.Spacing.l) {
-                    switch tab {
-                    case .subtitles: subtitlesTab
-                    case .audio: audioTab
-                    case .sync: SubtitleSyncView(model: model)
-                    case .adjust: adjustTab
+            if tab == .sync {
+                // The sync list scrolls by itself, following the video.
+                SubtitleSyncView(model: model)
+                    .frame(maxHeight: .infinity, alignment: .top)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+                        switch tab {
+                        case .subtitles: subtitlesTab
+                        case .audio: audioTab
+                        case .sync, .adjust: adjustTab
+                        }
                     }
+                    .padding(.vertical, Theme.Spacing.xs)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(.vertical, Theme.Spacing.xs)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .scrollIndicators(.hidden)
             }
-            .scrollIndicators(.hidden)
         }
         .padding(Theme.Spacing.l)
         .frame(width: 380)
