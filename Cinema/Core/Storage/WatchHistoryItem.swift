@@ -5,8 +5,10 @@ import SwiftData
 /// Playback progress is filled in by the built-in player (phase 3).
 @Model
 final class WatchHistoryItem {
-    /// One entry per title (`type/id`); the latest episode replaces older ones.
+    /// One entry per title per profile; the latest episode replaces older ones.
     @Attribute(.unique) var key: String
+    /// The profile that watched it.
+    var profileID: UUID?
     var metaID: String
     var type: String
     var name: String
@@ -23,9 +25,10 @@ final class WatchHistoryItem {
 
     init(
         metaID: String, type: String, name: String, poster: String?, background: String?, logo: String?,
-        videoID: String, episodeLabel: String?, addonID: String?
+        videoID: String, episodeLabel: String?, addonID: String?, profileID: UUID?
     ) {
-        key = "\(type)/\(metaID)"
+        key = Self.makeKey(profileID: profileID, type: type, metaID: metaID)
+        self.profileID = profileID
         self.metaID = metaID
         self.type = type
         self.name = name
@@ -41,10 +44,15 @@ final class WatchHistoryItem {
 }
 
 extension WatchHistoryItem {
-    /// Records (or refreshes) that a title was just started.
+    static func makeKey(profileID: UUID?, type: String, metaID: String) -> String {
+        "\(profileID?.uuidString ?? "shared")/\(type)/\(metaID)"
+    }
+
+    /// Records (or refreshes) that the active profile just started a title.
     @MainActor
     static func record(_ entry: WatchHistoryEntry, in context: ModelContext) {
-        let key = "\(entry.type)/\(entry.metaID)"
+        let profileID = ProfileSession.shared.activeID
+        let key = makeKey(profileID: profileID, type: entry.type, metaID: entry.metaID)
         let descriptor = FetchDescriptor<WatchHistoryItem>(predicate: #Predicate { $0.key == key })
         if let existing = try? context.fetch(descriptor).first {
             if existing.videoID != entry.videoID { existing.progress = 0 }
@@ -58,7 +66,7 @@ extension WatchHistoryItem {
             context.insert(WatchHistoryItem(
                 metaID: entry.metaID, type: entry.type, name: entry.name, poster: entry.poster,
                 background: entry.background, logo: entry.logo, videoID: entry.videoID,
-                episodeLabel: entry.episodeLabel, addonID: entry.addonID
+                episodeLabel: entry.episodeLabel, addonID: entry.addonID, profileID: profileID
             ))
         }
         try? context.save()

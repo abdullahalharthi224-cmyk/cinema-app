@@ -5,6 +5,12 @@ struct SettingsView: View {
     @Environment(AppRouter.self) private var router
     @Query private var addons: [InstalledAddon]
     @AppStorage(StremioDefaults.emailKey) private var stremioEmail = ""
+    @Query(sort: \Profile.sortIndex) private var profiles: [Profile]
+    @State private var isPickingProfile = false
+
+    private var activeProfile: Profile? {
+        profiles.first { $0.id == ProfileSession.shared.activeID } ?? profiles.first
+    }
 
     var body: some View {
         @Bindable var router = router
@@ -25,6 +31,27 @@ struct SettingsView: View {
                     }
                 } footer: {
                     Text("Addons are where all content comes from. Cinema doesn't host or provide any content itself.")
+                }
+
+                Section {
+                    Button {
+                        isPickingProfile = true
+                    } label: {
+                        LabeledContent {
+                            Text(verbatim: activeProfile?.name ?? "")
+                        } label: {
+                            Label {
+                                Text("Profiles")
+                                    .foregroundStyle(.primary)
+                            } icon: {
+                                if let activeProfile {
+                                    ProfileAvatar(profile: activeProfile, size: 30)
+                                } else {
+                                    SettingsIcon(systemName: "person.2.fill", color: .orange)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Section {
@@ -101,6 +128,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .fullScreenCover(isPresented: $isPickingProfile) {
+                ProfilePickerView()
+            }
             .navigationDestination(for: SettingsRoute.self) { route in
                 switch route {
                 case .addons:

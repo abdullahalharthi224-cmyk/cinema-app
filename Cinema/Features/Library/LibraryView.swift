@@ -4,7 +4,12 @@ import SwiftUI
 /// Everything the user has started watching, most recent first.
 struct LibraryView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \WatchHistoryItem.lastWatched, order: .reverse) private var history: [WatchHistoryItem]
+    @Query(sort: \WatchHistoryItem.lastWatched, order: .reverse) private var allHistory: [WatchHistoryItem]
+
+    /// Only the active profile's history.
+    private var history: [WatchHistoryItem] {
+        allHistory.filter { $0.profileID == ProfileSession.shared.activeID }
+    }
     @Namespace private var zoom
 
     private let columns = [GridItem(.adaptive(minimum: 104, maximum: 160), spacing: Theme.Spacing.m)]

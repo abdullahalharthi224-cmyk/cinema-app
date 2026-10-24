@@ -151,6 +151,16 @@
         }
       }
     },
+    "Add Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إضافة ملف"
+          }
+        }
+      }
+    },
     "Add by Link": {
       "localizations": {
         "ar": {
@@ -297,6 +307,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الكتالوجات المتاحة"
+          }
+        }
+      }
+    },
+    "Avatar": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصورة الرمزية"
           }
         }
       }
@@ -501,6 +521,26 @@
         }
       }
     },
+    "Close": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إغلاق"
+          }
+        }
+      }
+    },
+    "Color": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اللون"
+          }
+        }
+      }
+    },
     "Connected": {
       "localizations": {
         "ar": {
@@ -621,6 +661,36 @@
         }
       }
     },
+    "Delete Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حذف الملف"
+          }
+        }
+      }
+    },
+    "Delete this profile?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حذف هذا الملف الشخصي؟"
+          }
+        }
+      }
+    },
+    "Deleting a profile also deletes its Continue Watching and Library.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حذف الملف الشخصي يحذف معه متابعة المشاهدة والمكتبة الخاصة به."
+          }
+        }
+      }
+    },
     "Details": {
       "localizations": {
         "ar": {
@@ -667,6 +737,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "تم"
+          }
+        }
+      }
+    },
+    "Edit": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعديل"
+          }
+        }
+      }
+    },
+    "Edit Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعديل الملف"
+          }
+        }
+      }
+    },
+    "Edit Profiles": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعديل الملفات"
           }
         }
       }
@@ -951,6 +1051,16 @@
         }
       }
     },
+    "Me": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أنا"
+          }
+        }
+      }
+    },
     "Metadata": {
       "localizations": {
         "ar": {
@@ -1001,6 +1111,16 @@
         }
       }
     },
+    "Name": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الاسم"
+          }
+        }
+      }
+    },
     "Needs setup — configure it on its website (debrid or API key).": {
       "localizations": {
         "ar": {
@@ -1021,6 +1141,16 @@
         }
       }
     },
+    "New Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملف جديد"
+          }
+        }
+      }
+    },
     "New Series": {
       "localizations": {
         "ar": {
@@ -1037,6 +1167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "لا توجد إضافات بعد"
+          }
+        }
+      }
+    },
+    "No Results": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بدون نتائج"
           }
         }
       }
@@ -1321,6 +1461,16 @@
         }
       }
     },
+    "Profiles": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الملفات الشخصية"
+          }
+        }
+      }
+    },
     "Quality": {
       "localizations": {
         "ar": {
@@ -1437,6 +1587,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "م%lld · ح%lld"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حفظ"
           }
         }
       }
@@ -1707,6 +1867,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الترجمات"
+          }
+        }
+      }
+    },
+    "Switch Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تبديل الملف الشخصي"
           }
         }
       }
@@ -2091,6 +2261,16 @@
         }
       }
     },
+    "Up to %lld profiles. Each has its own Continue Watching and Library.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حتى %lld ملفات شخصية، ولكل ملف متابعة مشاهدة ومكتبة خاصة به."
+          }
+        }
+      }
+    },
     "Upcoming": {
       "localizations": {
         "ar": {
@@ -2187,6 +2367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "مرحباً بك في Cinema"
+          }
+        }
+      }
+    },
+    "Who's Watching?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "من يشاهد؟"
           }
         }
       }
