@@ -10,6 +10,7 @@ struct PlayerView: View {
     @State private var controlsVisible = true
     @State private var hideTask: Task<Void, Never>?
     @State private var skipPulse: SkipPulse?
+    @State private var showsPanel = false
 
     private enum SkipPulse: Equatable { case back, forward }
 
@@ -39,9 +40,20 @@ struct PlayerView: View {
                     .allowsHitTesting(false)
             }
 
-            if controlsVisible {
+            if controlsVisible && !showsPanel {
                 controls
                     .transition(.opacity)
+            }
+
+            if showsPanel {
+                SubtitlePanel(model: model) {
+                    withAnimation(Theme.Motion.spring) { showsPanel = false }
+                    scheduleHide()
+                }
+                .padding(.vertical, Theme.Spacing.m)
+                .padding(.trailing, Theme.Spacing.m)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .transition(.move(edge: .trailing).combined(with: .opacity))
             }
 
             if model.showsNextEpisode {
@@ -75,7 +87,7 @@ struct PlayerView: View {
         .onChange(of: model.isPaused) { _, paused in
             if paused { showControls(autoHide: false) } else { scheduleHide() }
         }
-        .onChange(of: controlsVisible, initial: true) { _, visible in
+        .onChange(of: controlsVisible && !showsPanel, initial: true) { _, visible in
             model.controlsVisibilityChanged(visible)
         }
     }
@@ -152,7 +164,7 @@ struct PlayerView: View {
 
             Spacer(minLength: Theme.Spacing.l)
 
-            audioAndSubtitlesMenu
+            audioAndSubtitlesButton
             speedMenu
         }
     }
@@ -211,41 +223,14 @@ struct PlayerView: View {
 
     // MARK: Menus
 
-    /// One menu for audio and subtitles, like the TV app's speech-bubble button.
-    private var audioAndSubtitlesMenu: some View {
-        Menu {
-            if model.audioTracks.count > 1 {
-                Section("Audio") {
-                    ForEach(model.audioTracks) { track in
-                        checkButton(trackName(track), checked: track.isSelected) {
-                            model.selectAudio(track)
-                        }
-                    }
-                }
-            }
-
-            Section("Subtitles") {
-                checkButton(localized("Off"), checked: model.subtitleTracks.allSatisfy { !$0.isSelected }) {
-                    model.selectSubtitle(nil)
-                }
-                ForEach(model.subtitleTracks) { track in
-                    checkButton(trackName(track), checked: track.isSelected) {
-                        model.selectSubtitle(track)
-                    }
-                }
-            }
-
-            Section("Subtitle Size") {
-                ForEach(PlaybackSettings.SubtitleSize.allCases) { size in
-                    checkButton(localized(size.rawValue.capitalized), checked: PlaybackSettings.shared.subtitleSize == size) {
-                        model.setSubtitleSize(size)
-                    }
-                }
-            }
+    /// Opens the subtitles & audio panel, like the TV app's speech-bubble button.
+    private var audioAndSubtitlesButton: some View {
+        Button {
+            withAnimation(Theme.Motion.spring) { showsPanel = true }
+            hideTask?.cancel()
         } label: {
             Image(systemName: "captions.bubble.fill")
         }
-        .menuStyle(.button)
         .buttonStyle(GlassCircleButtonStyle(size: 40))
         .accessibilityLabel("Audio & Subtitles")
     }
@@ -352,6 +337,11 @@ struct PlayerView: View {
     }
 
     private func toggleControls() {
+        if showsPanel {
+            withAnimation(Theme.Motion.spring) { showsPanel = false }
+            showControls(autoHide: true)
+            return
+        }
         if controlsVisible {
             controlsVisible = false
             hideTask?.cancel()
@@ -369,7 +359,7 @@ struct PlayerView: View {
         hideTask?.cancel()
         hideTask = Task {
             try? await Task.sleep(for: .seconds(4))
-            guard !Task.isCancelled, !model.isPaused, !model.isScrubbing else { return }
+            guard !Task.isCancelled, !model.isPaused, !model.isScrubbing, !showsPanel else { return }
             controlsVisible = false
         }
     }

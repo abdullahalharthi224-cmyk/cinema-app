@@ -25,6 +25,8 @@ struct MPVTrack: Identifiable, Hashable {
     var codec: String?
     var isSelected: Bool
     var isExternal: Bool
+    /// For subtitles added from an addon: the URL they were loaded from.
+    var externalFilename: String?
 }
 
 /// Owns a libmpv instance. libmpv's client API is thread-safe; events are
@@ -101,58 +103,82 @@ final class MPVHandle: @unchecked Sendable {
         }, context)
     }
 
-    // MARK: Commands (main thread)
+    // MARK: Commands
+    //
+    // Every libmpv call runs on `queue`, never on the main thread: some calls
+    // wait for the playback core, which can itself be waiting on the main
+    // thread (e.g. while the video output reconfigures), and blocking main
+    // there freezes the whole interface.
+
+    private func perform(_ work: @escaping (OpaquePointer) -> Void) {
+        guard isAlive else { return }
+        queue.async { [self] in
+            guard !destroyed else { return }
+            work(mpv)
+        }
+    }
 
     func command(_ args: [String]) {
-        guard isAlive else { return }
-        var cArgs: [UnsafePointer<CChar>?] = args.map { UnsafePointer(strdup($0)) }
-        cArgs.append(nil)
-        defer {
-            for pointer in cArgs where pointer != nil {
-                free(UnsafeMutablePointer(mutating: pointer))
+        perform { mpv in
+            var cArgs: [UnsafePointer<CChar>?] = args.map { UnsafePointer(strdup($0)) }
+            cArgs.append(nil)
+            defer {
+                for pointer in cArgs where pointer != nil {
+                    free(UnsafeMutablePointer(mutating: pointer))
+                }
             }
+            mpv_command(mpv, &cArgs)
         }
-        mpv_command(mpv, &cArgs)
     }
 
     func setString(_ name: String, _ value: String) {
-        guard isAlive else { return }
-        mpv_set_property_string(mpv, name, value)
+        perform { mpv in mpv_set_property_string(mpv, name, value) }
     }
 
     func setFlag(_ name: String, _ value: Bool) {
-        guard isAlive else { return }
-        var flag: Int32 = value ? 1 : 0
-        mpv_set_property(mpv, name, MPV_FORMAT_FLAG, &flag)
+        perform { mpv in
+            var flag: Int32 = value ? 1 : 0
+            mpv_set_property(mpv, name, MPV_FORMAT_FLAG, &flag)
+        }
     }
 
     func setDouble(_ name: String, _ value: Double) {
-        guard isAlive else { return }
-        var number = value
-        mpv_set_property(mpv, name, MPV_FORMAT_DOUBLE, &number)
+        perform { mpv in
+            var number = value
+            mpv_set_property(mpv, name, MPV_FORMAT_DOUBLE, &number)
+        }
     }
 
-    func getString(_ name: String) -> String? {
-        guard isAlive, let cString = mpv_get_property_string(mpv, name) else { return nil }
+    /// Reads the track list off the main thread and delivers it on main.
+    func fetchTracks(_ completion: @escaping ([MPVTrack]) -> Void) {
+        perform { mpv in
+            let tracks = Self.readTracks(mpv)
+            DispatchQueue.main.async { completion(tracks) }
+        }
+    }
+
+    private static func string(_ mpv: OpaquePointer, _ name: String) -> String? {
+        guard let cString = mpv_get_property_string(mpv, name) else { return nil }
         defer { mpv_free(cString) }
         return String(cString: cString)
     }
 
-    func tracks() -> [MPVTrack] {
-        let count = Int(getString("track-list/count") ?? "") ?? 0
+    private static func readTracks(_ mpv: OpaquePointer) -> [MPVTrack] {
+        let count = Int(string(mpv, "track-list/count") ?? "") ?? 0
         return (0..<count).compactMap { index in
             let prefix = "track-list/\(index)/"
-            guard let kind = getString(prefix + "type").flatMap(MPVTrack.Kind.init(rawValue:)),
-                  let id = Int(getString(prefix + "id") ?? "")
+            guard let kind = string(mpv, prefix + "type").flatMap(MPVTrack.Kind.init(rawValue:)),
+                  let id = Int(string(mpv, prefix + "id") ?? "")
             else { return nil }
             return MPVTrack(
                 id: id,
                 kind: kind,
-                title: getString(prefix + "title"),
-                language: getString(prefix + "lang"),
-                codec: getString(prefix + "codec"),
-                isSelected: getString(prefix + "selected") == "yes",
-                isExternal: getString(prefix + "external") == "yes"
+                title: string(mpv, prefix + "title"),
+                language: string(mpv, prefix + "lang"),
+                codec: string(mpv, prefix + "codec"),
+                isSelected: string(mpv, prefix + "selected") == "yes",
+                isExternal: string(mpv, prefix + "external") == "yes",
+                externalFilename: string(mpv, prefix + "external-filename")
             )
         }
     }
@@ -162,9 +188,9 @@ final class MPVHandle: @unchecked Sendable {
         guard isAlive else { return }
         isAlive = false
         onEvent = nil
-        mpv_set_wakeup_callback(mpv, nil, nil)
         let mpv = mpv
         queue.async {
+            mpv_set_wakeup_callback(mpv, nil, nil)
             self.destroyed = true
             mpv_terminate_destroy(mpv)
             Unmanaged.passUnretained(self).release()
@@ -234,18 +260,6 @@ final class MPVMetalLayer: CAMetalLayer {
         set {
             if Int(newValue.width) > 1 && Int(newValue.height) > 1 {
                 super.drawableSize = newValue
-            }
-        }
-    }
-
-    // HDR output must be switched on from the main thread.
-    override var wantsExtendedDynamicRangeContent: Bool {
-        get { super.wantsExtendedDynamicRangeContent }
-        set {
-            if Thread.isMainThread {
-                super.wantsExtendedDynamicRangeContent = newValue
-            } else {
-                DispatchQueue.main.sync { super.wantsExtendedDynamicRangeContent = newValue }
             }
         }
     }
