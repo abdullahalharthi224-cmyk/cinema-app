@@ -5,6 +5,11 @@ enum AppTab: Hashable {
     case home, search, library, settings
 }
 
+/// Which part of the Library is showing.
+enum LibraryFilter: Hashable {
+    case all, myList, watched, downloads
+}
+
 enum SettingsRoute: Hashable {
     case addons
     case appearance
@@ -12,6 +17,7 @@ enum SettingsRoute: Hashable {
     case playback
     case homeScreen
     case ratings
+    case downloads
     case addon(InstalledAddon)
 }
 
@@ -20,6 +26,13 @@ enum SettingsRoute: Hashable {
 final class AppRouter {
     var selectedTab: AppTab = .home
     var settingsPath: [SettingsRoute] = []
+    var libraryFilter: LibraryFilter = .all
+
+    /// Opens the Library on the Downloads (e.g. when there's no connection).
+    func openDownloads() {
+        libraryFilter = .downloads
+        selectedTab = .library
+    }
 
     func openAddons() {
         settingsPath = [.addons]

@@ -95,6 +95,11 @@ struct PosterArtwork: View {
                     .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
             }
             .shadow(color: .black.opacity(0.55), radius: 14, y: 8)
+            .overlay(alignment: .topLeading) {
+                if let id, DownloadManager.shared.downloadedMetaIDs.contains(id) {
+                    DownloadedBadge().padding(6)
+                }
+            }
     }
 }
 

@@ -895,16 +895,21 @@ private struct PauseScreen: View {
         return Artwork.logo(id: metaID, provided: session.request.history?.logo)
     }
 
+    /// Arabic reads from the right, like the Apple TV app in Arabic: the text
+    /// starts at the right edge and the shade comes from that side.
+    private var isRightToLeft: Bool { AppLanguage.current.isRightToLeft }
+
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        // The player itself is laid out left-to-right, so sides are set explicitly here.
+        ZStack(alignment: isRightToLeft ? .bottomTrailing : .bottomLeading) {
             LinearGradient(
                 stops: [
                     .init(color: .black.opacity(0.85), location: 0),
                     .init(color: .black.opacity(0.55), location: 0.55),
                     .init(color: .black.opacity(0.15), location: 1),
                 ],
-                startPoint: .leading,
-                endPoint: .trailing
+                startPoint: isRightToLeft ? .trailing : .leading,
+                endPoint: isRightToLeft ? .leading : .trailing
             )
             .ignoresSafeArea()
 

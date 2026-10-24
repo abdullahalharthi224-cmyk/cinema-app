@@ -227,6 +227,12 @@ struct SubtitleItem: Decodable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey { case id, url, lang }
 
+    init(id: String? = nil, url: String, lang: String?) {
+        self.id = id
+        self.url = url
+        self.lang = lang
+    }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = c.flexibleString(forKey: .id)

@@ -31,7 +31,9 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if addons.isEmpty {
+                if !NetworkMonitor.shared.isConnected {
+                    offline
+                } else if addons.isEmpty {
                     welcome
                 } else if sources.allSatisfy({ $0.browsableCatalogs.isEmpty }) {
                     noCatalogs
@@ -170,6 +172,25 @@ struct HomeView: View {
     }
 
     // MARK: Empty states
+
+    private var offline: some View {
+        ContentUnavailableView {
+            Label("You're Offline", systemImage: "wifi.slash")
+        } description: {
+            Text("Connect to the internet to browse. Your downloads play without a connection.")
+        } actions: {
+            Button {
+                router.openDownloads()
+            } label: {
+                Text("Go to Downloads")
+                    .padding(.horizontal, Theme.Spacing.s)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .buttonBorderShape(.capsule)
+        }
+        .navigationTitle("Home")
+    }
 
     private var welcome: some View {
         ContentUnavailableView {
