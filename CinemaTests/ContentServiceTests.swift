@@ -107,4 +107,18 @@ final class ContentServiceTests: XCTestCase {
         let empty = try await failing.search("   ", addons: [try cinemeta])
         XCTAssertTrue(empty.isEmpty)
     }
+
+    func testSubtitlesPutPreferredLanguageFirst() async throws {
+        let subsManifest = #"{"id": "subs", "name": "Subs", "types": ["movie"], "resources": ["subtitles"], "idPrefixes": ["tt"]}"#
+        let subs = try addon("subs.example.com", subsManifest)
+        let http = MockHTTPClient(json: #"{"subtitles": [{"id": "1", "url": "https://s/1.srt", "lang": "eng"}, {"id": "2", "url": "https://s/2.srt", "lang": "ara"}, {"id": "3", "url": "https://s/3.srt", "lang": "fre"}]}"#)
+        let service = ContentService(client: AddonClient(http: http))
+
+        let result = await service.subtitles(type: "movie", id: "tt1", addons: [try cinemeta, subs], preferredLanguages: ["ar", "en"])
+
+        XCTAssertEqual(result.map(\.id), ["2", "1", "3"])
+        XCTAssertEqual(http.requests.count, 1)
+        XCTAssertEqual(SubtitleLanguage.code(for: "pob"), "pt")
+        XCTAssertEqual(SubtitleLanguage.code(for: "Arabic"), "ar")
+    }
 }

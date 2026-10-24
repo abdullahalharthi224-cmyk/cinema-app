@@ -77,9 +77,17 @@ private struct HeroPage: View {
     var onPlay: () -> Void
 
     @State private var zoomed = false
+    @State private var localized: TitleLocalizer.Localized?
+    @State private var lookupFinished = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var route: MetaRoute { MetaRoute(preview: item, addonID: addonID) }
+
+    /// In Arabic only an Arabic logo is used; without one the Arabic title is drawn instead.
+    private var heroLogo: URL? {
+        if let localized { return localized.logo ?? nil }
+        return item.logoURL
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -107,7 +115,14 @@ private struct HeroPage: View {
             VStack(spacing: Theme.Spacing.l) {
                 NavigationLink(value: route) {
                     VStack(spacing: Theme.Spacing.m) {
-                        TitleArtwork(name: item.name, logo: item.logoURL, maxHeight: 110)
+                        if TitleLocalizer.isActive && !lookupFinished {
+                            // Hold the space so the English logo doesn't flash before the Arabic one.
+                            SkeletonBar(width: 220, height: 44)
+                                .padding(.vertical, Theme.Spacing.l)
+                        } else {
+                            TitleArtwork(name: localized?.title ?? item.name, logo: heroLogo, maxHeight: 110)
+                                .transition(.opacity)
+                        }
                         MetadataLine(
                             year: item.releaseInfo,
                             rating: item.imdbRating,
@@ -142,6 +157,17 @@ private struct HeroPage: View {
             .padding(.bottom, 52)
         }
         .frame(height: height)
+        .task(id: "\(item.id)|\(Appearance.shared.language.rawValue)") {
+            lookupFinished = false
+            if TitleLocalizer.isActive, let client = TMDBAccount.shared.client {
+                localized = await TitleLocalizer.shared.localize(
+                    id: item.id, wantsLogo: true, client: client, language: AppLanguage.arabic.tmdbCode
+                )
+            } else {
+                localized = nil
+            }
+            withAnimation(Theme.Motion.spring) { lookupFinished = true }
+        }
         .onChange(of: isActive, initial: true) { _, active in
             guard !reduceMotion else { return }
             if active {

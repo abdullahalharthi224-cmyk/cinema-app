@@ -90,5 +90,8 @@ extension View {
         .navigationDestination(for: TMDBTitleRoute.self) { route in
             TMDBTitleLoaderView(route: route)
         }
+        .navigationDestination(for: PersonRoute.self) { route in
+            PersonView(route: route)
+        }
     }
 }

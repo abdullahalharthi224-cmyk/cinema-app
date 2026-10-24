@@ -94,6 +94,32 @@ struct ContentService: Sendable {
         }
     }
 
+    /// External subtitles from every subtitles addon, preferred languages first.
+    func subtitles(type: String, id: String, addons: [AddonSource], preferredLanguages: [String]) async -> [SubtitleItem] {
+        let candidates = addons.filter { $0.supports(.subtitles, type: type, id: id) }
+        let lists = await withTaskGroup(of: (Int, [SubtitleItem]).self) { group in
+            for (offset, addon) in candidates.enumerated() {
+                group.addTask {
+                    let items = (try? await client.subtitles(base: addon.baseURL, type: type, id: id)) ?? []
+                    return (offset, items)
+                }
+            }
+            var results: [(Int, [SubtitleItem])] = []
+            for await result in group { results.append(result) }
+            return results.sorted { $0.0 < $1.0 }.flatMap(\.1)
+        }
+        func rank(_ item: SubtitleItem) -> Int {
+            let code = SubtitleLanguage.code(for: item.lang)
+            return preferredLanguages.firstIndex(of: code ?? "") ?? preferredLanguages.count
+        }
+        return lists.enumerated()
+            .sorted { lhs, rhs in
+                let left = rank(lhs.element), right = rank(rhs.element)
+                return left == right ? lhs.offset < rhs.offset : left < right
+            }
+            .map(\.element)
+    }
+
     /// Searches every catalog that supports search, in parallel.
     /// Throws only when every single addon failed.
     func search(_ query: String, addons: [AddonSource]) async throws -> [SearchSection] {
@@ -144,5 +170,25 @@ struct ContentService: Sendable {
 
     private static func addonError(_ error: Error) -> AddonError {
         (error as? AddonError) ?? .invalidResponse
+    }
+}
+
+/// Normalises the language codes subtitle addons use ("ara", "eng", "pob"…).
+enum SubtitleLanguage {
+    private static let threeLetter: [String: String] = [
+        "ara": "ar", "eng": "en", "fre": "fr", "fra": "fr", "spa": "es", "spn": "es", "ger": "de", "deu": "de",
+        "ita": "it", "por": "pt", "pob": "pt", "pt-br": "pt", "rus": "ru", "tur": "tr", "jpn": "ja", "kor": "ko",
+        "chi": "zh", "zho": "zh", "hin": "hi", "per": "fa", "fas": "fa", "heb": "he", "dut": "nl", "nld": "nl",
+        "pol": "pl", "swe": "sv", "ind": "id", "may": "ms", "msa": "ms", "urd": "ur", "gre": "el", "ell": "el",
+    ]
+
+    /// An ISO 639-1 code ("ar") for whatever the addon sent, if recognised.
+    static func code(for raw: String?) -> String? {
+        guard let raw = raw?.lowercased().trimmingCharacters(in: .whitespaces), !raw.isEmpty else { return nil }
+        if let mapped = threeLetter[raw] { return mapped }
+        if raw.count == 2 { return raw }
+        if raw.hasPrefix("arab") { return "ar" }
+        if raw.hasPrefix("engl") { return "en" }
+        return nil
     }
 }

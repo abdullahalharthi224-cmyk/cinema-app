@@ -23,6 +23,8 @@ final class DetailViewModel {
     private(set) var episodeTexts: [Int: [Int: TMDBEpisode]] = [:]
     private var tmdbShowID: Int?
     private(set) var localizedLogo: URL?
+    /// The cast with photos, from TMDB.
+    private(set) var cast: [TMDBCastMember] = []
     private(set) var localizedRuntime: Int?
     /// While Arabic details are being fetched, the English logo is held back so
     /// the title doesn't flash from English to Arabic.
@@ -84,6 +86,19 @@ final class DetailViewModel {
         return all.filter { $0 > 0 }.sorted() + (all.contains(0) ? [0] : [])
     }
 
+    /// Every regular episode in watching order (specials excluded), for "next episode".
+    var orderedEpisodes: [MetaVideo] {
+        (meta?.videos ?? [])
+            .filter { ($0.season ?? 1) > 0 }
+            .sorted { ($0.season ?? 0, $0.episode ?? 0) < ($1.season ?? 0, $1.episode ?? 0) }
+    }
+
+    func episode(after video: MetaVideo) -> MetaVideo? {
+        let ordered = orderedEpisodes
+        guard let index = ordered.firstIndex(where: { $0.id == video.id }), index + 1 < ordered.count else { return nil }
+        return ordered[index + 1]
+    }
+
     var episodes: [MetaVideo] {
         guard let meta else { return [] }
         if seasons.isEmpty { return meta.videos }
@@ -119,14 +134,14 @@ final class DetailViewModel {
     /// In Arabic, replaces the title, synopsis and genres with TMDB's Arabic
     /// versions (TMDB itself falls back to English when no Arabic synopsis exists).
     func loadTranslation() async {
-        guard Appearance.shared.language == .arabic,
-              !translationFinished, !isTranslating,
+        guard !translationFinished, !isTranslating,
               let client = TMDBAccount.shared.client,
               let imdbID
         else {
             translationFinished = true
             return
         }
+        let language = Appearance.shared.language
         isTranslating = true
         defer {
             isTranslating = false
@@ -134,11 +149,20 @@ final class DetailViewModel {
         }
         guard let found = try? await client.find(imdbID: imdbID) else { return }
 
+        // Cast photos in any language; titles and synopses only need translating in Arabic.
+        async let castRequest = try? client.credits(media: found.media, tmdbID: found.id, language: language.tmdbCode)
+        guard language == .arabic else {
+            let cast = await castRequest ?? []
+            withAnimation(Theme.Motion.spring) { self.cast = cast }
+            return
+        }
+
         async let detailsRequest = try? client.localizedDetails(
             media: found.media, tmdbID: found.id, language: AppLanguage.arabic.tmdbCode
         )
         async let logoRequest = try? client.logo(media: found.media, tmdbID: found.id, languageCode: "ar")
-        let (details, logo) = await (detailsRequest, logoRequest)
+        let (details, logo, castMembers) = await (detailsRequest, logoRequest, castRequest)
+        cast = castMembers ?? []
 
         withAnimation(Theme.Motion.spring) {
             if let details {

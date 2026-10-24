@@ -92,4 +92,23 @@ final class TMDBClientTests: XCTestCase {
         let details = try await client.localizedDetails(media: .tv, tmdbID: 1, language: "ar-SA")
         XCTAssertEqual(details.runtime, 48)
     }
+
+    func testCreditsAndFilmography() async throws {
+        let http = MockHTTPClient { request in
+            let path = request.url!.path
+            if path.hasSuffix("/aggregate_credits") {
+                return (200, Data(#"{"cast": [{"id": 17419, "name": "Bryan Cranston", "profile_path": "/b.jpg", "roles": [{"character": "Walter White"}]}, {"name": "no id"}]}"#.utf8))
+            }
+            return (200, Data(#"{"cast": [{"id": 1, "media_type": "movie", "title": "Low", "poster_path": "/l.jpg", "popularity": 1}, {"id": 2, "media_type": "tv", "name": "High", "poster_path": "/h.jpg", "popularity": 9}, {"id": 3, "media_type": "person"}, {"id": 1, "media_type": "movie", "title": "Low", "poster_path": "/l.jpg"}]}"#.utf8))
+        }
+        let client = TMDBClient(token: "t", http: http)
+
+        let cast = try await client.credits(media: .tv, tmdbID: 1396, language: "ar-SA")
+        XCTAssertEqual(cast.map(\.name), ["Bryan Cranston"])
+        XCTAssertEqual(cast.first?.character, "Walter White")
+
+        let credits = try await client.personCredits(id: 17419, language: "ar-SA")
+        XCTAssertEqual(credits.map(\.title.title), ["High", "Low"])
+        XCTAssertEqual(credits.first?.media, .tv)
+    }
 }

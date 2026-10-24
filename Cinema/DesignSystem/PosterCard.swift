@@ -37,17 +37,19 @@ struct PosterCard: View {
     var transitionID: String?
 
     @Environment(\.zoomNamespace) private var namespace
+    @State private var localized: TitleLocalizer.Localized?
 
     private var shape: PosterShape { PosterShape(item.posterShape) }
+    private var title: String { localized?.title ?? item.name }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PosterArtwork(url: item.poster?.asURL, title: item.name, shape: shape)
+            PosterArtwork(url: localized?.poster ?? item.poster?.asURL, title: title, shape: shape)
                 .frame(width: width)
                 .zoomSource(id: transitionID, in: namespace)
 
             if showsTitle {
-                Text(item.name)
+                Text(title)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -56,8 +58,9 @@ struct PosterCard: View {
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(item.name))
+        .accessibilityLabel(Text(title))
         .accessibilityAddTraits(.isButton)
+        .localizedTitle(id: item.id, into: $localized)
     }
 }
 

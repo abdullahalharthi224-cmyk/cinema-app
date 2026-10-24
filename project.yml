@@ -18,12 +18,21 @@ settings:
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: YES
 
+packages:
+  # libmpv for iOS: plays MKV, HEVC, Dolby Vision/HDR, multiple audio tracks and subtitles.
+  MPVKit:
+    url: https://github.com/mpvkit/MPVKit
+    exactVersion: 1.1.0-n9.0.2
+
 targets:
   Cinema:
     type: application
     platform: iOS
     sources:
       - path: Cinema
+    dependencies:
+      - package: MPVKit
+        product: MPVKit
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.personal.cinema

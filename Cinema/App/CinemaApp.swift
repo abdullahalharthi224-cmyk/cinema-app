@@ -16,6 +16,6 @@ struct CinemaApp: App {
                 .environment(router)
                 .preferredColorScheme(.dark)
         }
-        .modelContainer(for: [InstalledAddon.self, WatchHistoryItem.self, Profile.self])
+        .modelContainer(for: [InstalledAddon.self, WatchHistoryItem.self, Profile.self, PlaybackProgress.self, WatchlistItem.self])
     }
 }

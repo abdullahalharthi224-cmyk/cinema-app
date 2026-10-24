@@ -9,6 +9,7 @@ enum SettingsRoute: Hashable {
     case addons
     case appearance
     case tmdb
+    case playback
     case addon(InstalledAddon)
 }
 
