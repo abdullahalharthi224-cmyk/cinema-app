@@ -1,0 +1,9 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Continue Watching" : { "localizations" : { "ar" : { "stringUnit" : { "state" : "translated", "value" : "متابعة المشاهدة" } } } },
+    "Pick up where you left off." : { "localizations" : { "ar" : { "stringUnit" : { "state" : "translated", "value" : "أكمل من حيث توقفت." } } } },
+    "Start Watching" : { "localizations" : { "ar" : { "stringUnit" : { "state" : "translated", "value" : "ابدأ المشاهدة" } } } }
+  },
+  "version" : "1.0"
+}

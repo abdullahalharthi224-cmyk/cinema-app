@@ -60,13 +60,15 @@ struct RootView: View {
                 didCheckProfiles = true
                 ProfileStore.ensureActiveProfile(in: context)
                 ProfileStore.migrateToProfilePasscodes(in: context)
+                ViewingLogStore.seedIfNeeded(in: context)
                 LockGate.shared.lockIfNeeded()
                 if ProfileStore.all(in: context).count > 1 {
                     // Let the launch animation finish (and the lock open) first.
                     while LaunchState.shared.isShowingSplash || LockGate.shared.isLocked {
                         try? await Task.sleep(for: .milliseconds(100))
                     }
-                    isPickingProfile = true
+                    // Opened from the widget to resume a title: go straight to it.
+                    if router.continueKey == nil { isPickingProfile = true }
                 }
             }
             // Every two weeks, a gentle nudge to back up (after the launch animation).

@@ -1,6 +1,26 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ days in a row": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ أيام متتالية"
+          }
+        }
+      }
+    },
+    "%@ h": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ س"
+          }
+        }
+      }
+    },
     "%@ installed": {
       "localizations": {
         "ar": {
@@ -67,6 +87,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld كتالوج"
+          }
+        }
+      }
+    },
+    "%lld days in a row": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld أيام متتالية"
           }
         }
       }
@@ -311,6 +341,16 @@
         }
       }
     },
+    "Add it from the Home Screen: touch and hold, tap Edit → Add Widget, then choose Cinema.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أضفه من الشاشة الرئيسية: اضغط مطولًا، ثم «تعديل» ← «إضافة أداة»، واختر Cinema."
+          }
+        }
+      }
+    },
     "Add titles to My List with the + button, and the ones you start watching will appear here too.": {
       "localizations": {
         "ar": {
@@ -527,6 +567,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تم بنجاح"
+          }
+        }
+      }
+    },
+    "All Time": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الكل"
           }
         }
       }
@@ -787,6 +837,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الأفضل"
+          }
+        }
+      }
+    },
+    "Blocked by Signing": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "محجوب بالتوقيع"
           }
         }
       }
@@ -1417,6 +1477,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "سينمائي داكن"
+          }
+        }
+      }
+    },
+    "Day Streak": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أيام متتالية"
           }
         }
       }
@@ -2221,12 +2291,32 @@
         }
       }
     },
+    "Home Screen Widget": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ويدجت الشاشة الرئيسية"
+          }
+        }
+      }
+    },
     "Horror": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "رعب"
+          }
+        }
+      }
+    },
+    "Hours": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ساعات"
           }
         }
       }
@@ -2521,6 +2611,16 @@
         }
       }
     },
+    "Let's look back.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لنتذكّر معًا."
+          }
+        }
+      }
+    },
     "Letterboxd": {
       "localizations": {
         "ar": {
@@ -2617,6 +2717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "قفل هذا الملف"
+          }
+        }
+      }
+    },
+    "Longest Streak": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أطول سلسلة"
           }
         }
       }
@@ -2771,6 +2881,16 @@
         }
       }
     },
+    "Month": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شهر"
+          }
+        }
+      }
+    },
     "More": {
       "localizations": {
         "ar": {
@@ -2791,12 +2911,32 @@
         }
       }
     },
+    "Most Watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأكثر مشاهدة"
+          }
+        }
+      }
+    },
     "Most popular on %@": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الأكثر شعبية على %@"
+          }
+        }
+      }
+    },
+    "Most-Watched Actors": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أكثر الممثلين ظهورًا"
           }
         }
       }
@@ -2941,6 +3081,16 @@
         }
       }
     },
+    "New Today": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جديد اليوم"
+          }
+        }
+      }
+    },
     "New episode of %@": {
       "localizations": {
         "ar": {
@@ -3057,6 +3207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "بدون ترجمة"
+          }
+        }
+      }
+    },
+    "No Viewing Yet": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد مشاهدات بعد"
           }
         }
       }
@@ -3311,6 +3471,16 @@
         }
       }
     },
+    "Number One": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأول"
+          }
+        }
+      }
+    },
     "OK": {
       "localizations": {
         "ar": {
@@ -3547,6 +3717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "متوقف مؤقتًا"
+          }
+        }
+      }
+    },
+    "Pick up where you left off.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أكمل من حيث توقفت."
           }
         }
       }
@@ -3877,6 +4057,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الجودة"
+          }
+        }
+      }
+    },
+    "Range": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المدة"
           }
         }
       }
@@ -4411,6 +4601,16 @@
         }
       }
     },
+    "Share": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مشاركة"
+          }
+        }
+      }
+    },
     "Show": {
       "localizations": {
         "ar": {
@@ -4697,6 +4897,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "حلقات خاصة"
+          }
+        }
+      }
+    },
+    "Start Watching": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابدأ المشاهدة"
+          }
+        }
+      }
+    },
+    "Statistics": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإحصائيات"
           }
         }
       }
@@ -5051,6 +5271,26 @@
         }
       }
     },
+    "That's %@) whole days of stories.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أي %@ أيام كاملة من الحكايات."
+          }
+        }
+      }
+    },
+    "That's %lld whole days of stories.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أي %lld أيام كاملة من الحكايات."
+          }
+        }
+      }
+    },
     "The addon responded with an error (code %lld).": {
       "localizations": {
         "ar": {
@@ -5087,6 +5327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+          }
+        }
+      }
+    },
+    "The faces of your year": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وجوه عامك"
           }
         }
       }
@@ -5161,12 +5411,52 @@
         }
       }
     },
+    "The signing service removed the App Group permission, so the widget can't see what you're watching and shows \"Start Watching\". Everything else works normally.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أزالت خدمة التوقيع صلاحية App Groups، لذلك لا يرى الويدجت ما تشاهده ويعرض «ابدأ المشاهدة». كل شيء آخر يعمل طبيعيًا."
+          }
+        }
+      }
+    },
+    "The signing service removed the App Group permission, so the widget can't see what you're watching and shows \\\"Start Watching\\\". Everything else works normally.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أزالت خدمة التوقيع صلاحية App Groups، لذلك لا يرى الويدجت ما تشاهده ويعرض «ابدأ المشاهدة». كل شيء آخر يعمل طبيعيًا."
+          }
+        }
+      }
+    },
     "Theme": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "المظهر"
+          }
+        }
+      }
+    },
+    "This Month": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا الشهر"
+          }
+        }
+      }
+    },
+    "This Week": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا الأسبوع"
           }
         }
       }
@@ -5401,6 +5691,16 @@
         }
       }
     },
+    "Top Genres": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أكثر التصنيفات"
+          }
+        }
+      }
+    },
     "Top Rated Collections": {
       "localizations": {
         "ar": {
@@ -5427,6 +5727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "المسلسلات الأعلى تقييماً"
+          }
+        }
+      }
+    },
+    "Top genre: %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التصنيف الأول: %@"
           }
         }
       }
@@ -5831,6 +6141,16 @@
         }
       }
     },
+    "Watch something and your statistics will appear here.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شاهد شيئًا وستظهر إحصائياتك هنا."
+          }
+        }
+      }
+    },
     "Watched": {
       "localizations": {
         "ar": {
@@ -5841,12 +6161,32 @@
         }
       }
     },
+    "Week": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أسبوع"
+          }
+        }
+      }
+    },
     "Welcome to Cinema": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "مرحباً بك في Cinema"
+          }
+        }
+      }
+    },
+    "What you loved": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ما أحببته"
           }
         }
       }
@@ -5931,12 +6271,62 @@
         }
       }
     },
+    "Wrapped": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملخص العام"
+          }
+        }
+      }
+    },
+    "Year": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سنة"
+          }
+        }
+      }
+    },
+    "You watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شاهدت"
+          }
+        }
+      }
+    },
     "You're Offline": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "أنت غير متصل"
+          }
+        }
+      }
+    },
+    "Your %@ in Cinema": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عامك %@ في Cinema"
+          }
+        }
+      }
+    },
+    "Your %@) in Cinema": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عامك %@ في Cinema"
           }
         }
       }
@@ -6001,6 +6391,26 @@
         }
       }
     },
+    "Your busiest month was %@), with %@).": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أكثر شهر مشاهدة كان %@، بمجموع %@."
+          }
+        }
+      }
+    },
+    "Your busiest month was %@, with %@.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أكثر شهر مشاهدة كان %@، بمجموع %@."
+          }
+        }
+      }
+    },
     "Your installed addons will stay. You can sign in again any time to re-sync.": {
       "localizations": {
         "ar": {
@@ -6011,12 +6421,72 @@
         }
       }
     },
+    "Your number one": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عملك الأول"
+          }
+        }
+      }
+    },
     "Your password is only used to sign in and is never saved. Cinema keeps a secure session key in the Keychain.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "تُستخدم كلمة المرور لتسجيل الدخول فقط ولا تُحفظ أبداً. يحتفظ Cinema بمفتاح جلسة آمن في سلسلة المفاتيح (Keychain)."
+          }
+        }
+      }
+    },
+    "Your year in Cinema": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عامك في Cinema"
+          }
+        }
+      }
+    },
+    "Your year in numbers": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عامك بالأرقام"
+          }
+        }
+      }
+    },
+    "Your year of watching, in a few pages.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عام من المشاهدة في صفحات قليلة."
+          }
+        }
+      }
+    },
+    "days in a row": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أيام متتالية"
+          }
+        }
+      }
+    },
+    "hours": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ساعة"
           }
         }
       }

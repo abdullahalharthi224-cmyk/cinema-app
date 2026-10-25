@@ -166,6 +166,25 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    LabeledContent {
+                        Text(WidgetBridge.isAvailable ? LocalizedStringKey("Working") : "Blocked by Signing")
+                            .foregroundStyle(WidgetBridge.isAvailable ? Color.green : Color.orange)
+                    } label: {
+                        Label {
+                            Text("Home Screen Widget")
+                        } icon: {
+                            SettingsIcon(systemName: "rectangle.3.group.fill", color: .cyan)
+                        }
+                    }
+                } footer: {
+                    if WidgetBridge.isAvailable {
+                        Text("Add it from the Home Screen: touch and hold, tap Edit → Add Widget, then choose Cinema.")
+                    } else {
+                        Text("The signing service removed the App Group permission, so the widget can't see what you're watching and shows \"Start Watching\". Everything else works normally.")
+                    }
+                }
+
+                Section {
                     Toggle(isOn: Binding(
                         get: { PrivacySettings.shared.privateMode },
                         set: { PrivacySettings.shared.privateMode = $0 }

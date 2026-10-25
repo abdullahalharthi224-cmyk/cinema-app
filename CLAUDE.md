@@ -80,10 +80,10 @@ Done:
 Profile lock: Face ID with a 4-digit passcode fallback, per profile or for the whole app (passcode never in backups).
 Kids profile limited by age rating (TMDB certification; unrated titles hidden; no Settings/addons; leaving needs the passcode, not Face ID).
 Customization: hero source, poster size, show/hide ratings, alternate app icons (tools/AppIcons/make_variants.py).
+Every profile has its own passcode/lock and its own look and settings (Core/Storage/ProfileSettings.swift).
+Home Screen widget (CinemaWidget/, App Group group.com.personal.cinema; tools/adhoc-sign.sh puts the entitlement in the IPA; a signing service may strip it, then the widget shows "Start Watching").
+Viewing statistics (Library → chart button) and a yearly Wrapped per profile (Home card from mid-December).
+Not wanted: Siri / App Intents / Shortcuts (dropped by the owner).
 Next:
-Home Screen widget (last watched, continue with one tap).
-Siri / App Intents ("Continue watching in Cinema").
-Viewing statistics page (hours watched, top genres, most-seen actors).
-After that:
 A web version for the laptop.
 Never write anything to the owner's Stremio account: it is used only to import addons.

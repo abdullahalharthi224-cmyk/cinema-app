@@ -159,6 +159,10 @@ enum ProfileStore {
         for item in history {
             context.delete(item)
         }
+        let logs = (try? context.fetch(FetchDescriptor<ViewingLog>(predicate: #Predicate { $0.profileID == optionalID }))) ?? []
+        for log in logs {
+            context.delete(log)
+        }
         context.delete(profile)
         if ProfileSession.shared.activeID == id, let next = profiles.first(where: { $0.id != id }) {
             ProfileSession.shared.activate(next)
