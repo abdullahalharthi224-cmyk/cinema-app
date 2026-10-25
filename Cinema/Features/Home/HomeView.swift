@@ -20,6 +20,9 @@ struct HomeView: View {
     @State private var launcher = PlaybackLauncher()
     @State private var taste = TasteModel()
     @State private var kidsShelves = KidsShelvesModel()
+    /// The year whose Wrapped Home offers (mid-December to January).
+    @State private var wrappedYear: Int?
+    @State private var showsWrapped = false
     private var kidsMaxAge: Int? { ProfileSession.shared.kidsMaxAge }
     private static let kidsShelvesID = "kids.shelves"
     @Query private var allProgress: [PlaybackProgress]
@@ -60,6 +63,19 @@ struct HomeView: View {
         }
         .task(id: tasteKey) {
             await loadTaste()
+        }
+        .task(id: widgetKey) {
+            let today = taste.newEpisodes.filter { Calendar.current.isDateInToday($0.episode.date ?? .distantPast) }
+            await WidgetBridge.update(history: history, newToday: today)
+        }
+        .task(id: router.continueKey) {
+            await resumeFromWidget()
+        }
+        .task(id: "\(ProfileSession.shared.activeID?.uuidString ?? "")|\(history.count)") {
+            wrappedYear = WrappedSchedule.offeredYear(context: context)
+        }
+        .fullScreenCover(isPresented: $showsWrapped) {
+            if let wrappedYear { WrappedView(year: wrappedYear) }
         }
     }
 
@@ -102,6 +118,30 @@ struct HomeView: View {
                                 description: Text("Kids profiles check every title's age rating on TMDB. Connect TMDB in a grown-up profile's Settings.")
                             )
                         }
+                        if let wrappedYear {
+                            Button {
+                                showsWrapped = true
+                            } label: {
+                                WrappedBanner(year: wrappedYear)
+                            }
+                            .buttonStyle(.cardPress)
+                            .overlay(alignment: .topTrailing) {
+                                Button {
+                                    WrappedSchedule.dismiss(wrappedYear)
+                                    withAnimation(Theme.Motion.spring) { self.wrappedYear = nil }
+                                } label: {
+                                    Image(systemName: "xmark")
+                                        .font(.caption.weight(.bold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 26, height: 26)
+                                        .background(.black.opacity(0.3), in: Circle())
+                                }
+                                .padding(8)
+                                .accessibilityLabel("Hide")
+                            }
+                            .padding(.horizontal, Theme.Spacing.l)
+                            .transition(.scale.combined(with: .opacity))
+                        }
                         // In the order (and with the rows) chosen in Settings → Home Screen.
                         ForEach(sectionIDs, id: \.self) { id in
                             section(id)
@@ -142,6 +182,27 @@ struct HomeView: View {
             return picked
         }
         return model.hero
+    }
+
+    /// Changes when what the widget shows should change.
+    private var widgetKey: String {
+        history.prefix(3).map { "\($0.key)|\(Int($0.progress * 100))" }.joined(separator: ",")
+            + "|\(taste.newEpisodes.count)|\(Appearance.shared.language.rawValue)"
+    }
+
+    /// Resumes the title tapped in the widget, once Cinema is unlocked.
+    private func resumeFromWidget() async {
+        guard let key = router.continueKey else { return }
+        while LaunchState.shared.isShowingSplash || LockGate.shared.isLocked {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        router.continueKey = nil
+        guard let item = history.first(where: { $0.key == key }) else { return }
+        let request = StreamRequest(
+            type: item.type, videoID: item.videoID, title: item.name, subtitle: item.episodeLabel,
+            history: MetaRoute(history: item).historyEntryBase
+        )
+        await launcher.smartPlay(request, context: context)
     }
 
     /// Changes when the profile watches or saves something new.

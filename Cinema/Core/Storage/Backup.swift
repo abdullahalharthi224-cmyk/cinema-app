@@ -65,6 +65,18 @@ struct CinemaBackup: Codable {
         var updatedAt: Date
     }
 
+    struct ViewingRecord: Codable {
+        var profileID: UUID?
+        var day: Date
+        var metaID: String
+        var type: String
+        var videoID: String
+        var name: String
+        var poster: String?
+        var background: String?
+        var seconds: Double
+    }
+
     /// A setting as stored in UserDefaults.
     enum Setting: Codable, Equatable {
         case bool(Bool)
@@ -89,6 +101,8 @@ struct CinemaBackup: Codable {
     var progress: [ProgressRecord]
     var settings: [String: Setting]
     var secrets: Secrets?
+    /// For the viewing statistics (missing in older backups).
+    var viewing: [ViewingRecord]?
 }
 
 /// Builds and applies backups.
@@ -108,6 +122,7 @@ enum BackupService {
         let history = (try? context.fetch(FetchDescriptor<WatchHistoryItem>())) ?? []
         let watchlist = (try? context.fetch(FetchDescriptor<WatchlistItem>())) ?? []
         let progress = (try? context.fetch(FetchDescriptor<PlaybackProgress>())) ?? []
+        let viewing = (try? context.fetch(FetchDescriptor<ViewingLog>())) ?? []
 
         var settings: [String: CinemaBackup.Setting] = [:]
         for (key, value) in UserDefaults.standard.dictionaryRepresentation()
@@ -146,7 +161,11 @@ enum BackupService {
                       duration: $0.duration, watched: $0.watched, updatedAt: $0.updatedAt)
             },
             settings: settings,
-            secrets: secrets
+            secrets: secrets,
+            viewing: viewing.map {
+                .init(profileID: $0.profileID, day: $0.day, metaID: $0.metaID, type: $0.type, videoID: $0.videoID,
+                      name: $0.name, poster: $0.poster, background: $0.background, seconds: $0.seconds)
+            }
         )
     }
 
@@ -170,6 +189,7 @@ enum BackupService {
         try context.delete(model: WatchHistoryItem.self)
         try context.delete(model: WatchlistItem.self)
         try context.delete(model: PlaybackProgress.self)
+        if backup.viewing != nil { try context.delete(model: ViewingLog.self) }
 
         for record in backup.profiles {
             let profile = Profile(name: record.name, symbol: record.symbol, colorHex: record.colorHex, sortIndex: record.sortIndex)
@@ -213,6 +233,12 @@ enum BackupService {
             item.watched = record.watched
             item.updatedAt = record.updatedAt
             context.insert(item)
+        }
+        for record in backup.viewing ?? [] {
+            let log = ViewingLog(profileID: record.profileID, day: record.day, metaID: record.metaID, type: record.type,
+                                 videoID: record.videoID, name: record.name, poster: record.poster, background: record.background)
+            log.seconds = record.seconds
+            context.insert(log)
         }
         try context.save()
 

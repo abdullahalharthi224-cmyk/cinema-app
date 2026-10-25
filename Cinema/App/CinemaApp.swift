@@ -7,7 +7,7 @@ enum CinemaStore {
     static let container: ModelContainer = {
         do {
             return try ModelContainer(for: InstalledAddon.self, WatchHistoryItem.self, Profile.self,
-                                      PlaybackProgress.self, WatchlistItem.self, DownloadItem.self)
+                                      PlaybackProgress.self, WatchlistItem.self, DownloadItem.self, ViewingLog.self)
         } catch {
             fatalError("The database couldn't be opened: \(error)")
         }
@@ -31,6 +31,7 @@ struct CinemaApp: App {
                 // The colour scheme follows the theme chosen in Settings (see RootView).
                 RootView()
                     .environment(router)
+                    .onOpenURL { router.handle($0) }
                 if showsSplash {
                     SplashView {
                         showsSplash = false

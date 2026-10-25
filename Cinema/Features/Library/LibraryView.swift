@@ -158,6 +158,16 @@ struct LibraryView: View {
             }
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle("Library")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        StatsView()
+                    } label: {
+                        Image(systemName: "chart.bar.fill")
+                    }
+                    .accessibilityLabel("Statistics")
+                }
+            }
             .task(id: "\(ProfileSession.shared.kidsMaxAge ?? -1)|\(DownloadManager.shared.revision)") {
                 await checkKidsDownloads()
             }

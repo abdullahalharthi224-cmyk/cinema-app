@@ -56,6 +56,8 @@ final class PlayerViewModel {
     @ObservationIgnored private var precisePosition: Double = 0
     @ObservationIgnored private var cueCache: [String: [SubtitleCue]] = [:]
     @ObservationIgnored private var lastSavedPosition: Double = 0
+    /// Where watched time was last counted for the statistics.
+    @ObservationIgnored private var lastLoggedPosition: Double = -1
     @ObservationIgnored private var sourcesLoaded = false
     @ObservationIgnored private var subtitlesDecided = false
     @ObservationIgnored private var userPickedSubtitle = false
@@ -234,6 +236,7 @@ final class PlayerViewModel {
         precisePosition = session.startPosition
         duration = 0
         lastSavedPosition = session.startPosition
+        lastLoggedPosition = -1
         segments = .none
         skippedSegments = []
         nextCountdown = nil
@@ -939,9 +942,24 @@ final class PlayerViewModel {
     func saveProgress() {
         guard let context, duration > 0, precisePosition > 0 else { return }
         lastSavedPosition = precisePosition
+        logViewing(in: context)
         PlaybackProgressStore.save(
             metaID: session.metaID, type: session.type, videoID: session.videoID,
             position: precisePosition, duration: duration, in: context
+        )
+    }
+
+    /// Counts the time watched since the last save (forward playback only;
+    /// jumps and seeks back aren't counted) for the viewing statistics.
+    private func logViewing(in context: ModelContext) {
+        defer { lastLoggedPosition = precisePosition }
+        guard lastLoggedPosition >= 0 else { return }
+        let watched = precisePosition - lastLoggedPosition
+        guard watched > 0, watched < 120 else { return }
+        let entry = session.request.history
+        ViewingLogStore.add(
+            seconds: watched, metaID: session.metaID, type: session.type, videoID: session.videoID,
+            name: entry?.name ?? session.title, poster: entry?.poster, background: entry?.background, in: context
         )
     }
 
