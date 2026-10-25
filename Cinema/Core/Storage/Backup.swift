@@ -97,7 +97,7 @@ enum BackupService {
     /// Settings that belong in a backup (by UserDefaults key prefix).
     private static let settingPrefixes = [
         "appearance.", "playback.", "downloads.", "privacy.", "home.", "notifications.",
-        "search.", "stremio.", "profile.", "app.language", "security.",
+        "search.", "stremio.", "profile.", "app.language", "security.", "profileSettings.",
     ]
 
     static let lastBackupKey = "backup.lastDate"
@@ -238,16 +238,10 @@ enum BackupService {
         let restoredProfiles = ProfileStore.all(in: context)
         let activeID = defaults.string(forKey: "profile.activeID").flatMap(UUID.init(uuidString:))
         if let active = restoredProfiles.first(where: { $0.id == activeID }) ?? restoredProfiles.first {
-            ProfileSession.shared.activate(active)
+            ProfileSession.shared.activate(active, swappingSettings: false)
         }
         SecuritySettings.shared.reload()
-        HomeCustomization.shared.reload()
-        Task { await AppIconStore.applySaved() }
-        if let accent = defaults.string(forKey: "appearance.accentHex") { Appearance.shared.accentHex = accent }
-        if let theme = defaults.string(forKey: "appearance.theme").flatMap(AppTheme.init(rawValue:)) { Appearance.shared.theme = theme }
-        if let data = defaults.data(forKey: "home.layout"), let layout = try? JSONDecoder().decode(HomeLayout.self, from: data) {
-            HomeLayoutStore.shared.layout = layout
-        }
+        ProfileSettings.applyToApp()
     }
 
     private static func setting(from value: Any) -> CinemaBackup.Setting? {

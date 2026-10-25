@@ -19,4 +19,10 @@ final class HomeLayoutStore {
         layout = UserDefaults.standard.data(forKey: Self.key)
             .flatMap { try? JSONDecoder().decode(HomeLayout.self, from: $0) } ?? HomeLayout()
     }
+
+    /// Re-reads the saved values (after switching profile or restoring a backup).
+    func reload() {
+        layout = UserDefaults.standard.data(forKey: Self.key)
+            .flatMap { try? JSONDecoder().decode(HomeLayout.self, from: $0) } ?? HomeLayout()
+    }
 }

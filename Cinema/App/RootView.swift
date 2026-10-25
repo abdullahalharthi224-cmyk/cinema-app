@@ -59,12 +59,7 @@ struct RootView: View {
             if !didCheckProfiles {
                 didCheckProfiles = true
                 ProfileStore.ensureActiveProfile(in: context)
-                // Profiles locked before each had its own code start with a copy of Cinema's.
-                if !UserDefaults.standard.bool(forKey: "security.ownProfileCodes") {
-                    let guarded = ProfileStore.all(in: context).filter { $0.isKids || $0.isLocked }.map(\.id)
-                    Passcode.giveProfilesTheirOwnCodes(guarded)
-                    UserDefaults.standard.set(true, forKey: "security.ownProfileCodes")
-                }
+                ProfileStore.migrateToProfilePasscodes(in: context)
                 LockGate.shared.lockIfNeeded()
                 if ProfileStore.all(in: context).count > 1 {
                     // Let the launch animation finish (and the lock open) first.

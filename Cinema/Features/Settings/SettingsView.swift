@@ -55,7 +55,7 @@ struct SettingsView: View {
 
                     NavigationLink(value: SettingsRoute.security) {
                         LabeledContent {
-                            Text(SecuritySettings.shared.hasPasscode ? LocalizedStringKey("On") : "Off")
+                            Text(activeProfile?.isLocked == true ? LocalizedStringKey("On") : "Off")
                         } label: {
                             Label {
                                 Text("Passcode & Face ID")

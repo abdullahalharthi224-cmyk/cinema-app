@@ -1371,6 +1371,16 @@
         }
       }
     },
+    "Create a Passcode for This Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أنشئ رمزًا لهذا الملف"
+          }
+        }
+      }
+    },
     "Crime Series": {
       "localizations": {
         "ar": {
@@ -2151,6 +2161,16 @@
         }
       }
     },
+    "Has its own passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "له رمز خاص"
+          }
+        }
+      }
+    },
     "Health": {
       "localizations": {
         "ar": {
@@ -2587,6 +2607,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "قفل الملف"
+          }
+        }
+      }
+    },
+    "Lock This Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قفل هذا الملف"
           }
         }
       }
@@ -3051,6 +3081,16 @@
         }
       }
     },
+    "No passcode yet": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا يوجد رمز بعد"
+          }
+        }
+      }
+    },
     "No playable stream was found for the next episode.": {
       "localizations": {
         "ar": {
@@ -3377,6 +3417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "فتح هذا الملف يحتاج Face ID أو رمزه الخاص، المختلف عن رمز Cinema."
+          }
+        }
+      }
+    },
+    "Opening this profile needs Face ID or its own passcode. Each profile has a different one.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح هذا الملف يحتاج Face ID أو رمزه الخاص. لكل ملف رمز مختلف."
           }
         }
       }
@@ -3951,6 +4001,16 @@
         }
       }
     },
+    "Remove Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة الرمز"
+          }
+        }
+      }
+    },
     "Remove TMDB key?": {
       "localizations": {
         "ar": {
@@ -3977,6 +4037,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "إزالة من قائمتي"
+          }
+        }
+      }
+    },
+    "Remove this profile's passcode?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة رمز هذا الملف؟"
           }
         }
       }
@@ -5171,6 +5241,26 @@
         }
       }
     },
+    "This passcode belongs only to this profile. Every profile can set its own from here while it's open.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا الرمز خاص بهذا الملف فقط. كل ملف يستطيع وضع رمزه الخاص من هنا وهو مفتوح."
+          }
+        }
+      }
+    },
+    "This profile will open without asking. Other profiles keep their own passcodes.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سيفتح هذا الملف دون سؤال. الملفات الأخرى تحتفظ برموزها."
+          }
+        }
+      }
+    },
     "This stream couldn't be played (%@). Try another one.": {
       "localizations": {
         "ar": {
@@ -5777,6 +5867,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "عند قفل Cinema يطلب هذا الرمز في كل مرة يُفتح. الملفات المقفلة وملفات الأطفال تستخدم رموزها الخاصة من «من يشاهد؟» ← تعديل."
+          }
+        }
+      }
+    },
+    "When this profile is locked, opening it, or coming back to Cinema while it's open, needs Face ID or its passcode.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عند قفل هذا الملف، فتحه أو الرجوع إلى Cinema وهو مفتوح يحتاج Face ID أو رمزه."
           }
         }
       }
