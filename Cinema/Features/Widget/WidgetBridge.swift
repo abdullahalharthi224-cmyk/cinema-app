@@ -15,7 +15,7 @@ enum WidgetBridge {
     static func update(history: [WatchHistoryItem], newToday: [TasteModel.EpisodeEntry]) async {
         guard let imagesURL = WidgetShared.imagesURL else { return }
         let recent = Array(history.prefix(3))
-        let signature = (recent.map { "\($0.key)|\(Int($0.progress * 100))" } + newToday.map(\.id)).joined(separator: ",")
+        let signature = (recent.map { "\($0.key)|\(Int($0.progress * 20))" } + newToday.map(\.id)).joined(separator: ",")
             + "|\(Appearance.shared.language.rawValue)"
         guard signature != lastSignature else { return }
         lastSignature = signature

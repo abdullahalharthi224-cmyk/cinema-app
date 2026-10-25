@@ -83,7 +83,7 @@ struct PlatformCard: View {
                     name
                 }
                 .frame(width: 58, height: 58)
-                .clipShape(.continuous(14))
+                .clipShape(.continuous(Theme.Radius.medium))
                 .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
             } else {
                 name

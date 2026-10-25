@@ -76,8 +76,9 @@ final class PlaybackLauncher {
 
         var request = request
         if request.prefetched == nil {
+            // Once a playable link is in, slow addons get 3 more seconds rather than holding everything up.
             request.prefetched = await service.streams(
-                type: request.type, id: request.videoID, addons: Self.enabledAddons(in: context)
+                type: request.type, id: request.videoID, addons: Self.enabledAddons(in: context), settle: .seconds(3)
             )
         }
         guard let session = makeSession(for: request, preferring: nil, context: context) else {
@@ -116,7 +117,7 @@ final class PlaybackLauncher {
             return localSession(for: item, request: request, context: context)
         }
         request.prefetched = await service.streams(
-            type: request.type, id: next.videoID, addons: Self.enabledAddons(in: context)
+            type: request.type, id: next.videoID, addons: Self.enabledAddons(in: context), settle: .seconds(3)
         )
         // Keep going through the season: the one after becomes "next".
         request.next = request.upcoming.first

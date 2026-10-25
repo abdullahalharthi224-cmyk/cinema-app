@@ -39,7 +39,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if !NetworkMonitor.shared.isConnected {
+                if !NetworkMonitor.shared.isConnected && !model.hasLoadedRows {
                     offline
                 } else if addons.isEmpty {
                     welcome
@@ -55,7 +55,7 @@ struct HomeView: View {
             .playbackLauncher(launcher)
         }
         .environment(\.zoomNamespace, zoom)
-        .task(id: sources.map(\.id) + ["\(kidsMaxAge ?? -1)"]) {
+        .task(id: sources.map(\.id) + ["\(kidsMaxAge ?? -1)", "\(NetworkMonitor.shared.isConnected)"]) {
             await model.load(addons: sources, kidsMaxAge: kidsMaxAge)
         }
         .task(id: "\(kidsMaxAge ?? -1)|\(TMDBAccount.shared.isConnected)") {
@@ -186,7 +186,8 @@ struct HomeView: View {
 
     /// Changes when what the widget shows should change.
     private var widgetKey: String {
-        history.prefix(3).map { "\($0.key)|\(Int($0.progress * 100))" }.joined(separator: ",")
+        // Progress in 5% steps: the widget doesn't need every second of playback.
+        history.prefix(3).map { "\($0.key)|\(Int($0.progress * 20))" }.joined(separator: ",")
             + "|\(taste.newEpisodes.count)|\(Appearance.shared.language.rawValue)"
     }
 

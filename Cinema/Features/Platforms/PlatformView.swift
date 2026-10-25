@@ -216,10 +216,9 @@ struct TMDBTitleLoaderView: View {
                     DetailView(route: detailRoute)
                 }
             } else if let errorMessage {
-                ContentUnavailableView {
-                    Label("Can't Open This Title", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(errorMessage)
+                RetryErrorView(title: "Can't Open This Title", message: errorMessage, systemImage: "exclamationmark.triangle") {
+                    self.errorMessage = nil
+                    Task { await resolve() }
                 }
                 .background(Theme.background.ignoresSafeArea())
             } else {
@@ -231,18 +230,20 @@ struct TMDBTitleLoaderView: View {
             }
         }
         .zoomDestination(id: route.transitionID, in: zoomNamespace)
-        .task {
-            guard imdbID == nil else { return }
-            do {
-                guard let client = TMDBAccount.shared.client else { throw TMDBError.missingToken }
-                if let id = try await client.imdbID(media: route.media, tmdbID: route.title.id) {
-                    imdbID = id
-                } else {
-                    errorMessage = localized("This title has no IMDb ID, so addons can't find streams for it.")
-                }
-            } catch {
-                errorMessage = error.localizedDescription
+        .task { await resolve() }
+    }
+
+    private func resolve() async {
+        guard imdbID == nil else { return }
+        do {
+            guard let client = TMDBAccount.shared.client else { throw TMDBError.missingToken }
+            if let id = try await client.imdbID(media: route.media, tmdbID: route.title.id) {
+                imdbID = id
+            } else {
+                errorMessage = localized("This title has no IMDb ID, so addons can't find streams for it.")
             }
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 

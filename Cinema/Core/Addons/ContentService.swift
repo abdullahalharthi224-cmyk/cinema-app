@@ -43,13 +43,21 @@ struct ContentService: Sendable {
         self.client = client
     }
 
-    func catalog(_ reference: CatalogReference, skip: Int = 0, genre: String? = nil) async throws -> [MetaPreview] {
+    /// One page of a catalog. Recent pages come from memory unless `fresh` is set
+    /// (pull to refresh), so going back and forth between screens is instant.
+    func catalog(_ reference: CatalogReference, skip: Int = 0, genre: String? = nil, fresh: Bool = false) async throws -> [MetaPreview] {
         var extra: [ExtraArgument] = []
         if let genre, reference.catalog.supportsGenre { extra.append(.genre(genre)) }
         if skip > 0, reference.catalog.supportsSkip { extra.append(.skip(skip)) }
-        return try await client.catalog(
+        let key = "\(reference.id)|\(skip)|\(genre ?? "")"
+        if !fresh, let cached = await ResponseCache.catalogs.value(for: key, as: [MetaPreview].self) {
+            return cached
+        }
+        let items = try await client.catalog(
             base: reference.addon.baseURL, type: reference.catalog.type, id: reference.catalog.id, extra: extra
         )
+        await ResponseCache.catalogs.store(items, for: key)
+        return items
     }
 
     /// Asks addons for full details, starting with the one the item came from.
@@ -71,10 +79,18 @@ struct ContentService: Sendable {
 
     /// Fetches streams from every addon that can provide them, in parallel,
     /// keeping the user's addon order. Each group reports its own errors.
-    func streams(type: String, id: String, addons: [AddonSource]) async -> [StreamGroup] {
+    ///
+    /// `onUpdate` hears every addon's answer as it arrives. With `settle`, once
+    /// a playable link has arrived the slower addons get only that long to
+    /// answer; the ones still waiting are left out (the stream list asks them again).
+    func streams(
+        type: String, id: String, addons: [AddonSource],
+        settle: Duration? = nil,
+        onUpdate: (@Sendable ([StreamGroup]) async -> Void)? = nil
+    ) async -> [StreamGroup] {
         let candidates = addons.filter { $0.supports(.stream, type: type, id: id) }
 
-        return await withTaskGroup(of: (Int, StreamGroup).self) { group in
+        return await withTaskGroup(of: (Int, StreamGroup)?.self) { group in
             for (offset, addon) in candidates.enumerated() {
                 group.addTask {
                     do {
@@ -89,7 +105,29 @@ struct ContentService: Sendable {
                 }
             }
             var results: [(Int, StreamGroup)] = []
-            for await result in group { results.append(result) }
+            var settling = false
+            while let next = await group.next() {
+                // The settle timer firing: stop waiting for the rest.
+                guard let result = next else {
+                    group.cancelAll()
+                    break
+                }
+                results.append(result)
+                let sorted = results.sorted { $0.0 < $1.0 }.map(\.1)
+                await onUpdate?(sorted)
+                if let settle, !settling, case .success(let streams) = result.1.result,
+                   streams.contains(where: { if case .direct = $0.stream.kind { true } else { false } }) {
+                    settling = true
+                    group.addTask {
+                        try? await Task.sleep(for: settle)
+                        return nil
+                    }
+                }
+                if results.count == candidates.count {
+                    group.cancelAll()
+                    break
+                }
+            }
             return results.sorted { $0.0 < $1.0 }.map(\.1)
         }
     }

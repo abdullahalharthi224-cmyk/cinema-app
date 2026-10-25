@@ -21,7 +21,9 @@ final class PlayerViewModel {
     private(set) var isLoadingNext = false
     private(set) var subtitleSources: [SubtitleSource] = []
     private(set) var isLoadingSubtitles = false
-    private(set) var subtitleDelay: Double = 0
+    private(set) var subtitleDelay: Double = 0 {
+        didSet { refreshOverlayText() }
+    }
     private(set) var subtitleRaise: Double = 40
     private(set) var sync: SyncState = .idle
     private(set) var supportsPictureInPicture = false
@@ -29,9 +31,14 @@ final class PlayerViewModel {
     private(set) var videoFill = false
     private(set) var scrubThumbnail: UIImage?
     /// Addon subtitles the player screen draws itself (Apple's player).
-    private(set) var overlayCues: [SubtitleCue]?
+    private(set) var overlayCues: [SubtitleCue]? {
+        didSet { refreshOverlayText() }
+    }
+    /// The subtitle line drawn right now. Only changes when the line does, so the
+    /// player screen isn't redrawn on every video frame.
+    private(set) var overlayText: String?
     /// The playback time for drawn subtitles, updated ten times a second.
-    private(set) var subtitleClock: Double = 0
+    @ObservationIgnored private var subtitleClock: Double = 0
     /// Intro, recap and end-credits timings (from IntroDB).
     private(set) var segments: MediaSegments = .none
     /// A short message over the picture ("Skipped intro", "Trying another link…").
@@ -426,7 +433,10 @@ final class PlayerViewModel {
         switch event {
         case .position(let value):
             precisePosition = value
-            if overlayCues != nil { subtitleClock = value }
+            if overlayCues != nil {
+                subtitleClock = value
+                refreshOverlayText()
+            }
             followTimeline(value)
             // Updates arrive many times a second; a few a second is plenty for the UI.
             if abs(value - position) >= 0.25 || value < position { position = value }
@@ -595,13 +605,16 @@ final class PlayerViewModel {
         }
     }
 
-    /// The subtitle line to draw right now, if any.
-    var overlayText: String? {
-        guard let cues = overlayCues else { return nil }
-        let time = subtitleClock - subtitleDelay
-        guard let index = cues.activeIndex(at: time, tolerance: 0) else { return nil }
-        let cue = cues[index]
-        return cue.start <= time && time <= cue.end ? cue.text : nil
+    private func refreshOverlayText() {
+        var text: String?
+        if let cues = overlayCues {
+            let time = subtitleClock - subtitleDelay
+            if let index = cues.activeIndex(at: time, tolerance: 0) {
+                let cue = cues[index]
+                text = cue.start <= time && time <= cue.end ? cue.text : nil
+            }
+        }
+        if text != overlayText { overlayText = text }
     }
 
     /// Downloads and reads a subtitle file once, for drawing and for tap-to-sync.

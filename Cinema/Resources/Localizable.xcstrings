@@ -1,12 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ catalogs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كتالوجات: %@"
+          }
+        }
+      }
+    },
     "%@ days in a row": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ أيام متتالية"
+            "value": "أيام متتالية: %@"
           }
         }
       }
@@ -27,6 +37,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تم تثبيت %@"
+          }
+        }
+      }
+    },
+    "%@ languages": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لغات: %@"
           }
         }
       }
@@ -76,7 +96,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld من الإضافات · %lld كتالوج جاهز"
+            "value": "الإضافات: %lld · الكتالوجات الجاهزة: %lld"
           }
         }
       }
@@ -86,7 +106,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld كتالوج"
+            "value": "كتالوجات: %lld"
           }
         }
       }
@@ -96,7 +116,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld أيام متتالية"
+            "value": "أيام متتالية: %lld"
           }
         }
       }
@@ -106,7 +126,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تم تخطي %lld من إضافات الكمبيوتر لأنها لا تعمل على iPhone."
+            "value": "تم تخطي إضافات خاصة بالكمبيوتر لا تعمل على الآيفون: %lld"
           }
         }
       }
@@ -116,7 +136,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld لغات"
+            "value": "لغات: %lld"
           }
         }
       }
@@ -146,7 +166,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld خيارات"
+            "value": "خيارات: %lld"
           }
         }
       }
@@ -1336,7 +1356,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تعذّر التحميل"
+            "value": "تعذّر جلب المحتوى"
           }
         }
       }
@@ -1427,6 +1447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تعذّر الوصول إلى الإضافة. تحقّق من اتصالك بالإنترنت وحاول مرة أخرى."
+          }
+        }
+      }
+    },
+    "Couldn't reach your addons. Check your internet connection and try again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر الوصول إلى إضافاتك. تحقّق من اتصال الإنترنت ثم حاول مرة أخرى."
           }
         }
       }
@@ -2096,7 +2126,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "المتاح في الجوال"
+            "value": "المتاح في الآيفون"
           }
         }
       }
@@ -2106,7 +2136,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "المساحة المتاحة في الجوال: %@"
+            "value": "المساحة المتاحة في الآيفون: %@"
           }
         }
       }
@@ -2116,7 +2146,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "المساحة المتاحة في الجوال: %@"
+            "value": "المساحة المتاحة في الآيفون: %@"
           }
         }
       }
@@ -2126,7 +2156,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "من %@: %@ ملفات شخصية، %@ إضافات، %@ أعمال مشاهدة."
+            "value": "من %@ — الملفات الشخصية: %@، الإضافات: %@، الأعمال المشاهدة: %@."
           }
         }
       }
@@ -2136,7 +2166,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "من %@: %lld ملفات شخصية، %lld إضافات، %lld أعمال مشاهدة."
+            "value": "من %@ — الملفات الشخصية: %lld، الإضافات: %lld، الأعمال المشاهدة: %lld."
           }
         }
       }
@@ -2396,7 +2426,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تم استيراد %lld من الإضافات من حسابك في Stremio."
+            "value": "تم استيراد الإضافات من حسابك في Stremio: %lld"
           }
         }
       }
@@ -3036,7 +3066,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تحتاج إعداداً — اضبطها من موقعها (debrid أو مفتاح API)."
+            "value": "تحتاج إعداداً — اضبطها من موقعها (خدمة Debrid أو مفتاح API)."
           }
         }
       }
@@ -3456,7 +3486,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "لا توجد مساحة كافية في الجوال."
+            "value": "لا توجد مساحة كافية في الآيفون."
           }
         }
       }
@@ -3576,7 +3606,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تعطي روابط تورنت فقط — تحتاج خدمة debrid لتعمل هنا."
+            "value": "تعطي روابط تورنت فقط — تحتاج خدمة Debrid لتعمل هنا."
           }
         }
       }
@@ -3886,7 +3916,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "زر التشغيل يختار لك أفضل رابط: بجودتك المفضلة، والروابط الجاهزة على خدمة debrid أولاً، وبحجم معقول. استخدم زر القائمة لتختار بنفسك."
+            "value": "زر التشغيل يختار لك أفضل رابط: بجودتك المفضلة، والروابط الجاهزة على خدمة Debrid أولاً، وبحجم معقول. استخدم زر القائمة لتختار بنفسك."
           }
         }
       }
@@ -4716,7 +4746,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "سجّل الدخول في mdblist.com وافتح Preferences وانسخ مفتاح API. يُحفظ فقط في سلسلة مفاتيح هذا الجوال."
+            "value": "سجّل الدخول في mdblist.com وافتح «Preferences» وانسخ مفتاح API. يُحفظ فقط في سلسلة مفاتيح هذا الآيفون."
           }
         }
       }
@@ -4726,7 +4756,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "سجّل الدخول في themoviedb.org، وافتح Settings ثم API، وانسخ «API Read Access Token» (المفتاح الطويل). يُحفظ فقط في سلسلة مفاتيح هذا الآيفون."
+            "value": "سجّل الدخول في themoviedb.org، وافتح «Settings» ثم «API»، وانسخ «API Read Access Token» (المفتاح الطويل). يُحفظ فقط في سلسلة مفاتيح هذا الآيفون."
           }
         }
       }
@@ -5176,7 +5206,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تمت مزامنة %lld من الإضافات"
+            "value": "تمت مزامنة الإضافات: %lld"
           }
         }
       }
@@ -5296,7 +5326,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "فيلم الاختبار: %lld رابط (%lld قابل للتشغيل)"
+            "value": "فيلم الاختبار: %lld رابط، منها %lld قابل للتشغيل"
           }
         }
       }
@@ -5326,7 +5356,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "أي %@ أيام كاملة من الحكايات."
+            "value": "أي ما يعادل %@ يوم كامل من الحكايات."
           }
         }
       }
@@ -5336,7 +5366,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "أي %lld أيام كاملة من الحكايات."
+            "value": "أي ما يعادل %lld يوم كامل من الحكايات."
           }
         }
       }
@@ -5546,7 +5576,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "يحتاج هذا التحميل %@، والمتاح في الجوال %@ فقط. وفّر مساحة أو اختر رابطًا أصغر."
+            "value": "يحتاج هذا التحميل %@، والمتاح في الآيفون %@ فقط. وفّر مساحة أو اختر رابطًا أصغر."
           }
         }
       }
@@ -5556,7 +5586,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "يحتاج هذا التحميل %@، والمتاح في الجوال %@ فقط. وفّر مساحة أو اختر رابطًا أصغر."
+            "value": "يحتاج هذا التحميل %@، والمتاح في الآيفون %@ فقط. وفّر مساحة أو اختر رابطًا أصغر."
           }
         }
       }
@@ -6486,7 +6516,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تُستخدم كلمة المرور لتسجيل الدخول فقط ولا تُحفظ أبداً. يحتفظ Cinema بمفتاح جلسة آمن في سلسلة المفاتيح (Keychain)."
+            "value": "تُستخدم كلمة المرور لتسجيل الدخول فقط ولا تُحفظ أبداً. يحتفظ Cinema بمفتاح جلسة آمن في سلسلة مفاتيح الآيفون."
           }
         }
       }

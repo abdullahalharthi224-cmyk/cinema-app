@@ -1,4 +1,7 @@
 import XCTest
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import Cinema
 
 final class ContentServiceTests: XCTestCase {
@@ -80,6 +83,23 @@ final class ContentServiceTests: XCTestCase {
         }
     }
 
+    func testStreamsSettleOnceAPlayableLinkArrives() async throws {
+        let slow = try addon("slow.example.com", Fixtures.streamAddonManifest)
+        let service = ContentService(client: AddonClient(http: DelayedHTTPClient()))
+        let updates = UpdateCounter()
+        let started = Date()
+
+        let groups = await service.streams(
+            type: "movie", id: "tt1", addons: [try streamer, slow], settle: .milliseconds(100)
+        ) { _ in await updates.increment() }
+
+        // The fast addon's playable link arrived; the slow one was not waited for.
+        XCTAssertEqual(groups.map(\.addon.id), [try streamer.id])
+        XCTAssertLessThan(Date().timeIntervalSince(started), 1.5)
+        let count = await updates.count
+        XCTAssertEqual(count, 1)
+    }
+
     func testSearchQueriesEverySearchableCatalog() async throws {
         let http = MockHTTPClient { request in
             let path = request.url!.absoluteString
@@ -144,4 +164,21 @@ final class ContentServiceTests: XCTestCase {
         XCTAssertEqual(sources.map(\.addon.id), [first.id, second.id])
         XCTAssertEqual(sources[0].items.map(\.id), ["a", "e"])
     }
+}
+
+/// Answers at once, except for slow.example.com, which takes three seconds.
+private struct DelayedHTTPClient: HTTPClient {
+    func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        if request.url?.host == "slow.example.com" {
+            try await Task.sleep(for: .seconds(3))
+        }
+        let data = Data(#"{"streams": [{"name": "1080p", "url": "https://cdn/a.mp4"}]}"#.utf8)
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+        return (data, response)
+    }
+}
+
+private actor UpdateCounter {
+    private(set) var count = 0
+    func increment() { count += 1 }
 }

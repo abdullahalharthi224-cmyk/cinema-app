@@ -1,4 +1,5 @@
 import SwiftUI
+import ImageIO
 import UIKit
 
 /// Downloads and caches images: decoded images in memory, raw data on disk
@@ -35,7 +36,7 @@ actor ImagePipeline {
         let task = Task<UIImage?, Never> { [session] in
             guard let (data, response) = try? await session.data(from: url),
                   (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true,
-                  let image = UIImage(data: data)
+                  let image = Self.downsampled(data) ?? UIImage(data: data)
             else { return nil }
             return await image.byPreparingForDisplay() ?? image
         }
@@ -47,6 +48,32 @@ actor ImagePipeline {
             memory.setObject(image, forKey: url as NSURL, cost: cost)
         }
         return image
+    }
+
+    /// Starts loading images that are about to scroll into view, a few at a time.
+    nonisolated func prefetch(_ urls: [URL]) {
+        let wanted = urls.filter { cachedImage(for: $0) == nil }
+        guard !wanted.isEmpty else { return }
+        Task(priority: .utility) {
+            for url in wanted.prefix(12) {
+                _ = await image(for: url)
+            }
+        }
+    }
+
+    /// Decodes at no more than 1600 pixels on the long side: huge artwork costs
+    /// memory and battery but looks the same on an iPhone.
+    private static func downsampled(_ data: Data, maxPixels: CGFloat = 1600) -> UIImage? {
+        let options = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithData(data as CFData, options) else { return nil }
+        let thumbnailOptions = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixels,
+        ] as CFDictionary
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, thumbnailOptions) else { return nil }
+        return UIImage(cgImage: image)
     }
 
     private var colors: [URL: UIColor] = [:]
