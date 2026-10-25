@@ -56,7 +56,8 @@ struct StatsView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Statistics")
         .navigationBarTitleDisplayMode(.large)
-        .task { await model.load(context: context) }
+        // Reloads when coming back from Manage, after titles were removed.
+        .onAppear { Task { await model.load(context: context) } }
         .fullScreenCover(item: $wrappedYear) { item in
             WrappedView(year: item.year)
         }
@@ -245,8 +246,17 @@ struct StatsView: View {
 
     private var topTitlesCard: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Most Watched")
-                .font(.display(.title3))
+            HStack(alignment: .firstTextBaseline) {
+                Text("Most Watched")
+                    .font(.display(.title3))
+                Spacer()
+                NavigationLink {
+                    StatsManageView()
+                } label: {
+                    Text("Edit")
+                        .font(.subheadline.weight(.semibold))
+                }
+            }
             ForEach(Array(stats.topTitles.prefix(5).enumerated()), id: \.element.id) { index, title in
                 HStack(spacing: Theme.Spacing.m) {
                     Text(verbatim: "\(index + 1)")

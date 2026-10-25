@@ -4,7 +4,7 @@ import UIKit
 
 /// A year of watching, as full-screen pages that advance on their own like
 /// stories: hours, counts, the top title, genres, actors, the longest streak
-/// and the busiest month, ending with a card to share.
+/// and the busiest month, ending with a summary card.
 struct WrappedView: View {
     let year: Int
 
@@ -19,7 +19,6 @@ struct WrappedView: View {
     @State private var posterImage: UIImage?
     @State private var backdropImage: UIImage?
     @State private var actorImages: [Int: UIImage] = [:]
-    @State private var shareImage: UIImage?
 
     private static let pageDuration: Double = 6
 
@@ -157,7 +156,6 @@ struct WrappedView: View {
         backdropImage = await backdrop
         actorImages = faces
         withAnimation(Theme.Motion.spring) { insights = loaded }
-        renderShareImage()
         // Start the first page's timer now that everything is ready.
         if index == 0 { await advanceLater() }
     }
@@ -165,20 +163,6 @@ struct WrappedView: View {
     private static func image(_ url: URL?) async -> UIImage? {
         guard let url, let result = try? await URLSession.shared.data(from: url) else { return nil }
         return UIImage(data: result.0)
-    }
-
-    @MainActor
-    private func renderShareImage() {
-        let card = WrappedShareCard(
-            year: year, stats: stats, insights: insights ?? ViewingInsights(),
-            poster: posterImage, actorImages: actorImages, profileName: profile?.name
-        )
-        .frame(width: 360, height: 640)
-        .environment(\.locale, AppLanguage.current.locale)
-        .environment(\.layoutDirection, AppLanguage.current.isRightToLeft ? .rightToLeft : .leftToRight)
-        let renderer = ImageRenderer(content: card)
-        renderer.scale = 3
-        shareImage = renderer.uiImage
     }
 
     // MARK: Pages
@@ -343,27 +327,12 @@ struct WrappedView: View {
                 .shadow(color: .black.opacity(0.5), radius: 30, y: 14)
                 .storyAppear(0.1)
 
-                HStack(spacing: Theme.Spacing.m) {
-                    if let shareImage {
-                        ShareLink(
-                            item: Image(uiImage: shareImage),
-                            preview: SharePreview("Your \(String(year)) in Cinema", image: Image(uiImage: shareImage))
-                        ) {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                                .font(.headline)
-                                .padding(.horizontal, Theme.Spacing.xl)
-                                .padding(.vertical, 14)
-                                .background(.white, in: Capsule())
-                                .foregroundStyle(.black)
-                        }
-                    }
-                    Button("Done") { dismiss() }
-                        .font(.headline)
-                        .padding(.horizontal, Theme.Spacing.xl)
-                        .padding(.vertical, 14)
-                        .background(.white.opacity(0.18), in: Capsule())
-                }
-                .storyAppear(0.4)
+                Button("Done") { dismiss() }
+                    .font(.headline)
+                    .padding(.horizontal, Theme.Spacing.xxl)
+                    .padding(.vertical, 14)
+                    .background(.white.opacity(0.18), in: Capsule())
+                    .storyAppear(0.4)
             }
         }
     }
@@ -486,7 +455,7 @@ private extension View {
     }
 }
 
-/// The card at the end, also rendered as the image to share.
+/// The summary card on the last page.
 struct WrappedShareCard: View {
     let year: Int
     let stats: ViewingStats
