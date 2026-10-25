@@ -57,6 +57,24 @@ enum ViewingLogStore {
         try? context.save()
     }
 
+    /// Removes a title from the active profile's statistics.
+    static func delete(metaID: String, in context: ModelContext) {
+        let profileID = ProfileSession.shared.activeID
+        let logs = (try? context.fetch(FetchDescriptor<ViewingLog>(predicate: #Predicate {
+            $0.profileID == profileID && $0.metaID == metaID
+        }))) ?? []
+        for log in logs { context.delete(log) }
+        try? context.save()
+    }
+
+    /// Clears all of the active profile's statistics (other profiles keep theirs).
+    static func deleteAll(in context: ModelContext) {
+        let profileID = ProfileSession.shared.activeID
+        let logs = (try? context.fetch(FetchDescriptor<ViewingLog>(predicate: #Predicate { $0.profileID == profileID }))) ?? []
+        for log in logs { context.delete(log) }
+        try? context.save()
+    }
+
     /// Once: builds a starting log from what was watched before statistics existed,
     /// counting each watched (or started) video on the day it was last played.
     static func seedIfNeeded(in context: ModelContext) {

@@ -1191,6 +1191,26 @@
         }
       }
     },
+    "Clear All Statistics": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسح كل الإحصائيات"
+          }
+        }
+      }
+    },
+    "Clear all statistics for this profile?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسح كل إحصائيات هذا الملف؟"
+          }
+        }
+      }
+    },
     "Close": {
       "localizations": {
         "ar": {
@@ -1791,6 +1811,16 @@
         }
       }
     },
+    "Edit Statistics": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعديل الإحصائيات"
+          }
+        }
+      }
+    },
     "Email": {
       "localizations": {
         "ar": {
@@ -2317,6 +2347,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "ساعات"
+          }
+        }
+      }
+    },
+    "Hours, streaks and Wrapped start again from zero. Other profiles keep theirs.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تبدأ الساعات والسلاسل وملخص العام من الصفر. الملفات الأخرى تحتفظ بإحصائياتها."
           }
         }
       }
@@ -4146,7 +4186,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "إزالة"
+            "value": "حذف"
           }
         }
       }
@@ -5077,6 +5117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تُفعّل الترجمة بهذه اللغة تلقائياً — من الفيديو نفسه أو من إضافات الترجمة مثل OpenSubtitles."
+          }
+        }
+      }
+    },
+    "Swipe a title to remove it from this profile's statistics and Wrapped. Your Library and Continue Watching aren't changed.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسحب أي عمل لحذفه من إحصائيات هذا الملف وملخص العام. المكتبة ومتابعة المشاهدة لا تتغيّر."
           }
         }
       }
