@@ -11,6 +11,8 @@ struct PasscodeView: View {
     }
 
     var mode: Mode
+    /// Which code this checks or sets: Cinema's, or one profile's.
+    var scope: PasscodeScope = .app
     var title: LocalizedStringKey? = nil
     var message: LocalizedStringKey? = nil
     var onCancel: (() -> Void)? = nil
@@ -198,7 +200,7 @@ struct PasscodeView: View {
         if isCreating {
             if let firstEntry {
                 if firstEntry == code {
-                    SecuritySettings.shared.setPasscode(code)
+                    SecuritySettings.shared.setPasscode(code, for: scope)
                     success += 1
                     onSuccess()
                 } else {
@@ -209,7 +211,7 @@ struct PasscodeView: View {
                 withAnimation(Theme.Motion.spring) { firstEntry = code }
                 entered = ""
             }
-        } else if Passcode.verify(code) {
+        } else if Passcode.verify(code, for: scope) {
             success += 1
             onSuccess()
         } else {

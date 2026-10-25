@@ -30,7 +30,7 @@ struct SecuritySettingsView: View {
                         Label("Turn Passcode On", systemImage: "lock.fill")
                     }
                 } footer: {
-                    Text("A 4-digit passcode, with Face ID, to lock Cinema, lock single profiles and keep kids profiles safe.")
+                    Text("A 4-digit passcode, with Face ID, to lock Cinema itself. Locked and kids profiles each have their own passcode, set in Who's Watching → Edit.")
                 }
             } else if !isUnlocked {
                 Section {
@@ -59,7 +59,7 @@ struct SecuritySettingsView: View {
                         }
                     }
                 } footer: {
-                    Text("When Cinema is locked, it asks every time it opens. To lock just one profile, open Who's Watching → Edit. Leaving a kids profile always needs the passcode itself.")
+                    Text("When Cinema is locked, it asks for this passcode every time it opens. Locked and kids profiles use their own passcodes, set in Who's Watching → Edit.")
                 }
 
                 Section {
@@ -95,7 +95,7 @@ struct SecuritySettingsView: View {
                 withAnimation(Theme.Motion.spring) { security.removePasscode() }
             }
         } message: {
-            Text("Cinema and locked profiles will open without asking, and anyone can leave kids profiles.")
+            Text("Cinema will open without asking. Locked and kids profiles keep their own passcodes.")
         }
         .sensoryFeedback(.selection, trigger: security.lockApp)
     }

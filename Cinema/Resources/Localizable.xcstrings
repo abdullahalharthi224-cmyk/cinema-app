@@ -171,6 +171,16 @@
         }
       }
     },
+    "A 4-digit passcode, with Face ID, to lock Cinema itself. Locked and kids profiles each have their own passcode, set in Who's Watching → Edit.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رمز من ٤ أرقام مع Face ID لقفل Cinema نفسه. الملفات المقفلة وملفات الأطفال لكل منها رمزها الخاص، ويُضبط من «من يشاهد؟» ← تعديل."
+          }
+        }
+      }
+    },
     "A 4-digit passcode, with Face ID, to lock Cinema, lock single profiles and keep kids profiles safe.": {
       "localizations": {
         "ar": {
@@ -921,12 +931,32 @@
         }
       }
     },
+    "Change Kids Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تغيير رمز ملف الأطفال"
+          }
+        }
+      }
+    },
     "Change Passcode": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "تغيير الرمز"
+          }
+        }
+      }
+    },
+    "Change Profile Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تغيير رمز الملف"
           }
         }
       }
@@ -1067,6 +1097,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "يعرض Cinema ما توفّره إضافاتك. استورد إضافاتك من Stremio أو أضف إضافة عبر رابط للبدء."
+          }
+        }
+      }
+    },
+    "Cinema will open without asking. Locked and kids profiles keep their own passcodes.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سيفتح Cinema دون سؤال. الملفات المقفلة وملفات الأطفال تحتفظ برموزها الخاصة."
           }
         }
       }
@@ -1731,6 +1771,16 @@
         }
       }
     },
+    "Enter the kids profile's passcode to leave it.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أدخل رمز ملف الأطفال للخروج منه."
+          }
+        }
+      }
+    },
     "Episode Length": {
       "localizations": {
         "ar": {
@@ -2337,6 +2387,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "ملف أطفال"
+          }
+        }
+      }
+    },
+    "Kids Profile Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رمز ملف الأطفال"
           }
         }
       }
@@ -3311,6 +3371,16 @@
         }
       }
     },
+    "Opening this profile needs Face ID or its own passcode, separate from Cinema's.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح هذا الملف يحتاج Face ID أو رمزه الخاص، المختلف عن رمز Cinema."
+          }
+        }
+      }
+    },
     "Opening this profile needs Face ID or your passcode.": {
       "localizations": {
         "ar": {
@@ -3717,6 +3787,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الإنتاج"
+          }
+        }
+      }
+    },
+    "Profile Passcode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رمز الملف"
           }
         }
       }
@@ -4277,6 +4357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "يعرض فقط الأعمال المصنّفة لهذا العمر في TMDB، وتُخفى الأعمال بلا تصنيف. بدون إعدادات أو إضافات، والخروج يحتاج رمزك."
+          }
+        }
+      }
+    },
+    "Shows only titles rated for this age on TMDB; titles without a rating are hidden. No Settings or addons. Leaving needs this profile's own passcode.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعرض فقط الأعمال المصنّفة لهذا العمر في TMDB، وتُخفى الأعمال بلا تصنيف. بدون إعدادات أو إضافات. الخروج يحتاج رمز هذا الملف الخاص."
           }
         }
       }
@@ -5501,6 +5591,16 @@
         }
       }
     },
+    "Use Face ID or enter this profile's passcode.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدم Face ID أو أدخل رمز هذا الملف."
+          }
+        }
+      }
+    },
     "Use Face ID or enter your passcode.": {
       "localizations": {
         "ar": {
@@ -5667,6 +5767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "عند قفل Cinema يطلب الفتح في كل مرة. لقفل ملف واحد فقط افتح «من يشاهد؟» ← تعديل. الخروج من ملف الأطفال يحتاج الرمز نفسه دائمًا."
+          }
+        }
+      }
+    },
+    "When Cinema is locked, it asks for this passcode every time it opens. Locked and kids profiles use their own passcodes, set in Who's Watching → Edit.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عند قفل Cinema يطلب هذا الرمز في كل مرة يُفتح. الملفات المقفلة وملفات الأطفال تستخدم رموزها الخاصة من «من يشاهد؟» ← تعديل."
           }
         }
       }
