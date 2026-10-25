@@ -30,9 +30,17 @@ targets:
     platform: iOS
     sources:
       - path: Cinema
+      - path: Shared
     dependencies:
       - package: MPVKit
         product: MPVKit
+      # The Home Screen widget, embedded in the app.
+      - target: CinemaWidget
+    entitlements:
+      path: Cinema/Resources/Cinema.entitlements
+      properties:
+        # Shared with the widget. A signing service may remove this; the widget then shows "Start Watching".
+        com.apple.security.application-groups: [group.com.personal.cinema]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.personal.cinema
@@ -73,6 +81,40 @@ targets:
           NSAllowsArbitraryLoads: true
         NSLocalNetworkUsageDescription: Cinema connects to addons you host on your local network.
         NSFaceIDUsageDescription: Cinema uses Face ID to unlock locked profiles.
+        # cinema://continue?key=… from the widget resumes a title.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.personal.cinema
+            CFBundleURLSchemes: [cinema]
+
+  CinemaWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: CinemaWidget
+      - path: Shared
+    entitlements:
+      path: CinemaWidget/CinemaWidget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.personal.cinema]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.personal.cinema.widget
+        PRODUCT_NAME: CinemaWidget
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: CinemaWidget/Info.plist
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: WidgetBackground
+        SKIP_INSTALL: YES
+    info:
+      path: CinemaWidget/Info.plist
+      properties:
+        CFBundleDisplayName: Cinema
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, ar]
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
   CinemaTests:
     type: bundle.unit-test

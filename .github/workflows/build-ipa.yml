@@ -91,6 +91,9 @@ jobs:
           rm -rf Payload Cinema.ipa
           mkdir Payload
           cp -R "$APP" Payload/
+          test -d Payload/Cinema.app/PlugIns/CinemaWidget.appex
+          # Ad-hoc signature carrying the App Group entitlement for the widget.
+          tools/adhoc-sign.sh Payload/Cinema.app || echo "::warning::Ad-hoc signing skipped"
           zip -qry Cinema.ipa Payload
           ls -lh Cinema.ipa
 
