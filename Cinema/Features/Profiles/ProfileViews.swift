@@ -430,7 +430,7 @@ struct ProfileEditorView: View {
                             Button("Change Profile Passcode") { pendingPasscode = .change }
                         }
                     } footer: {
-                        Text("Opening this profile needs Face ID or its own passcode, separate from Cinema's.")
+                        Text("Opening this profile needs Face ID or its own passcode. Each profile has a different one.")
                     }
                 }
 

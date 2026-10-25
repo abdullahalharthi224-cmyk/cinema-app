@@ -30,7 +30,7 @@ struct PasscodeView: View {
 
     private var allowsBiometrics: Bool {
         if case .unlock(let allowed) = mode {
-            return allowed && SecuritySettings.shared.useBiometrics && Biometrics.isAvailable && !isResetting
+            return allowed && SecuritySettings.shared.usesBiometrics(for: scope) && Biometrics.isAvailable && !isResetting
         }
         return false
     }

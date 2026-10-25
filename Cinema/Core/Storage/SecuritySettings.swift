@@ -139,6 +139,18 @@ final class SecuritySettings {
         revision += 1
     }
 
+    /// Whether Face ID is offered for this code (each profile chooses its own).
+    func usesBiometrics(for scope: PasscodeScope) -> Bool {
+        _ = revision
+        guard case .profile(let id) = scope else { return useBiometrics }
+        return UserDefaults.standard.object(forKey: "security.biometrics." + id.uuidString) as? Bool ?? true
+    }
+
+    func setBiometrics(_ on: Bool, for profileID: UUID) {
+        UserDefaults.standard.set(on, forKey: "security.biometrics." + profileID.uuidString)
+        revision += 1
+    }
+
     func removePasscode() {
         Passcode.remove(.app)
         hasPasscode = false

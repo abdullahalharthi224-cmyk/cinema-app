@@ -68,8 +68,10 @@ final class ProfileSession {
         kidsMaxAge = defaults.object(forKey: Self.kidsKey) as? Int
     }
 
-    /// Switches to a profile (and its kids limit, if any).
-    func activate(_ profile: Profile) {
+    /// Switches to a profile: its kids limit, if any, and its own look and settings.
+    @MainActor
+    func activate(_ profile: Profile, swappingSettings: Bool = true) {
+        if swappingSettings { ProfileSettings.switchProfile(from: activeID, to: profile.id) }
         activeID = profile.id
         sync(profile)
     }
@@ -116,6 +118,24 @@ enum ProfileStore {
         return active
     }
 
+    /// Cinema used to have one shared passcode (and an "app lock"). Now each
+    /// profile has its own: profiles that were protected get a copy of the old
+    /// code (to change in their own Settings), then the shared one is removed.
+    static func migrateToProfilePasscodes(in context: ModelContext) {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: "security.perProfilePasscodes") else { return }
+        defaults.set(true, forKey: "security.perProfilePasscodes")
+        let security = SecuritySettings.shared
+        guard Passcode.isSet(.app) else { return }
+        let profiles = all(in: context)
+        if security.lockApp {
+            for profile in profiles where !profile.isKids { profile.isLocked = true }
+        }
+        Passcode.giveProfilesTheirOwnCodes(profiles.filter { $0.isKids || $0.isLocked }.map(\.id))
+        security.removePasscode()
+        try? context.save()
+    }
+
     static func add(name: String, symbol: String, colorHex: String, in context: ModelContext) -> Profile? {
         let profiles = all(in: context)
         guard profiles.count < Profile.maxCount else { return nil }
@@ -143,6 +163,8 @@ enum ProfileStore {
         if ProfileSession.shared.activeID == id, let next = profiles.first(where: { $0.id != id }) {
             ProfileSession.shared.activate(next)
         }
+        ProfileSettings.forget(id)
+        Passcode.remove(.profile(id))
         try? context.save()
     }
 }

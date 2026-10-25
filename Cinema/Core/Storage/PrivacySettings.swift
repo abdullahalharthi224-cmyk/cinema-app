@@ -15,4 +15,9 @@ final class PrivacySettings {
     private init() {
         privateMode = UserDefaults.standard.bool(forKey: Self.key)
     }
+
+    /// Re-reads the saved values (after switching profile or restoring a backup).
+    func reload() {
+        privateMode = UserDefaults.standard.bool(forKey: Self.key)
+    }
 }

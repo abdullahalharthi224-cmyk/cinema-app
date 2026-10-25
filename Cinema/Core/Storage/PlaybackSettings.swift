@@ -175,4 +175,22 @@ final class PlaybackSettings {
         nightMode = defaults.bool(forKey: "playback.nightMode")
         dialogueBoost = defaults.bool(forKey: "playback.dialogueBoost")
     }
+
+    /// Re-reads the saved values (after switching profile or restoring a backup).
+    func reload() {
+        let defaults = UserDefaults.standard
+        quality = PreferredQuality(rawValue: defaults.string(forKey: "playback.quality") ?? "") ?? .fullHD
+        preferCached = defaults.object(forKey: "playback.preferCached") as? Bool ?? true
+        subtitles = SubtitleChoice(rawValue: defaults.string(forKey: "playback.subtitles") ?? "") ?? .arabic
+        subtitleSize = SubtitleSize(rawValue: defaults.string(forKey: "playback.subtitleSize") ?? "") ?? .medium
+        subtitleFallback = SubtitleFallback(rawValue: defaults.string(forKey: "playback.subtitleFallback") ?? "") ?? .off
+        useApplePlayer = defaults.object(forKey: "playback.useApplePlayer") as? Bool ?? true
+        subtitleColorHex = defaults.string(forKey: "playback.subtitleColor") ?? "#FFFFFF"
+        subtitleBackground = defaults.object(forKey: "playback.subtitleBackground") as? Double ?? 0
+        audioPreference = AudioPreference(rawValue: defaults.string(forKey: "playback.audioPreference") ?? "") ?? .original
+        autoSkipIntro = defaults.bool(forKey: "playback.autoSkipIntro")
+        autoPlayNext = defaults.object(forKey: "playback.autoPlayNext") as? Bool ?? true
+        nightMode = defaults.bool(forKey: "playback.nightMode")
+        dialogueBoost = defaults.bool(forKey: "playback.dialogueBoost")
+    }
 }

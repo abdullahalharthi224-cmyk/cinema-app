@@ -30,13 +30,10 @@ final class LockGate {
         return ProfileStore.all(in: CinemaStore.container.mainContext).first { $0.id == id }
     }
 
-    /// Which code opens the lock now: Cinema's when the whole app is locked,
-    /// otherwise the active profile's own when it's locked. Nil means no lock.
+    /// The active profile's own code when it's locked; nil means no lock.
     var lockScope: PasscodeScope? {
-        let security = SecuritySettings.shared
-        if security.lockApp && security.hasPasscode { return .app }
-        if let profile = activeProfile, profile.isLocked, let scope = Passcode.scope(for: profile.id) { return scope }
-        return nil
+        guard let profile = activeProfile, profile.isLocked else { return nil }
+        return Passcode.scope(for: profile.id)
     }
 
     var needsLock: Bool { lockScope != nil }

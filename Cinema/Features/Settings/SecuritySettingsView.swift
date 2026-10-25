@@ -1,15 +1,30 @@
+import SwiftData
 import SwiftUI
 
-/// Settings → Passcode & Face ID: the passcode, locking the whole app, and Face ID.
+/// Settings → Passcode & Face ID, for the profile that's open now: its own
+/// passcode, whether it's locked, and Face ID. Other profiles set their own.
 struct SecuritySettingsView: View {
+    @Environment(\.modelContext) private var context
+    @Query(sort: \Profile.sortIndex) private var profiles: [Profile]
     @State private var security = SecuritySettings.shared
     @State private var isUnlocked = false
     @State private var sheet: Sheet?
     @State private var isConfirmingRemoval = false
 
     enum Sheet: String, Identifiable {
-        case unlock, create, change
+        case unlock, create
         var id: String { rawValue }
+    }
+
+    private var profile: Profile? {
+        profiles.first { $0.id == ProfileSession.shared.activeID } ?? profiles.first
+    }
+
+    private var scope: PasscodeScope? { profile.map { .profile($0.id) } }
+
+    private var hasPasscode: Bool {
+        _ = security.revision
+        return scope.map { Passcode.isSet($0) } ?? false
     }
 
     private var biometricsName: LocalizedStringKey {
@@ -22,81 +37,111 @@ struct SecuritySettingsView: View {
 
     var body: some View {
         List {
-            if !security.hasPasscode {
+            if let profile {
                 Section {
-                    Button {
-                        sheet = .create
-                    } label: {
-                        Label("Turn Passcode On", systemImage: "lock.fill")
-                    }
-                } footer: {
-                    Text("A 4-digit passcode, with Face ID, to lock Cinema itself. Locked and kids profiles each have their own passcode, set in Who's Watching → Edit.")
-                }
-            } else if !isUnlocked {
-                Section {
-                    Button {
-                        sheet = .unlock
-                    } label: {
-                        Label("Unlock to Change", systemImage: "lock.open.fill")
-                    }
-                }
-            } else {
-                Section {
-                    Toggle(isOn: $security.lockApp) {
-                        Label {
-                            Text("Lock Cinema")
-                        } icon: {
-                            SettingsIcon(systemName: "lock.shield.fill", color: .gray)
+                    HStack(spacing: Theme.Spacing.m) {
+                        ProfileAvatar(profile: profile, size: 44)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: profile.name).font(.headline)
+                            Text(hasPasscode ? LocalizedStringKey("Has its own passcode") : "No passcode yet")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
                     }
-                    if Biometrics.isAvailable {
-                        Toggle(isOn: $security.useBiometrics) {
-                            Label {
-                                Text(biometricsName)
-                            } icon: {
-                                SettingsIcon(systemName: Biometrics.symbol, color: .green)
-                            }
-                        }
-                    }
+                    .padding(.vertical, 4)
                 } footer: {
-                    Text("When Cinema is locked, it asks for this passcode every time it opens. Locked and kids profiles use their own passcodes, set in Who's Watching → Edit.")
+                    Text("This passcode belongs only to this profile. Every profile can set its own from here while it's open.")
                 }
 
-                Section {
-                    Button("Change Passcode") { sheet = .change }
-                    Button("Turn Passcode Off", role: .destructive) { isConfirmingRemoval = true }
+                if !hasPasscode {
+                    Section {
+                        Button {
+                            sheet = .create
+                        } label: {
+                            Label("Create a Passcode for This Profile", systemImage: "lock.fill")
+                        }
+                    }
+                } else if !isUnlocked {
+                    Section {
+                        Button {
+                            sheet = .unlock
+                        } label: {
+                            Label("Unlock to Change", systemImage: "lock.open.fill")
+                        }
+                    }
+                } else {
+                    Section {
+                        Toggle(isOn: Binding(
+                            get: { profile.isLocked },
+                            set: { on in
+                                profile.isLocked = on
+                                try? context.save()
+                            }
+                        )) {
+                            Label {
+                                Text("Lock This Profile")
+                            } icon: {
+                                SettingsIcon(systemName: "lock.shield.fill", color: .gray)
+                            }
+                        }
+                        if Biometrics.isAvailable {
+                            Toggle(isOn: Binding(
+                                get: { security.usesBiometrics(for: .profile(profile.id)) },
+                                set: { security.setBiometrics($0, for: profile.id) }
+                            )) {
+                                Label {
+                                    Text(biometricsName)
+                                } icon: {
+                                    SettingsIcon(systemName: Biometrics.symbol, color: .green)
+                                }
+                            }
+                        }
+                    } footer: {
+                        Text("When this profile is locked, opening it, or coming back to Cinema while it's open, needs Face ID or its passcode.")
+                    }
+
+                    Section {
+                        Button("Change Passcode") { sheet = .create }
+                        Button("Remove Passcode", role: .destructive) { isConfirmingRemoval = true }
+                    }
                 }
             }
         }
         .navigationTitle("Passcode & Face ID")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            if security.hasPasscode && !isUnlocked { sheet = .unlock }
+            if hasPasscode && !isUnlocked { sheet = .unlock }
         }
         .sheet(item: $sheet) { which in
             Group {
-                switch which {
-                case .unlock:
-                    PasscodeView(mode: .unlock(allowsBiometrics: true), onCancel: { sheet = nil }) {
-                        sheet = nil
-                        withAnimation(Theme.Motion.spring) { isUnlocked = true }
-                    }
-                case .create, .change:
-                    PasscodeView(mode: .create, onCancel: { sheet = nil }) {
-                        sheet = nil
-                        withAnimation(Theme.Motion.spring) { isUnlocked = true }
+                if let scope {
+                    switch which {
+                    case .unlock:
+                        PasscodeView(mode: .unlock(allowsBiometrics: true), scope: scope, onCancel: { sheet = nil }) {
+                            sheet = nil
+                            withAnimation(Theme.Motion.spring) { isUnlocked = true }
+                        }
+                    case .create:
+                        PasscodeView(mode: .create, scope: scope, onCancel: { sheet = nil }) {
+                            sheet = nil
+                            withAnimation(Theme.Motion.spring) { isUnlocked = true }
+                        }
                     }
                 }
             }
             .interactiveDismissDisabled()
         }
-        .confirmationDialog("Turn the passcode off?", isPresented: $isConfirmingRemoval, titleVisibility: .visible) {
-            Button("Turn Passcode Off", role: .destructive) {
-                withAnimation(Theme.Motion.spring) { security.removePasscode() }
+        .confirmationDialog("Remove this profile's passcode?", isPresented: $isConfirmingRemoval, titleVisibility: .visible) {
+            Button("Remove Passcode", role: .destructive) {
+                guard let profile else { return }
+                withAnimation(Theme.Motion.spring) {
+                    profile.isLocked = false
+                    try? context.save()
+                    security.removePasscode(.profile(profile.id))
+                }
             }
         } message: {
-            Text("Cinema will open without asking. Locked and kids profiles keep their own passcodes.")
+            Text("This profile will open without asking. Other profiles keep their own passcodes.")
         }
-        .sensoryFeedback(.selection, trigger: security.lockApp)
     }
 }

@@ -150,6 +150,13 @@ final class Appearance {
         theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: Self.themeKey) ?? "") ?? .cinematic
         language = AppLanguage.current
     }
+
+    /// Re-reads the saved values (after switching profile or restoring a backup).
+    func reload() {
+        accentHex = UserDefaults.standard.string(forKey: Self.accentKey) ?? Self.defaultAccentHex
+        theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: Self.themeKey) ?? "") ?? .cinematic
+        language = AppLanguage.current
+    }
 }
 
 extension Color {
