@@ -52,15 +52,16 @@ struct ProfilePickerView: View {
 
     /// Opening a profile, editing it, or leaving a kids profile, after the passcode.
     enum ProfileAuth: Identifiable {
-        case open(Profile)
-        case edit(Profile)
-        case leaveKids(Profile)
+        case open(Profile, PasscodeScope)
+        case edit(Profile, PasscodeScope)
+        /// Leaving the kids profile for `Profile` needs the kids profile's own code.
+        case leaveKids(Profile, PasscodeScope)
 
         var id: String {
             switch self {
-            case .open(let profile): return "open" + profile.id.uuidString
-            case .edit(let profile): return "edit" + profile.id.uuidString
-            case .leaveKids(let profile): return "kids" + profile.id.uuidString
+            case .open(let profile, _): return "open" + profile.id.uuidString
+            case .edit(let profile, _): return "edit" + profile.id.uuidString
+            case .leaveKids(let profile, _): return "kids" + profile.id.uuidString
             }
         }
     }
@@ -163,7 +164,7 @@ struct ProfilePickerView: View {
                         .padding(-6)
                 }
             .overlay(alignment: .bottomTrailing) {
-                if profile.isKids || (profile.isLocked && SecuritySettings.shared.hasPasscode) {
+                if profile.isKids || (profile.isLocked && Passcode.scope(for: profile.id) != nil) {
                     Image(systemName: profile.isKids ? "figure.and.child.holdinghands" : "lock.fill")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.white)
@@ -200,14 +201,15 @@ struct ProfilePickerView: View {
     }
 
     private func select(_ profile: Profile) {
-        let hasPasscode = SecuritySettings.shared.hasPasscode
+        let kidsScope = session.activeID.flatMap { Passcode.scope(for: $0) }
+        let profileScope = Passcode.scope(for: profile.id)
         if profile.id == session.activeID {
             dismiss()
-        } else if hasPasscode && session.isKids && !profile.isKids {
-            // Leaving a kids profile always takes the passcode itself, never Face ID.
-            auth = .leaveKids(profile)
-        } else if hasPasscode && profile.isLocked && !LockGate.shared.recentlyUnlocked {
-            auth = .open(profile)
+        } else if session.isKids && !profile.isKids, let kidsScope {
+            // Leaving a kids profile always takes its own passcode, never Face ID.
+            auth = .leaveKids(profile, kidsScope)
+        } else if profile.isLocked, let profileScope, !LockGate.shared.recentlyUnlocked(profileScope) {
+            auth = .open(profile, profileScope)
         } else {
             activate(profile)
         }
@@ -219,8 +221,8 @@ struct ProfilePickerView: View {
     }
 
     private func beginEditing(_ profile: Profile) {
-        if SecuritySettings.shared.hasPasscode && profile.isLocked && !LockGate.shared.recentlyUnlocked {
-            auth = .edit(profile)
+        if profile.isLocked, let scope = Passcode.scope(for: profile.id), !LockGate.shared.recentlyUnlocked(scope) {
+            auth = .edit(profile, scope)
         } else {
             editing = .edit(profile)
         }
@@ -229,16 +231,16 @@ struct ProfilePickerView: View {
     @ViewBuilder
     private func authSheet(_ request: ProfileAuth) -> some View {
         switch request {
-        case .open(let profile):
-            PasscodeView(mode: .unlock(allowsBiometrics: true), title: "Unlock \(profile.name)", onCancel: { auth = nil }) {
-                LockGate.shared.noteUnlocked()
+        case .open(let profile, let scope):
+            PasscodeView(mode: .unlock(allowsBiometrics: true), scope: scope, title: "Unlock \(profile.name)", onCancel: { auth = nil }) {
+                LockGate.shared.noteUnlocked(scope)
                 auth = nil
                 activate(profile)
             }
             .interactiveDismissDisabled()
-        case .edit(let profile):
-            PasscodeView(mode: .unlock(allowsBiometrics: true), title: "Unlock \(profile.name)", onCancel: { auth = nil }) {
-                LockGate.shared.noteUnlocked()
+        case .edit(let profile, let scope):
+            PasscodeView(mode: .unlock(allowsBiometrics: true), scope: scope, title: "Unlock \(profile.name)", onCancel: { auth = nil }) {
+                LockGate.shared.noteUnlocked(scope)
                 auth = nil
                 Task {
                     try? await Task.sleep(for: .milliseconds(450))
@@ -246,11 +248,12 @@ struct ProfilePickerView: View {
                 }
             }
             .interactiveDismissDisabled()
-        case .leaveKids(let profile):
+        case .leaveKids(let profile, let scope):
             PasscodeView(
                 mode: .unlock(allowsBiometrics: false),
+                scope: scope,
                 title: "Enter Passcode",
-                message: "A grown-up's passcode is needed to leave the kids profile.",
+                message: "Enter the kids profile's passcode to leave it.",
                 onCancel: { auth = nil }
             ) {
                 auth = nil
@@ -291,11 +294,20 @@ struct ProfileEditorView: View {
     @State private var isLocked = false
     /// Set while a new passcode is being created for the lock or the kids profile.
     @State private var pendingPasscode: PendingPasscode?
+    /// A new profile's ID, chosen up front so its passcode can be saved before the profile is.
+    @State private var draftID = UUID()
+    /// Whether this profile has its own passcode yet.
+    @State private var hasOwnPasscode = false
 
     enum PendingPasscode: String, Identifiable {
-        case kids, lock
+        case kids, lock, change
         var id: String { rawValue }
     }
+
+    private var profileID: UUID { editedProfile?.id ?? draftID }
+
+    /// Every kids or locked profile has its own passcode, separate from Cinema's.
+    private var passcodeScope: PasscodeScope { .profile(profileID) }
 
     /// At least one grown-up profile must stay, or nobody could leave the kids profiles.
     private var canBeKids: Bool {
@@ -384,6 +396,9 @@ struct ProfileEditorView: View {
                         }
                     }
                     .disabled(!canBeKids)
+                    if isKids && hasOwnPasscode {
+                        Button("Change Kids Passcode") { pendingPasscode = .change }
+                    }
                     if isKids {
                         Picker("Age Limit", selection: $kidsMaxAge) {
                             ForEach(Profile.kidsAges, id: \.self) { age in
@@ -396,7 +411,7 @@ struct ProfileEditorView: View {
                     if !canBeKids {
                         Text("Keep at least one grown-up profile so the passcode can be used to leave kids profiles.")
                     } else if isKids {
-                        Text("Shows only titles rated for this age on TMDB; titles without a rating are hidden. No Settings or addons, and leaving needs your passcode.")
+                        Text("Shows only titles rated for this age on TMDB; titles without a rating are hidden. No Settings or addons. Leaving needs this profile's own passcode.")
                     } else {
                         Text("A kids profile shows only titles suitable for the age you choose.")
                     }
@@ -411,8 +426,11 @@ struct ProfileEditorView: View {
                                 SettingsIcon(systemName: "lock.fill", color: .gray)
                             }
                         }
+                        if isLocked && hasOwnPasscode {
+                            Button("Change Profile Passcode") { pendingPasscode = .change }
+                        }
                     } footer: {
-                        Text("Opening this profile needs Face ID or your passcode.")
+                        Text("Opening this profile needs Face ID or its own passcode, separate from Cinema's.")
                     }
                 }
 
@@ -440,19 +458,24 @@ struct ProfileEditorView: View {
             }
             .confirmationDialog("Delete this profile?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
                 Button("Delete Profile", role: .destructive) {
-                    if let editedProfile { ProfileStore.delete(editedProfile, in: context) }
+                    if let editedProfile {
+                        Passcode.remove(.profile(editedProfile.id))
+                        ProfileStore.delete(editedProfile, in: context)
+                    }
                     dismiss()
                 }
             }
             .sensoryFeedback(.selection, trigger: symbol)
             .sensoryFeedback(.selection, trigger: colorHex)
             .sheet(item: $pendingPasscode) { pending in
-                PasscodeView(mode: .create, onCancel: { pendingPasscode = nil }) {
+                PasscodeView(mode: .create, scope: passcodeScope, title: pending == .kids ? "Kids Profile Passcode" : "Profile Passcode", onCancel: { pendingPasscode = nil }) {
                     pendingPasscode = nil
+                    hasOwnPasscode = true
                     withAnimation(Theme.Motion.spring) {
                         switch pending {
                         case .kids: isKids = true
                         case .lock: isLocked = true
+                        case .change: break
                         }
                     }
                 }
@@ -467,6 +490,7 @@ struct ProfileEditorView: View {
                 isKids = editedProfile.isKids
                 kidsMaxAge = editedProfile.kidsMaxAge
                 isLocked = editedProfile.isLocked
+                hasOwnPasscode = Passcode.isSet(.profile(editedProfile.id))
             } else {
                 // Suggest a colour and avatar not already taken.
                 colorHex = Profile.colors.first { hex in !profiles.contains { $0.colorHex == hex } } ?? Profile.colors[0]
@@ -485,9 +509,12 @@ struct ProfileEditorView: View {
             try? context.save()
             ProfileSession.shared.sync(editedProfile)
         } else if let profile = ProfileStore.add(name: trimmedName, symbol: symbol, colorHex: colorHex, in: context) {
+            profile.id = draftID
             apply(to: profile)
             try? context.save()
         }
+        // A profile that's neither locked nor for kids no longer needs its code.
+        if !isKids && !isLocked { Passcode.remove(passcodeScope) }
         dismiss()
     }
 
@@ -497,9 +524,9 @@ struct ProfileEditorView: View {
         profile.isLocked = isLocked && !isKids
     }
 
-    /// Kids profiles and locks need a passcode; the first time, one is created.
+    /// Kids profiles and locks need the profile's own passcode; the first time, one is created.
     private func setKids(_ on: Bool) {
-        if on && !SecuritySettings.shared.hasPasscode {
+        if on && !hasOwnPasscode {
             pendingPasscode = .kids
         } else {
             withAnimation(Theme.Motion.spring) { isKids = on }
@@ -507,7 +534,7 @@ struct ProfileEditorView: View {
     }
 
     private func setLocked(_ on: Bool) {
-        if on && !SecuritySettings.shared.hasPasscode {
+        if on && !hasOwnPasscode {
             pendingPasscode = .lock
         } else {
             withAnimation(Theme.Motion.spring) { isLocked = on }

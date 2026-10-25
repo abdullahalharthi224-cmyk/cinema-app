@@ -18,32 +18,42 @@ final class LockGate {
 
     private init() {}
 
-    /// Unlocked moments ago, so picking a locked profile right after doesn't ask twice.
-    var recentlyUnlocked: Bool { Date.now.timeIntervalSince(lastUnlock) < 60 }
+    private var lastUnlockScope: PasscodeScope?
+
+    /// Unlocked with this code moments ago, so it isn't asked for twice in a row.
+    func recentlyUnlocked(_ scope: PasscodeScope?) -> Bool {
+        scope != nil && scope == lastUnlockScope && Date.now.timeIntervalSince(lastUnlock) < 60
+    }
 
     private var activeProfile: Profile? {
         let id = ProfileSession.shared.activeID
         return ProfileStore.all(in: CinemaStore.container.mainContext).first { $0.id == id }
     }
 
-    var needsLock: Bool {
+    /// Which code opens the lock now: Cinema's when the whole app is locked,
+    /// otherwise the active profile's own when it's locked. Nil means no lock.
+    var lockScope: PasscodeScope? {
         let security = SecuritySettings.shared
-        guard security.hasPasscode else { return false }
-        return security.lockApp || (activeProfile?.isLocked ?? false)
+        if security.lockApp && security.hasPasscode { return .app }
+        if let profile = activeProfile, profile.isLocked, let scope = Passcode.scope(for: profile.id) { return scope }
+        return nil
     }
+
+    var needsLock: Bool { lockScope != nil }
 
     func lockIfNeeded() {
-        guard needsLock, !isLocked else { return }
+        guard let scope = lockScope, !isLocked else { return }
         isLocked = true
-        present()
+        present(scope: scope)
     }
 
-    func noteUnlocked() {
+    func noteUnlocked(_ scope: PasscodeScope?) {
         lastUnlock = .now
+        lastUnlockScope = scope
     }
 
-    private func unlock() {
-        noteUnlocked()
+    private func unlock(_ scope: PasscodeScope) {
+        noteUnlocked(scope)
         isLocked = false
         guard let window else { return }
         UIView.animate(withDuration: 0.3, animations: { window.alpha = 0 }) { _ in
@@ -52,11 +62,12 @@ final class LockGate {
         }
     }
 
-    private func present() {
+    private func present(scope: PasscodeScope) {
         guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else { return }
         let appearance = Appearance.shared
-        let root = LockScreenView(profile: activeProfile.map { (name: $0.name, symbol: $0.symbol, colorHex: $0.colorHex) }) { [weak self] in
-            self?.unlock()
+        let profile = scope == .app ? nil : activeProfile.map { (name: $0.name, symbol: $0.symbol, colorHex: $0.colorHex) }
+        let root = LockScreenView(profile: profile, scope: scope) { [weak self] in
+            self?.unlock(scope)
         }
         .tint(Theme.accent)
         .preferredColorScheme(appearance.theme.colorScheme)
@@ -75,12 +86,13 @@ final class LockGate {
 /// What the lock window shows: the app's icon (or the profile's avatar) over the passcode pad.
 private struct LockScreenView: View {
     let profile: (name: String, symbol: String, colorHex: String)?
+    let scope: PasscodeScope
     var onUnlock: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             Group {
-                if let profile, !SecuritySettings.shared.lockApp {
+                if let profile {
                     VStack(spacing: Theme.Spacing.s) {
                         ProfileAvatar(symbol: profile.symbol, colorHex: profile.colorHex, size: 64)
                         Text(verbatim: profile.name).font(.headline)
@@ -94,7 +106,11 @@ private struct LockScreenView: View {
             }
             .padding(.top, Theme.Spacing.xxl)
 
-            PasscodeView(mode: .unlock(allowsBiometrics: true), title: "Cinema Is Locked", message: "Use Face ID or enter your passcode.") {
+            PasscodeView(
+                mode: .unlock(allowsBiometrics: true), scope: scope,
+                title: profile == nil ? "Cinema Is Locked" : "Enter Passcode",
+                message: profile == nil ? "Use Face ID or enter your passcode." : "Use Face ID or enter this profile's passcode."
+            ) {
                 onUnlock()
             }
         }

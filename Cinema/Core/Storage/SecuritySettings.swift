@@ -3,28 +3,62 @@ import Foundation
 import LocalAuthentication
 import Observation
 
-/// The 4-digit passcode, kept only as a salted hash in the Keychain (never in
+/// What a passcode protects: Cinema itself, or one profile (a locked
+/// profile, or leaving a kids profile). Each has its own code.
+enum PasscodeScope: Hashable {
+    case app
+    case profile(UUID)
+
+    fileprivate var account: String {
+        switch self {
+        case .app: return "security.passcodeHash"
+        case .profile(let id): return "security.passcodeHash." + id.uuidString
+        }
+    }
+}
+
+/// 4-digit passcodes, kept only as salted hashes in the Keychain (never in
 /// backups, never in plain text).
 enum Passcode {
     static let length = 4
-    private static let account = "security.passcodeHash"
 
-    static var isSet: Bool { KeychainStore().string(for: account) != nil }
-
-    static func set(_ code: String) {
-        let salt = UUID().uuidString
-        KeychainStore().set(salt + ":" + hash(code, salt: salt), for: account)
+    static func isSet(_ scope: PasscodeScope = .app) -> Bool {
+        KeychainStore().string(for: scope.account) != nil
     }
 
-    static func verify(_ code: String) -> Bool {
-        guard let stored = KeychainStore().string(for: account) else { return false }
+    static func set(_ code: String, for scope: PasscodeScope = .app) {
+        let salt = UUID().uuidString
+        KeychainStore().set(salt + ":" + hash(code, salt: salt), for: scope.account)
+    }
+
+    static func verify(_ code: String, for scope: PasscodeScope = .app) -> Bool {
+        guard let stored = KeychainStore().string(for: scope.account) else { return false }
         let parts = stored.split(separator: ":", maxSplits: 1).map(String.init)
         guard parts.count == 2 else { return false }
         return hash(code, salt: parts[0]) == parts[1]
     }
 
-    static func remove() {
-        KeychainStore().remove(account)
+    static func remove(_ scope: PasscodeScope = .app) {
+        KeychainStore().remove(scope.account)
+    }
+
+    /// The code that guards a profile: its own, or (for profiles set up before
+    /// each had its own code) Cinema's code. Nil when there's none.
+    static func scope(for profileID: UUID) -> PasscodeScope? {
+        if isSet(.profile(profileID)) { return .profile(profileID) }
+        if isSet(.app) { return .app }
+        return nil
+    }
+
+    /// Before each profile had its own code, kids and locked profiles used
+    /// Cinema's. They get their own copy of it once, so the codes can then be
+    /// changed separately.
+    static func giveProfilesTheirOwnCodes(_ profileIDs: [UUID]) {
+        let keychain = KeychainStore()
+        guard let appCode = keychain.string(for: PasscodeScope.app.account) else { return }
+        for id in profileIDs where !isSet(.profile(id)) {
+            keychain.set(appCode, for: PasscodeScope.profile(id).account)
+        }
     }
 
     static func hash(_ code: String, salt: String) -> String {
@@ -88,24 +122,34 @@ final class SecuritySettings {
         let defaults = UserDefaults.standard
         lockApp = defaults.bool(forKey: "security.lockApp")
         useBiometrics = defaults.object(forKey: "security.useBiometrics") as? Bool ?? true
-        hasPasscode = Passcode.isSet
+        hasPasscode = Passcode.isSet()
     }
 
-    func setPasscode(_ code: String) {
-        Passcode.set(code)
-        hasPasscode = true
+    /// Bumped whenever any passcode changes, so views re-read them.
+    private(set) var revision = 0
+
+    func setPasscode(_ code: String, for scope: PasscodeScope = .app) {
+        Passcode.set(code, for: scope)
+        if scope == .app { hasPasscode = true }
+        revision += 1
+    }
+
+    func removePasscode(_ scope: PasscodeScope) {
+        Passcode.remove(scope)
+        revision += 1
     }
 
     func removePasscode() {
-        Passcode.remove()
+        Passcode.remove(.app)
         hasPasscode = false
         lockApp = false
+        revision += 1
     }
 
     func reload() {
         let defaults = UserDefaults.standard
         lockApp = defaults.bool(forKey: "security.lockApp")
         useBiometrics = defaults.object(forKey: "security.useBiometrics") as? Bool ?? true
-        hasPasscode = Passcode.isSet
+        hasPasscode = Passcode.isSet()
     }
 }
