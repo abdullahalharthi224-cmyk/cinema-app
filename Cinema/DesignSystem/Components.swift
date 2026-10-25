@@ -168,3 +168,23 @@ extension String {
         }
     }
 }
+
+/// A failed load: what went wrong and a "Try Again" button, in the app's style.
+struct RetryErrorView: View {
+    var title: LocalizedStringKey = "Couldn't Load"
+    let message: String
+    var systemImage = "wifi.exclamationmark"
+    let retry: () -> Void
+
+    var body: some View {
+        ContentUnavailableView {
+            Label(title, systemImage: systemImage)
+        } description: {
+            Text(verbatim: message)
+        } actions: {
+            Button("Try Again", action: retry)
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+        }
+    }
+}

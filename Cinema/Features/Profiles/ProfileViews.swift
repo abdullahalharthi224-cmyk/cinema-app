@@ -417,23 +417,6 @@ struct ProfileEditorView: View {
                     }
                 }
 
-                if !isKids {
-                    Section {
-                        Toggle(isOn: Binding(get: { isLocked }, set: { setLocked($0) })) {
-                            Label {
-                                Text("Lock Profile")
-                            } icon: {
-                                SettingsIcon(systemName: "lock.fill", color: .gray)
-                            }
-                        }
-                        if isLocked && hasOwnPasscode {
-                            Button("Change Profile Passcode") { pendingPasscode = .change }
-                        }
-                    } footer: {
-                        Text("Opening this profile needs Face ID or its own passcode. Each profile has a different one.")
-                    }
-                }
-
                 if editedProfile != nil, profiles.count > 1 {
                     Section {
                         Button("Delete Profile", role: .destructive) {
@@ -524,7 +507,8 @@ struct ProfileEditorView: View {
         profile.isLocked = isLocked && !isKids
     }
 
-    /// Kids profiles and locks need the profile's own passcode; the first time, one is created.
+    /// A kids profile needs its own passcode; the first time, one is created.
+    /// (Locking a grown-up profile is done from its own Settings → Passcode & Face ID.)
     private func setKids(_ on: Bool) {
         if on && !hasOwnPasscode {
             pendingPasscode = .kids
@@ -533,13 +517,6 @@ struct ProfileEditorView: View {
         }
     }
 
-    private func setLocked(_ on: Bool) {
-        if on && !hasOwnPasscode {
-            pendingPasscode = .lock
-        } else {
-            withAnimation(Theme.Motion.spring) { isLocked = on }
-        }
-    }
 
     static func ageTitle(_ age: Int) -> LocalizedStringKey {
         age == 0 ? "All Ages" : "\(age)+"

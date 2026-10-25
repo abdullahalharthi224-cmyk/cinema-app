@@ -90,6 +90,7 @@ final class DownloadManager {
     @ObservationIgnored private var tasks: [String: URLSessionDownloadTask] = [:]
     @ObservationIgnored private var pausing: Set<String> = []
     @ObservationIgnored private var lastSaved: [String: Date] = [:]
+    @ObservationIgnored private var lastProgress: [String: Date] = [:]
     @ObservationIgnored private var extrasRequested: Set<String> = []
     /// Handed over by the system when it wakes the app for finished downloads.
     @ObservationIgnored var backgroundCompletion: (() -> Void)?
@@ -372,14 +373,21 @@ final class DownloadManager {
     // MARK: Session events (from the delegate, on the main actor)
 
     fileprivate func didWrite(id: String, written: Int64, expected: Int64) {
-        if expected > 0 { progress[id] = Double(written) / Double(expected) }
-        guard let item = item(id: id) else { return }
+        // The system reports progress many times a second; the screen only needs
+        // a change of half a percent (or a second passing), and the database every 5 seconds.
+        let now = Date.now
+        if expected > 0 {
+            let fraction = Double(written) / Double(expected)
+            if abs(fraction - (progress[id] ?? -1)) >= 0.005 || now.timeIntervalSince(lastProgress[id] ?? .distantPast) >= 1 {
+                progress[id] = fraction
+                lastProgress[id] = now
+            }
+        }
+        guard now.timeIntervalSince(lastSaved[id] ?? .distantPast) > 5, let item = item(id: id) else { return }
         item.receivedBytes = written
         if expected > 0 { item.expectedBytes = expected }
-        if Date.now.timeIntervalSince(lastSaved[id] ?? .distantPast) > 5 {
-            lastSaved[id] = .now
-            save()
-        }
+        lastSaved[id] = now
+        save()
     }
 
     fileprivate func didFinish(id: String, fileName: String, size: Int64) {

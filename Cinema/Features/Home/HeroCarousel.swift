@@ -34,7 +34,8 @@ struct HeroCarousel: View {
         .frame(height: height)
         .overlay(alignment: .bottom) { pageIndicator }
         .task(id: currentID) {
-            guard !reduceMotion, items.count > 1 else { return }
+            // Stays put with Reduce Motion or Low Power Mode on.
+            guard !reduceMotion, !ProcessInfo.processInfo.isLowPowerModeEnabled, items.count > 1 else { return }
             try? await Task.sleep(for: .seconds(8))
             guard !Task.isCancelled else { return }
             let index = items.firstIndex { $0.id == currentID } ?? 0
@@ -169,7 +170,7 @@ private struct HeroPage: View {
             withAnimation(Theme.Motion.spring) { lookupFinished = true }
         }
         .onChange(of: isActive, initial: true) { _, active in
-            guard !reduceMotion else { return }
+            guard !reduceMotion, !ProcessInfo.processInfo.isLowPowerModeEnabled else { return }
             if active {
                 withAnimation(.linear(duration: 12)) { zoomed = true }
             } else {

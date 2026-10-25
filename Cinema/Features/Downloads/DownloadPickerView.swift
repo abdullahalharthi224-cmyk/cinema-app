@@ -15,6 +15,8 @@ struct DownloadPickerView: View {
     @State private var recommendedID: String?
     @State private var addonNames: [String: String] = [:]
     @State private var isLoading = true
+    /// Every addon failed (usually no connection), rather than simply having no links.
+    @State private var failedEverywhere = false
     @State private var spaceWarning: SpaceWarning?
     @State private var added = false
 
@@ -35,6 +37,11 @@ struct DownloadPickerView: View {
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if streams.isEmpty && failedEverywhere {
+                    RetryErrorView(message: localized("Couldn't reach your addons. Check your internet connection and try again.")) {
+                        isLoading = true
+                        Task { await load() }
+                    }
                 } else if streams.isEmpty {
                     ContentUnavailableView(
                         "No Links Found",
@@ -149,6 +156,7 @@ struct DownloadPickerView: View {
         let sources = addons.sources
         addonNames = Dictionary(sources.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
         let groups = await ContentService().streams(type: request.type, id: request.videoID, addons: sources)
+        failedEverywhere = !groups.isEmpty && groups.allSatisfy { if case .failure = $0.result { true } else { false } }
         streams = DownloadPlanner.ranked(groups)
         recommendedID = DownloadPlanner.recommended(in: groups)?.id
         withAnimation(Theme.Motion.spring) { isLoading = false }

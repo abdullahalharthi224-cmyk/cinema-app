@@ -57,10 +57,9 @@ struct PersonView: View {
                         }
                         .padding(.horizontal, Theme.Spacing.l)
                     } else if let errorMessage {
-                        Text(errorMessage)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, Theme.Spacing.l)
+                        RetryErrorView(message: errorMessage) {
+                            Task { await load() }
+                        }
                     } else {
                         LazyVGrid(columns: columns, spacing: Theme.Spacing.l) {
                             ForEach(credits) { credit in
@@ -143,6 +142,8 @@ struct PersonView: View {
 
     private func load() async {
         guard person == nil else { return }
+        errorMessage = nil
+        isLoading = true
         guard let client = TMDBAccount.shared.client else {
             errorMessage = TMDBError.missingToken.localizedDescription
             isLoading = false

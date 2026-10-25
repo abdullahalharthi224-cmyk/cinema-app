@@ -291,12 +291,22 @@ struct TMDBClient: Sendable {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
+        // The real network is cached for a while; test doubles never are.
+        let cacheKey = http is URLSessionHTTPClient ? request.url?.absoluteString : nil
+        if let cacheKey, let cached = await ResponseCache.tmdb.value(for: cacheKey, as: Data.self),
+           let value = try? JSONDecoder.addon.decode(T.self, from: cached) {
+            return value
+        }
+
         let data: Data
         let response: HTTPURLResponse
         do {
             (data, response) = try await http.send(request)
         } catch let error as URLError {
             throw TMDBError.network(error)
+        }
+        if let cacheKey, (200..<300).contains(response.statusCode) {
+            await ResponseCache.tmdb.store(data, for: cacheKey)
         }
 
         switch response.statusCode {

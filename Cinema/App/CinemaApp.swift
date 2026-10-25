@@ -5,9 +5,22 @@ import SwiftUI
 @MainActor
 enum CinemaStore {
     static let container: ModelContainer = {
+        let schema = Schema([InstalledAddon.self, WatchHistoryItem.self, Profile.self,
+                             PlaybackProgress.self, WatchlistItem.self, DownloadItem.self, ViewingLog.self])
+        if let container = try? ModelContainer(for: schema) { return container }
+
+        // The saved database couldn't be opened (e.g. damaged). Rather than closing
+        // at every launch, set it aside (a backup can bring everything back) and start fresh.
+        let store = URL.applicationSupportDirectory.appending(path: "default.store")
+        for suffix in ["", "-shm", "-wal"] {
+            let file = URL(fileURLWithPath: store.path + suffix)
+            let aside = URL(fileURLWithPath: store.path + suffix + ".unreadable")
+            try? FileManager.default.removeItem(at: aside)
+            try? FileManager.default.moveItem(at: file, to: aside)
+        }
+        if let container = try? ModelContainer(for: schema) { return container }
         do {
-            return try ModelContainer(for: InstalledAddon.self, WatchHistoryItem.self, Profile.self,
-                                      PlaybackProgress.self, WatchlistItem.self, DownloadItem.self, ViewingLog.self)
+            return try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         } catch {
             fatalError("The database couldn't be opened: \(error)")
         }

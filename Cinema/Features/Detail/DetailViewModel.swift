@@ -13,6 +13,8 @@ final class DetailViewModel {
     /// Streams fetched ahead of time for movies, so quality badges can be
     /// shown and the stream picker opens instantly.
     private(set) var prefetchedStreams: [StreamGroup]?
+    /// The addons that have answered so far, so quality badges appear as each one does.
+    private(set) var partialStreams: [StreamGroup] = []
     /// A colour sampled from the poster, used to tint the page.
     private(set) var tint: Color?
     /// Arabic title, synopsis and genres from TMDB when the app is in Arabic.
@@ -352,14 +354,18 @@ final class DetailViewModel {
 
     private func prefetchStreams(addons: [AddonSource]) async {
         guard route.type == "movie", prefetchedStreams == nil else { return }
-        let groups = await service.streams(type: route.type, id: route.id, addons: addons)
+        let groups = await service.streams(type: route.type, id: route.id, addons: addons) { [weak self] partial in
+            await MainActor.run {
+                withAnimation(Theme.Motion.spring) { self?.partialStreams = partial }
+            }
+        }
         guard !Task.isCancelled else { return }
         withAnimation(Theme.Motion.spring) { prefetchedStreams = groups }
     }
 
     /// The best qualities on offer across every addon, e.g. ["4K", "Dolby Vision", "HDR"].
     var availableQualities: [String] {
-        let infos = (prefetchedStreams ?? [])
+        let infos = (prefetchedStreams ?? partialStreams)
             .compactMap { try? $0.result.get() }
             .flatMap { $0 }
             .filter(\.stream.isSupported)

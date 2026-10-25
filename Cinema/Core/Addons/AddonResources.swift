@@ -81,6 +81,24 @@ struct MetaPreview: Decodable, Hashable, Sendable, Identifiable {
     }
 }
 
+extension MetaPreview: Encodable {
+    /// Written back in the addon format, for Home's saved rows.
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(type, forKey: .type)
+        try c.encode(name, forKey: .name)
+        try c.encodeIfPresent(poster, forKey: .poster)
+        try c.encodeIfPresent(posterShape, forKey: .posterShape)
+        try c.encodeIfPresent(background, forKey: .background)
+        try c.encodeIfPresent(logo, forKey: .logo)
+        try c.encodeIfPresent(description, forKey: .description)
+        try c.encodeIfPresent(releaseInfo, forKey: .releaseInfo)
+        try c.encodeIfPresent(imdbRating, forKey: .imdbRating)
+        try c.encode(genres, forKey: .genres)
+    }
+}
+
 extension MetaPreview {
     init(
         id: String, type: String, name: String, poster: String? = nil, background: String? = nil,

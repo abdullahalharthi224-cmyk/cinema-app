@@ -370,7 +370,9 @@ private struct DownloadRow: View {
             if DownloadSettings.shared.wifiOnly && NetworkMonitor.shared.isExpensive {
                 Text("Waiting for Wi-Fi").foregroundStyle(.orange)
             } else {
-                let received = ByteCountFormatter.string(fromByteCount: item.receivedBytes, countStyle: .file)
+                // Live from the progress, which updates more often than the saved byte count.
+                let liveBytes = progress.map { Int64(Double(item.expectedBytes) * $0) } ?? item.receivedBytes
+                let received = ByteCountFormatter.string(fromByteCount: max(liveBytes, item.receivedBytes), countStyle: .file)
                 Text(verbatim: item.expectedBytes > 0 ? "\(received) / \(size)" : received)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
