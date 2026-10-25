@@ -257,7 +257,10 @@ struct MetadataLine: View {
                 }
             ))
         }
-        if !genres.isEmpty { parts.append(AnyView(Text(verbatim: genres.joined(separator: ", ")))) }
+        if !genres.isEmpty {
+            let separator = AppLanguage.current.isRightToLeft ? "، " : ", "
+            parts.append(AnyView(Text(verbatim: GenreName.display(genres).joined(separator: separator))))
+        }
         return parts
     }
 }

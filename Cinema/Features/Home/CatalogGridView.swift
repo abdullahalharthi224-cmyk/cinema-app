@@ -96,7 +96,7 @@ struct CatalogGridView: View {
             HStack(spacing: Theme.Spacing.s) {
                 chip(title: Text("All"), isSelected: genre == nil) { genre = nil }
                 ForEach(reference.catalog.genreOptions, id: \.self) { option in
-                    chip(title: Text(verbatim: option), isSelected: genre == option) { genre = option }
+                    chip(title: Text(verbatim: GenreName.display(option)), isSelected: genre == option) { genre = option }
                 }
             }
             .padding(.horizontal, Theme.Spacing.l)

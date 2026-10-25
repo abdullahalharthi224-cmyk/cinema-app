@@ -47,22 +47,43 @@ final class HomeViewModel {
     }
 
     /// Titles for the hero carousel: the first row that has artwork.
+    /// Titles for the hero: a fresh mix of the first addon's popular movies and
+    /// series each time Cinema opens (the lists themselves change only slowly).
     var hero: (items: [MetaPreview], addonID: String)? {
-        for row in rows {
-            guard case .loaded(let items) = states[row.id] else { continue }
-            let withArt = items.filter { $0.background != nil || $0.poster != nil }
-            if withArt.count >= 3 {
-                return (Array(withArt.prefix(6)), row.addon.id)
-            }
+        guard let first = rows.first(where: { row in
+            guard case .loaded(let items) = states[row.id] else { return false }
+            return items.filter(Self.hasArt).count >= 3
+        }) else { return nil }
+        // That addon's first movie row and first series row (or just the first row).
+        let addonRows = rows.filter { $0.addon.id == first.addon.id }
+        var picked = [first]
+        if let other = addonRows.first(where: { $0.type != first.type && isLoaded($0) }) { picked.append(other) }
+        let candidates = picked.flatMap { row -> [MetaPreview] in
+            guard case .loaded(let items) = states[row.id] else { return [] }
+            return Array(items.filter(Self.hasArt).prefix(20))
         }
-        return nil
+        return (Self.mix(candidates), first.addon.id)
     }
 
     /// Hero titles from one chosen addon row, when it has artwork.
     func hero(fromRow id: String) -> (items: [MetaPreview], addonID: String)? {
         guard let row = rows.first(where: { $0.id == id }), case .loaded(let items) = states[row.id] else { return nil }
-        let withArt = items.filter { $0.background != nil || $0.poster != nil }
-        return withArt.isEmpty ? nil : (Array(withArt.prefix(6)), row.addon.id)
+        let withArt = Array(items.filter(Self.hasArt).prefix(20))
+        return withArt.isEmpty ? nil : (Self.mix(withArt), row.addon.id)
+    }
+
+    private static func hasArt(_ item: MetaPreview) -> Bool {
+        item.background != nil || item.poster != nil
+    }
+
+    /// Six titles in an order that's new each launch but steady while Cinema is
+    /// open (Swift's hashes are seeded per launch), preferring wide artwork.
+    private static func mix(_ items: [MetaPreview]) -> [MetaPreview] {
+        var seen = Set<String>()
+        let unique = items.filter { seen.insert($0.id).inserted }
+        let ordered = unique.sorted { ($0.id + "|hero").hashValue < ($1.id + "|hero").hashValue }
+        let wide = ordered.filter { $0.background != nil }
+        return Array((wide.count >= 6 ? wide : ordered).prefix(6))
     }
 
     /// The "Top 10" row: the first popular movie catalog, falling back to any loaded row.

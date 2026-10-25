@@ -102,7 +102,7 @@ struct DetailView: View {
                     if !model.genres.isEmpty {
                         FlowLayout(spacing: Theme.Spacing.s) {
                             ForEach(model.genres, id: \.self) { genre in
-                                Text(LocalizedStringKey(genre))
+                                Text(verbatim: GenreName.display(genre))
                                     .font(.footnote.weight(.semibold))
                                     .foregroundStyle(.primary.opacity(0.85))
                                     .padding(.horizontal, 12)
