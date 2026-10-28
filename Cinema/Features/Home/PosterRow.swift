@@ -238,6 +238,8 @@ private struct RankNumeral: View {
 /// Wide landscape cards for titles the user has started.
 struct ContinueWatchingRow: View {
     let items: [WatchHistoryItem]
+    /// Series completion, by title.
+    var completion: [String: Double] = [:]
     var onRemove: (WatchHistoryItem) -> Void
 
     var body: some View {
@@ -249,7 +251,7 @@ struct ContinueWatchingRow: View {
                 LazyHStack(spacing: Theme.Spacing.m) {
                     ForEach(items) { item in
                         NavigationLink(value: MetaRoute(history: item)) {
-                            ContinueWatchingCard(item: item)
+                            ContinueWatchingCard(item: item, completion: completion[item.metaID])
                         }
                         .buttonStyle(.cardPress)
                         .contextMenu {
@@ -273,6 +275,7 @@ struct ContinueWatchingRow: View {
 
 private struct ContinueWatchingCard: View {
     let item: WatchHistoryItem
+    var completion: Double?
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -327,6 +330,12 @@ private struct ContinueWatchingCard: View {
                 .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
         }
         .shadow(color: .black.opacity(0.5), radius: 14, y: 8)
+        .overlay(alignment: .topTrailing) {
+            if let completion {
+                CompletionBadge(share: completion)
+                    .padding(Theme.Spacing.s)
+            }
+        }
         .overlay(alignment: .center) {
             Image(systemName: "play.fill")
                 .font(.system(size: 16, weight: .bold))

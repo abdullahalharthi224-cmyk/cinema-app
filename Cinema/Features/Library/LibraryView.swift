@@ -8,6 +8,9 @@ struct LibraryView: View {
     @Query(sort: \WatchHistoryItem.lastWatched, order: .reverse) private var allHistory: [WatchHistoryItem]
     @Query(sort: \WatchlistItem.addedAt, order: .reverse) private var allWatchlist: [WatchlistItem]
     @Query private var allProgress: [PlaybackProgress]
+    @Query(sort: \UserList.sortIndex) private var allLists: [UserList]
+    @Query private var allListItems: [UserListItem]
+    @Query private var allRatings: [TitleRating]
 
     @State private var launcher = PlaybackLauncher()
     @Namespace private var zoom
@@ -56,6 +59,23 @@ struct LibraryView: View {
         allWatchlist.filter { $0.profileID == ProfileSession.shared.activeID }
     }
 
+    private var lists: [UserList] {
+        allLists.filter { $0.profileID == ProfileSession.shared.activeID }
+    }
+
+    private var listCounts: [UUID: Int] {
+        Dictionary(allListItems.map { ($0.listID, 1) }, uniquingKeysWith: +)
+    }
+
+    private var likedCount: Int {
+        allRatings.filter { $0.profileID == ProfileSession.shared.activeID && $0.liked }.count
+    }
+
+    /// How far through each started series this profile is.
+    private var completion: [String: Double] {
+        SeriesCompletion.shares(for: history.filter { $0.type == "series" }.map(\.metaID), progress: allProgress)
+    }
+
     /// Where this profile stopped in each video.
     private var progress: [String: PlaybackProgress] {
         let mine = allProgress.filter { $0.profileID == ProfileSession.shared.activeID }
@@ -75,7 +95,7 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if history.isEmpty && watchlist.isEmpty && downloads.isEmpty {
+                if history.isEmpty && watchlist.isEmpty && downloads.isEmpty && lists.isEmpty && likedCount == 0 {
                     ContentUnavailableView(
                         "Your Library Is Empty",
                         systemImage: "square.stack",
@@ -93,6 +113,10 @@ struct LibraryView: View {
                                     if !downloads.isEmpty { Text("Downloads").tag(Filter.downloads) }
                                 }
                                 .pickerStyle(.segmented)
+                            }
+
+                            if filter == .all || filter == .myList {
+                                UserListsRow(lists: lists, counts: listCounts, likedCount: likedCount)
                             }
 
                             if (filter == .all || filter == .downloads) && !downloads.isEmpty {
@@ -123,6 +147,7 @@ struct LibraryView: View {
                             }
 
                             if (filter == .all || filter == .watched) && !history.isEmpty {
+                                let shares = completion
                                 section(title: "Recently Watched", count: history.count) {
                                     ForEach(history) { item in
                                         let transitionID = "library|" + item.key
@@ -133,7 +158,8 @@ struct LibraryView: View {
                                                 caption: item.episodeLabel.map { Text(verbatim: $0) }
                                                     ?? Text(item.type == "movie" ? "Movie" : "TV Series"),
                                                 progress: saved.flatMap { $0.isResumable ? $0.fraction : nil },
-                                                watched: saved?.watched == true
+                                                watched: item.type == "series" ? (shares[item.metaID] ?? 0) >= 1 : saved?.watched == true,
+                                                completion: shares[item.metaID]
                                             )
                                             .zoomSource(id: transitionID, in: zoom)
                                         }
@@ -159,6 +185,14 @@ struct LibraryView: View {
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle("Library")
             .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        EpisodeCalendarView()
+                    } label: {
+                        Image(systemName: "calendar")
+                    }
+                    .accessibilityLabel("Calendar")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         StatsView()
@@ -215,13 +249,15 @@ struct LibraryView: View {
 
 /// One library title: an even 2:3 poster (with progress when started), its
 /// name and one caption line, so every card in the grid lines up.
-private struct LibraryCard: View {
+struct LibraryCard: View {
     let id: String
     let name: String
     let poster: String?
     let caption: Text
     var progress: Double? = nil
     var watched = false
+    /// For series: the share of episodes watched.
+    var completion: Double? = nil
 
     @State private var localized: TitleLocalizer.Localized?
 
@@ -244,6 +280,12 @@ private struct LibraryCard: View {
                         .padding(.horizontal, Theme.Spacing.s)
                         .padding(.bottom, Theme.Spacing.s)
                         .environment(\.layoutDirection, .leftToRight)
+                    }
+                }
+                .overlay(alignment: .topLeading) {
+                    if let completion, !watched {
+                        CompletionBadge(share: completion)
+                            .padding(5)
                     }
                 }
                 .overlay(alignment: .topTrailing) {

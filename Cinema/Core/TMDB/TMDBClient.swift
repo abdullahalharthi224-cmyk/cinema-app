@@ -434,9 +434,10 @@ struct TMDBEpisode: Decodable, Sendable {
     var name: String?
     var overview: String?
     var stillPath: String?
+    var airDate: String?
 
     enum CodingKeys: String, CodingKey {
-        case episodeNumber = "episode_number", name, overview, stillPath = "still_path"
+        case episodeNumber = "episode_number", name, overview, stillPath = "still_path", airDate = "air_date"
     }
 }
 

@@ -77,6 +77,39 @@ struct CinemaBackup: Codable {
         var seconds: Double
     }
 
+    struct ListRecord: Codable {
+        var id: UUID
+        var profileID: UUID?
+        var name: String
+        var symbol: String
+        var colorHex: String
+        var sortIndex: Int
+        var createdAt: Date
+    }
+
+    struct ListItemRecord: Codable {
+        var listID: UUID
+        var profileID: UUID?
+        var metaID: String
+        var type: String
+        var name: String
+        var poster: String?
+        var background: String?
+        var addonID: String?
+        var addedAt: Date
+    }
+
+    struct RatingRecord: Codable {
+        var profileID: UUID?
+        var metaID: String
+        var type: String
+        var name: String
+        var poster: String?
+        var background: String?
+        var liked: Bool
+        var date: Date
+    }
+
     /// A setting as stored in UserDefaults.
     enum Setting: Codable, Equatable {
         case bool(Bool)
@@ -103,6 +136,10 @@ struct CinemaBackup: Codable {
     var secrets: Secrets?
     /// For the viewing statistics (missing in older backups).
     var viewing: [ViewingRecord]?
+    /// Custom lists and likes (missing in older backups).
+    var lists: [ListRecord]?
+    var listItems: [ListItemRecord]?
+    var ratings: [RatingRecord]?
 }
 
 /// Builds and applies backups.
@@ -123,6 +160,9 @@ enum BackupService {
         let watchlist = (try? context.fetch(FetchDescriptor<WatchlistItem>())) ?? []
         let progress = (try? context.fetch(FetchDescriptor<PlaybackProgress>())) ?? []
         let viewing = (try? context.fetch(FetchDescriptor<ViewingLog>())) ?? []
+        let lists = (try? context.fetch(FetchDescriptor<UserList>())) ?? []
+        let listItems = (try? context.fetch(FetchDescriptor<UserListItem>())) ?? []
+        let ratings = (try? context.fetch(FetchDescriptor<TitleRating>())) ?? []
 
         var settings: [String: CinemaBackup.Setting] = [:]
         for (key, value) in UserDefaults.standard.dictionaryRepresentation()
@@ -165,6 +205,18 @@ enum BackupService {
             viewing: viewing.map {
                 .init(profileID: $0.profileID, day: $0.day, metaID: $0.metaID, type: $0.type, videoID: $0.videoID,
                       name: $0.name, poster: $0.poster, background: $0.background, seconds: $0.seconds)
+            },
+            lists: lists.map {
+                .init(id: $0.id, profileID: $0.profileID, name: $0.name, symbol: $0.symbol, colorHex: $0.colorHex,
+                      sortIndex: $0.sortIndex, createdAt: $0.createdAt)
+            },
+            listItems: listItems.map {
+                .init(listID: $0.listID, profileID: $0.profileID, metaID: $0.metaID, type: $0.type, name: $0.name,
+                      poster: $0.poster, background: $0.background, addonID: $0.addonID, addedAt: $0.addedAt)
+            },
+            ratings: ratings.map {
+                .init(profileID: $0.profileID, metaID: $0.metaID, type: $0.type, name: $0.name, poster: $0.poster,
+                      background: $0.background, liked: $0.liked, date: $0.date)
             }
         )
     }
@@ -190,6 +242,11 @@ enum BackupService {
         try context.delete(model: WatchlistItem.self)
         try context.delete(model: PlaybackProgress.self)
         if backup.viewing != nil { try context.delete(model: ViewingLog.self) }
+        if backup.lists != nil {
+            try context.delete(model: UserList.self)
+            try context.delete(model: UserListItem.self)
+        }
+        if backup.ratings != nil { try context.delete(model: TitleRating.self) }
 
         for record in backup.profiles {
             let profile = Profile(name: record.name, symbol: record.symbol, colorHex: record.colorHex, sortIndex: record.sortIndex)
@@ -239,6 +296,25 @@ enum BackupService {
                                  videoID: record.videoID, name: record.name, poster: record.poster, background: record.background)
             log.seconds = record.seconds
             context.insert(log)
+        }
+        for record in backup.lists ?? [] {
+            let list = UserList(profileID: record.profileID, name: record.name, symbol: record.symbol,
+                                colorHex: record.colorHex, sortIndex: record.sortIndex)
+            list.id = record.id
+            list.createdAt = record.createdAt
+            context.insert(list)
+        }
+        for record in backup.listItems ?? [] {
+            let item = UserListItem(listID: record.listID, profileID: record.profileID, metaID: record.metaID, type: record.type,
+                                    name: record.name, poster: record.poster, background: record.background, addonID: record.addonID)
+            item.addedAt = record.addedAt
+            context.insert(item)
+        }
+        for record in backup.ratings ?? [] {
+            let rating = TitleRating(profileID: record.profileID, metaID: record.metaID, type: record.type, name: record.name,
+                                     poster: record.poster, background: record.background, liked: record.liked)
+            rating.date = record.date
+            context.insert(rating)
         }
         try context.save()
 

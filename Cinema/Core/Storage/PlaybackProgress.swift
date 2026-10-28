@@ -83,3 +83,26 @@ enum PlaybackProgressStore {
         try? context.save()
     }
 }
+
+extension PlaybackProgressStore {
+    /// Marks several videos at once (a season, or everything before an episode), saving once.
+    static func setWatched(_ watched: Bool, metaID: String, videoIDs: [String], in context: ModelContext) {
+        let profileID = ProfileSession.shared.activeID
+        let existing = (try? context.fetch(FetchDescriptor<PlaybackProgress>(predicate: #Predicate {
+            $0.metaID == metaID && $0.profileID == profileID
+        }))) ?? []
+        let byVideo = Dictionary(existing.map { ($0.videoID, $0) }, uniquingKeysWith: { first, _ in first })
+        for videoID in videoIDs {
+            let record = byVideo[videoID] ?? {
+                let new = PlaybackProgress(profileID: profileID, metaID: metaID, videoID: videoID)
+                context.insert(new)
+                return new
+            }()
+            guard record.watched != watched || (!watched && record.position > 0) else { continue }
+            record.watched = watched
+            if !watched { record.position = 0 }
+            record.updatedAt = .now
+        }
+        try? context.save()
+    }
+}

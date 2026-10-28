@@ -27,6 +27,12 @@ struct HomeView: View {
     private static let kidsShelvesID = "kids.shelves"
     @Query private var allProgress: [PlaybackProgress]
     @Query(sort: \WatchlistItem.addedAt, order: .reverse) private var allWatchlist: [WatchlistItem]
+    @Query(sort: \TitleRating.date, order: .reverse) private var allRatings: [TitleRating]
+
+    /// This profile's thumbs up and down.
+    private var ratings: [TitleRating] {
+        allRatings.filter { $0.profileID == ProfileSession.shared.activeID }
+    }
 
     /// This profile's "My List".
     private var watchlist: [WatchlistItem] {
@@ -209,6 +215,7 @@ struct HomeView: View {
     /// Changes when the profile watches or saves something new.
     private var tasteKey: String {
         (history.prefix(3).map(\.metaID) + watchlist.prefix(3).map(\.metaID)).joined(separator: "|")
+            + ratings.prefix(10).map { "\($0.metaID)\($0.liked ? "+" : "-")" }.joined()
             + "|\(ProfileSession.shared.activeID?.uuidString ?? "")|\(TMDBAccount.shared.isConnected)"
     }
 
@@ -223,7 +230,11 @@ struct HomeView: View {
             + watchlist.map { TasteModel.Seed(metaID: $0.metaID, name: $0.name, isSeries: $0.type == "series") })
             .filter { $0.isSeries && seriesSeen.insert($0.metaID).inserted }
         let watched = Set(allProgress.filter { $0.profileID == ProfileSession.shared.activeID && $0.watched }.map(\.videoID))
-        await taste.load(recent: recent, series: series, watched: watched)
+        let seed = { (rating: TitleRating) in TasteModel.Seed(metaID: rating.metaID, name: rating.name, isSeries: rating.type == "series") }
+        await taste.load(
+            recent: recent, series: series, watched: watched,
+            liked: ratings.filter(\.liked).map(seed), disliked: ratings.filter { !$0.liked }.map(seed)
+        )
     }
 
     /// Home's rows: the built-in ones and every addon row worth showing.
@@ -243,7 +254,10 @@ struct HomeView: View {
         switch id {
         case HomeLayout.continueWatching:
             if !history.isEmpty {
-                ContinueWatchingRow(items: Array(history.prefix(15))) { item in
+                ContinueWatchingRow(
+                    items: Array(history.prefix(15)),
+                    completion: SeriesCompletion.shares(for: history.prefix(15).filter { $0.type == "series" }.map(\.metaID), progress: allProgress)
+                ) { item in
                     withAnimation(Theme.Motion.spring) {
                         context.delete(item)
                         try? context.save()

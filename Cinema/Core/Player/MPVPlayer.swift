@@ -464,6 +464,7 @@ final class MPVEngine: NSObject, VideoEngine {
     nonisolated(unsafe) private var durationForPictureInPicture: Double = 0
     private var isBuffering = false
     private var speed: Double = 1
+    private var thumbnailer: MPVThumbnailer?
     /// The floating window's clock: it shows elapsed and remaining time from it.
     private let timebase: CMTimebase? = {
         var timebase: CMTimebase?
@@ -502,6 +503,7 @@ final class MPVEngine: NSObject, VideoEngine {
             pictureInPicture?.invalidatePlaybackState()
         case .buffering(let buffering):
             isBuffering = buffering
+            thumbnailer?.setMainBuffering(buffering)
             updateClockRate()
         default:
             break
@@ -532,6 +534,9 @@ final class MPVEngine: NSObject, VideoEngine {
         handle.setDouble("sub-delay", 0)
         handle.command(["loadfile", url.absoluteString, "replace"])
         handle.setFlag("pause", false)
+        thumbnailer?.destroy()
+        thumbnailer = MPVThumbnailer(url: url)
+        thumbnailer?.startBackgroundFrames()
     }
 
     func setPaused(_ paused: Bool) { handle.setFlag("pause", paused) }
@@ -592,9 +597,12 @@ final class MPVEngine: NSObject, VideoEngine {
         }
     }
 
-    func thumbnail(at seconds: Double) async -> UIImage? { nil }
+    func thumbnail(at seconds: Double) async -> UIImage? { await thumbnailer?.thumbnail(at: seconds) }
+    func cachedThumbnail(near seconds: Double) -> UIImage? { thumbnailer?.cachedThumbnail(near: seconds) }
 
     func destroy() {
+        thumbnailer?.destroy()
+        thumbnailer = nil
         pictureInPicture?.stopPictureInPicture()
         pictureInPicture?.delegate = nil
         pictureInPicture = nil
