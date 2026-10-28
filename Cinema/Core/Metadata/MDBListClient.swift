@@ -43,6 +43,17 @@ struct MDBListClient: Sendable {
 
     /// The scores for a title, in display order, leaving out sources without one.
     func ratings(imdbID: String, isSeries: Bool) async throws -> [ExternalRating] {
+        // The real network is cached for a while; test doubles never are.
+        let cacheKey = http is URLSessionHTTPClient ? "\(apiKey.hashValue)|\(imdbID)|\(isSeries)" : nil
+        if let cacheKey, let cached = await ResponseCache.ratings.value(for: cacheKey, as: [ExternalRating].self) {
+            return cached
+        }
+        let ratings = try await fetchRatings(imdbID: imdbID, isSeries: isSeries)
+        if let cacheKey { await ResponseCache.ratings.store(ratings, for: cacheKey) }
+        return ratings
+    }
+
+    private func fetchRatings(imdbID: String, isSeries: Bool) async throws -> [ExternalRating] {
         let item = try await fetch(imdbID: imdbID, isSeries: isSeries)
         let byName = Dictionary(
             (item.ratings ?? []).compactMap { rating -> (String, Double)? in

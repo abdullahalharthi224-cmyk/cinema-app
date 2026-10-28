@@ -39,6 +39,9 @@ final class HomeViewModel {
         return Double(withPoster) / Double(items.count) >= 0.5
     }
 
+    /// Some row was fetched from the addons this session (not only the saved copy).
+    var hasFreshRows: Bool { !freshRowIDs.isEmpty }
+
     /// Some row has titles to show (fresh or saved), so Home can show them even offline.
     var hasLoadedRows: Bool { rows.contains { isLoaded($0) } }
 
@@ -164,6 +167,8 @@ final class HomeViewModel {
                 switch state {
                 case .loaded(let items):
                     freshRowIDs.insert(id)
+                    // Unchanged since the saved copy (the usual case): nothing to redraw or save.
+                    if case .loaded(let current) = states[id], current == items { break }
                     HomeRowCache.save(items, rowID: id, kidsMaxAge: kidsMaxAge)
                     withAnimation(.smooth) { states[id] = state }
                     ImagePipeline.shared.prefetch(items.prefix(8).compactMap { $0.poster?.asURL })

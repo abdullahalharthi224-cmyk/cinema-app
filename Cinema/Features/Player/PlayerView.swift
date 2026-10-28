@@ -104,7 +104,7 @@ struct PlayerView: View {
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, Theme.Spacing.l)
                 .padding(.vertical, Theme.Spacing.m)
-                .background(.ultraThinMaterial, in: Capsule())
+                .background(.adaptiveMaterial, in: Capsule())
                 .transition(.scale(scale: 0.9).combined(with: .opacity))
                 .allowsHitTesting(false)
             }
@@ -221,11 +221,15 @@ struct PlayerView: View {
         .sensoryFeedback(.impact(weight: .medium), trigger: speedBeforeBoost == nil)
         .sensoryFeedback(.impact(weight: .medium), trigger: model.videoFill)
         .onAppear {
+            PlayerPresence.shared.set(open: true)
             OrientationController.lock(.landscape)
             scheduleHide()
         }
         .onDisappear {
+            hideTask?.cancel()
+            pauseScreenTask?.cancel()
             model.close()
+            PlayerPresence.shared.set(open: false)
             OrientationController.lock(.portrait)
         }
         .onChange(of: model.isPaused) { _, paused in
@@ -446,7 +450,7 @@ struct PlayerView: View {
                     .font(.caption.weight(.semibold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(.ultraThinMaterial, in: Capsule())
+                    .background(.adaptiveMaterial, in: Capsule())
                     .accessibilityLabel("Private Viewing")
             }
 
@@ -461,7 +465,7 @@ struct PlayerView: View {
             }
             AirPlayButton()
                 .frame(width: 40, height: 40)
-                .background(.ultraThinMaterial, in: Circle())
+                .background(.adaptiveMaterial, in: Circle())
                 .overlay(Circle().strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
                 .accessibilityLabel("AirPlay")
             audioAndSubtitlesButton
@@ -659,7 +663,7 @@ struct PlayerView: View {
         }
         .padding(Theme.Spacing.xl)
         .frame(maxWidth: 380)
-        .background(.ultraThinMaterial, in: .continuous(Theme.Radius.large))
+        .background(.adaptiveMaterial, in: .continuous(Theme.Radius.large))
     }
 
     // MARK: Behaviour
@@ -884,7 +888,7 @@ private struct ScrubPreview: View {
     var body: some View {
         VStack(spacing: 6) {
             if image == nil, let fallback {
-                RemoteImage(url: fallback) { Color.white.opacity(0.08) }
+                RemoteImage(url: fallback, size: .small) { Color.white.opacity(0.08) }
                     .frame(width: 172, height: 97)
                     .blur(radius: 14)
                     .overlay(Color.black.opacity(0.25))
@@ -912,7 +916,7 @@ private struct ScrubPreview: View {
                 .monospacedDigit()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 5)
-                .background(.ultraThinMaterial, in: Capsule())
+                .background(.adaptiveMaterial, in: Capsule())
         }
         .animation(Theme.Motion.snappy, value: image != nil)
     }
@@ -968,7 +972,7 @@ private struct NextEpisodeCountdown: View {
         .padding(.leading, Theme.Spacing.s)
         .padding(.trailing, Theme.Spacing.m)
         .padding(.vertical, Theme.Spacing.s)
-        .background(.ultraThinMaterial, in: Capsule())
+        .background(.adaptiveMaterial, in: Capsule())
         .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 0.5))
         .shadow(color: .black.opacity(0.4), radius: 16)
         .sensoryFeedback(.selection, trigger: seconds)
@@ -1053,7 +1057,7 @@ private struct NoticeCapsule: View {
         .font(.subheadline.weight(.semibold))
         .padding(.horizontal, Theme.Spacing.l)
         .padding(.vertical, Theme.Spacing.s)
-        .background(.ultraThinMaterial, in: Capsule())
+        .background(.adaptiveMaterial, in: Capsule())
         .environment(\.layoutDirection, AppLanguage.current.isRightToLeft ? .rightToLeft : .leftToRight)
     }
 }

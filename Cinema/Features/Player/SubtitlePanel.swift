@@ -55,7 +55,7 @@ struct SubtitlePanel: View {
         .padding(Theme.Spacing.l)
         .frame(width: 380)
         .frame(maxHeight: .infinity)
-        .background(.ultraThinMaterial, in: .continuous(Theme.Radius.large))
+        .background(.adaptiveMaterial, in: .continuous(Theme.Radius.large))
         .overlay {
             RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
                 .strokeBorder(.white.opacity(0.12), lineWidth: 0.5)

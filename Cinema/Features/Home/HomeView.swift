@@ -16,7 +16,8 @@ struct HomeView: View {
     }
 
     @State private var model = HomeViewModel()
-    @State private var scrollOffset: CGFloat = 0
+    /// Scroll-driven state, kept out of this view so scrolling doesn't redraw all of Home.
+    @State private var chrome = HomeScrollChrome()
     @State private var launcher = PlaybackLauncher()
     @State private var taste = TasteModel()
     @State private var kidsShelves = KidsShelvesModel()
@@ -71,8 +72,12 @@ struct HomeView: View {
             await loadTaste()
         }
         .task(id: widgetKey) {
+            guard !PlayerPresence.shared.isOpen else { return }
             let today = taste.newEpisodes.filter { Calendar.current.isDateInToday($0.episode.date ?? .distantPast) }
             await WidgetBridge.update(history: history, newToday: today)
+        }
+        .onChange(of: model.hasLoadedRows, initial: true) { _, loaded in
+            if loaded { PerformanceMonitor.shared.markHomeReady(fromCache: !model.hasFreshRows) }
         }
         .task(id: router.continueKey) {
             await resumeFromWidget()
@@ -96,7 +101,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
                     Group {
                         if let hero {
-                            HeroCarousel(items: hero.items, addonID: hero.addonID, height: heroHeight) { item in
+                            HeroCarousel(items: hero.items, addonID: hero.addonID, height: heroHeight, chrome: chrome) { item in
                                 let request = StreamRequest(
                                     type: item.type, videoID: item.id, title: item.name, subtitle: nil,
                                     history: MetaRoute(preview: item, addonID: hero.addonID).historyEntryBase
@@ -110,10 +115,12 @@ struct HomeView: View {
                             heroSkeleton(height: heroHeight)
                         }
                     }
-                    .onGeometryChange(for: CGFloat.self) { geometry in
-                        geometry.frame(in: .scrollView(axis: .vertical)).minY
-                    } action: { minY in
-                        scrollOffset = -minY
+                    // Only coarse values leave the geometry reader: the bar's fade in 5% steps
+                    // and whether the hero is on screen, so Home isn't redrawn on every frame.
+                    .onGeometryChange(for: HomeScrollChrome.Reading.self) { geometry in
+                        HomeScrollChrome.Reading(minY: geometry.frame(in: .scrollView(axis: .vertical)).minY, heroHeight: heroHeight)
+                    } action: { reading in
+                        chrome.apply(reading)
                     }
 
                     LazyVStack(alignment: .leading, spacing: Theme.Spacing.xxxl) {
@@ -161,7 +168,7 @@ struct HomeView: View {
             .scrollIndicators(.hidden)
             .ignoresSafeArea(edges: .top)
             .overlay(alignment: .top) {
-                GlassTopBar(title: Text("Home"), progress: barProgress(heroHeight: heroHeight))
+                HomeTopBar(chrome: chrome)
             }
             .overlay(alignment: .topTrailing) {
                 ProfileButton()
@@ -190,11 +197,14 @@ struct HomeView: View {
         return model.hero
     }
 
-    /// Changes when what the widget shows should change.
+    /// Changes only when what the widget shows really changes: a viewing ends
+    /// (the player closes), the titles or profile change, or today's new episodes.
+    /// Never while a video plays.
     private var widgetKey: String {
-        // Progress in 5% steps: the widget doesn't need every second of playback.
-        history.prefix(3).map { "\($0.key)|\(Int($0.progress * 20))" }.joined(separator: ",")
-            + "|\(taste.newEpisodes.count)|\(Appearance.shared.language.rawValue)"
+        guard !PlayerPresence.shared.isOpen else { return "playing" }
+        return history.prefix(3).map(\.key).joined(separator: ",")
+            + "|\(PlayerPresence.shared.sessions)|\(ProfileSession.shared.activeID?.uuidString ?? "")"
+            + "|\(taste.newEpisodes.map(\.id).joined())|\(Appearance.shared.language.rawValue)"
     }
 
     /// Resumes the title tapped in the widget, once Cinema is unlocked.
@@ -217,9 +227,18 @@ struct HomeView: View {
         (history.prefix(3).map(\.metaID) + watchlist.prefix(3).map(\.metaID)).joined(separator: "|")
             + ratings.prefix(10).map { "\($0.metaID)\($0.liked ? "+" : "-")" }.joined()
             + "|\(ProfileSession.shared.activeID?.uuidString ?? "")|\(TMDBAccount.shared.isConnected)"
+            + (PlayerPresence.shared.isOpen ? "|playing" : "")
     }
 
     private func loadTaste() async {
+        // Nothing is looked up behind a playing video; it runs once the player closes.
+        guard !PlayerPresence.shared.isOpen else { return }
+        BackgroundActivity.shared.begin("Home recommendations")
+        defer { BackgroundActivity.shared.end("Home recommendations") }
+        await loadTasteNow()
+    }
+
+    private func loadTasteNow() async {
         var seen = Set<String>()
         let recent = history.compactMap { item -> TasteModel.Seed? in
             guard seen.insert(item.metaID).inserted else { return nil }
@@ -299,13 +318,6 @@ struct HomeView: View {
         }
     }
 
-    /// 0 while the hero is in view, rising to 1 as it scrolls away.
-    private func barProgress(heroHeight: CGFloat) -> CGFloat {
-        let start = heroHeight * 0.55
-        let end = heroHeight * 0.8
-        return min(max((scrollOffset - start) / (end - start), 0), 1)
-    }
-
     private func heroSkeleton(height: CGFloat) -> some View {
         ZStack(alignment: .bottom) {
             ShimmerPlaceholder()
@@ -380,6 +392,44 @@ struct HomeView: View {
     }
 }
 
+/// What Home's scrolling changes: the top bar's frosting and whether the hero
+/// is on screen (its slideshow and slow zoom pause when it isn't).
+@MainActor
+@Observable
+final class HomeScrollChrome {
+    struct Reading: Equatable {
+        /// 0 while the hero is in view, rising to 1 as it scrolls away, in 5% steps.
+        var barProgress: CGFloat
+        var heroVisible: Bool
+
+        init(minY: CGFloat, heroHeight: CGFloat) {
+            let offset = -minY
+            let start = heroHeight * 0.55
+            let end = heroHeight * 0.8
+            let progress = min(max((offset - start) / (end - start), 0), 1)
+            barProgress = (progress * 20).rounded() / 20
+            heroVisible = offset < heroHeight - 60
+        }
+    }
+
+    private(set) var barProgress: CGFloat = 0
+    private(set) var heroVisible = true
+
+    func apply(_ reading: Reading) {
+        if reading.barProgress != barProgress { barProgress = reading.barProgress }
+        if reading.heroVisible != heroVisible { heroVisible = reading.heroVisible }
+    }
+}
+
+/// Home's title bar; reads the scroll state itself so only the bar redraws.
+private struct HomeTopBar: View {
+    let chrome: HomeScrollChrome
+
+    var body: some View {
+        GlassTopBar(title: Text("Home"), progress: chrome.barProgress)
+    }
+}
+
 /// A top bar that materialises into frosted glass as content scrolls beneath it.
 struct GlassTopBar: View {
     let title: Text
@@ -394,7 +444,7 @@ struct GlassTopBar: View {
             .opacity(progress)
             .background(alignment: .bottom) {
                 Rectangle()
-                    .fill(.ultraThinMaterial)
+                    .fill(.adaptiveMaterial)
                     .overlay(alignment: .bottom) {
                         Rectangle().fill(Color.primary.opacity(0.08)).frame(height: 0.5)
                     }

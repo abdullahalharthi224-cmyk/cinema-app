@@ -291,10 +291,17 @@ struct TMDBClient: Sendable {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
-        // The real network is cached for a while; test doubles never are.
+        // The real network is cached for a while (in memory, and on disk between
+        // launches); test doubles never are. Searches and the key check aren't saved.
         let cacheKey = http is URLSessionHTTPClient ? request.url?.absoluteString : nil
+        let keepsOnDisk = !path.hasPrefix("search/") && path != "authentication"
         if let cacheKey, let cached = await ResponseCache.tmdb.value(for: cacheKey, as: Data.self),
            let value = try? JSONDecoder.addon.decode(T.self, from: cached) {
+            return value
+        }
+        if let cacheKey, keepsOnDisk, let saved = DiskResponseCache.tmdb.data(for: cacheKey),
+           let value = try? JSONDecoder.addon.decode(T.self, from: saved) {
+            await ResponseCache.tmdb.store(saved, for: cacheKey)
             return value
         }
 
@@ -303,10 +310,17 @@ struct TMDBClient: Sendable {
         do {
             (data, response) = try await http.send(request)
         } catch let error as URLError {
+            // Offline: an older saved copy is better than nothing.
+            if let cacheKey, keepsOnDisk, error.code != .cancelled,
+               let saved = DiskResponseCache.tmdb.data(for: cacheKey, allowStale: true),
+               let value = try? JSONDecoder.addon.decode(T.self, from: saved) {
+                return value
+            }
             throw TMDBError.network(error)
         }
         if let cacheKey, (200..<300).contains(response.statusCode) {
             await ResponseCache.tmdb.store(data, for: cacheKey)
+            if keepsOnDisk { DiskResponseCache.tmdb.store(data, for: cacheKey) }
         }
 
         switch response.statusCode {

@@ -281,7 +281,7 @@ private struct ContinueWatchingCard: View {
         ZStack(alignment: .bottomLeading) {
             Color.clear
                 .overlay {
-                    RemoteImage(url: Artwork.background(id: item.metaID, provided: item.background) ?? item.poster?.asURL)
+                    RemoteImage(url: Artwork.background(id: item.metaID, provided: item.background) ?? item.poster?.asURL, size: .medium)
                 }
                 .clipped()
 
@@ -293,7 +293,7 @@ private struct ContinueWatchingCard: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 if let logo = Artwork.logo(id: item.metaID, provided: item.logo) {
-                    RemoteImage(url: logo, contentMode: .fit) {
+                    RemoteImage(url: logo, contentMode: .fit, size: .medium) {
                         Text(item.name).font(.display(.headline))
                     }
                     .frame(maxWidth: 150, maxHeight: 40, alignment: .leading)
@@ -329,7 +329,7 @@ private struct ContinueWatchingCard: View {
             RoundedRectangle(cornerRadius: Theme.Radius.poster, style: .continuous)
                 .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
         }
-        .shadow(color: .black.opacity(0.5), radius: 14, y: 8)
+        .cardShadow(radius: 12, y: 6, opacity: 0.5)
         .overlay(alignment: .topTrailing) {
             if let completion {
                 CompletionBadge(share: completion)
@@ -341,7 +341,7 @@ private struct ContinueWatchingCard: View {
                 .font(.system(size: 16, weight: .bold))
                 .foregroundStyle(.white)
                 .frame(width: 42, height: 42)
-                .background(.ultraThinMaterial, in: Circle())
+                .background(.adaptiveMaterial, in: Circle())
                 .environment(\.colorScheme, .dark)
         }
     }

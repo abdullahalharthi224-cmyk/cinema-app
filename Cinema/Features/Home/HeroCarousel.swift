@@ -6,10 +6,21 @@ struct HeroCarousel: View {
     let items: [MetaPreview]
     let addonID: String
     let height: CGFloat
+    /// Whether the hero is scrolled into view.
+    var chrome: HomeScrollChrome?
     var onPlay: (MetaPreview) -> Void
 
     @State private var currentID: String?
+    /// Home is the screen showing (not another tab, a pushed page or a sheet).
+    @State private var isShown = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// The slideshow and the slow zoom run only while someone can see them:
+    /// never behind another screen, the player, or with the app in the background.
+    private var isLive: Bool {
+        isShown && (chrome?.heroVisible ?? true) && scenePhase == .active && !PlayerPresence.shared.isOpen
+    }
 
     var body: some View {
         ScrollView(.horizontal) {
@@ -19,7 +30,7 @@ struct HeroCarousel: View {
                         item: item,
                         addonID: addonID,
                         height: height,
-                        isActive: item.id == currentID,
+                        isActive: item.id == currentID && isLive,
                         onPlay: { onPlay(item) }
                     )
                     .containerRelativeFrame(.horizontal)
@@ -33,9 +44,11 @@ struct HeroCarousel: View {
         .scrollIndicators(.hidden)
         .frame(height: height)
         .overlay(alignment: .bottom) { pageIndicator }
-        .task(id: currentID) {
-            // Stays put with Reduce Motion or Low Power Mode on.
-            guard !reduceMotion, !ProcessInfo.processInfo.isLowPowerModeEnabled, items.count > 1 else { return }
+        .task(id: "\(currentID ?? "")|\(isLive)") {
+            // Stays put with Reduce Motion, Low Power Mode or off screen.
+            guard isLive, !reduceMotion, !ProcessInfo.processInfo.isLowPowerModeEnabled, items.count > 1 else { return }
+            BackgroundActivity.shared.begin("Home hero slideshow")
+            defer { BackgroundActivity.shared.end("Home hero slideshow") }
             try? await Task.sleep(for: .seconds(8))
             guard !Task.isCancelled else { return }
             let index = items.firstIndex { $0.id == currentID } ?? 0
@@ -44,8 +57,10 @@ struct HeroCarousel: View {
             }
         }
         .onAppear {
+            isShown = true
             if currentID == nil { currentID = items.first?.id }
         }
+        .onDisappear { isShown = false }
         .sensoryFeedback(.selection, trigger: currentID)
         // Stretch when pulled down; drift slower than the page when scrolled (parallax).
         .visualEffect { [height] content, proxy in
@@ -170,8 +185,8 @@ private struct HeroPage: View {
             withAnimation(Theme.Motion.spring) { lookupFinished = true }
         }
         .onChange(of: isActive, initial: true) { _, active in
-            guard !reduceMotion, !ProcessInfo.processInfo.isLowPowerModeEnabled else { return }
-            if active {
+            // Ken Burns only while the page is in view, and never in Performance Mode.
+            if active && !reduceMotion && !PerformanceSettings.shared.isActive {
                 withAnimation(.linear(duration: 12)) { zoomed = true }
             } else {
                 var transaction = Transaction()
@@ -193,14 +208,14 @@ struct TitleArtwork: View {
 
     var body: some View {
         if let logo {
-            RemoteImage(url: logo, contentMode: .fit) {
+            RemoteImage(url: logo, contentMode: .fit, size: .medium) {
                 title
             }
             .frame(maxWidth: 290, maxHeight: maxHeight)
             .shadow(color: isDarkLogo ? .white.opacity(0.55) : .black.opacity(0.5), radius: isDarkLogo ? 10 : 16)
             .shadow(color: isDarkLogo ? .white.opacity(0.4) : .clear, radius: 1.5)
             .task(id: logo) {
-                let luminance = await ImagePipeline.shared.image(for: logo)?.averageOpaqueLuminance()
+                let luminance = await ImagePipeline.shared.image(for: logo, size: .medium)?.averageOpaqueLuminance()
                 isDarkLogo = (luminance ?? 1) < 0.4
             }
         } else {

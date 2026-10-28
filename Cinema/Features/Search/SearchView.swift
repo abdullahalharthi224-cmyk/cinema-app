@@ -10,6 +10,7 @@ struct SearchView: View {
 
     @State private var query = ""
     @State private var phase: Phase = .idle
+    @State private var path = NavigationPath()
     @AppStorage("search.recent") private var recentStorage = ""
     @Namespace private var zoom
 
@@ -31,7 +32,7 @@ struct SearchView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             content
                 .background(Theme.background.ignoresSafeArea())
                 .navigationTitle("Search")
@@ -41,6 +42,10 @@ struct SearchView: View {
                 .navigationDestination(for: BrowseCategory.self) { category in
                     CategoryView(category: category)
                 }
+        }
+        // A result was opened: the search was worth keeping.
+        .onChange(of: path.count) { old, new in
+            if old == 0, new > 0, case .results = phase { remember(trimmedQuery) }
         }
         .environment(\.zoomNamespace, zoom)
         .task(id: trimmedQuery) {
@@ -190,7 +195,6 @@ struct SearchView: View {
             .padding(.vertical, Theme.Spacing.l)
         }
         .scrollDismissesKeyboard(.immediately)
-        .simultaneousGesture(TapGesture().onEnded { remember(trimmedQuery) })
     }
 
     // MARK: Actions

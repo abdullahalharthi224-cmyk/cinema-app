@@ -78,7 +78,7 @@ struct CompletionBadge: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 7)
         .padding(.vertical, 4)
-        .background(.ultraThinMaterial, in: Capsule())
+        .background(.adaptiveMaterial, in: Capsule())
         .environment(\.colorScheme, .dark)
         .accessibilityLabel(Text("\(Text(share, format: .percent.precision(.fractionLength(0)))) watched"))
     }

@@ -347,7 +347,7 @@ private struct ResolvingIndicator: View {
         }
         .padding(.horizontal, Theme.Spacing.xl)
         .padding(.vertical, Theme.Spacing.l)
-        .background(.ultraThinMaterial, in: .continuous(Theme.Radius.large))
+        .background(.adaptiveMaterial, in: .continuous(Theme.Radius.large))
         .environment(\.colorScheme, .dark)
         .shadow(color: .black.opacity(0.4), radius: 20, y: 8)
     }

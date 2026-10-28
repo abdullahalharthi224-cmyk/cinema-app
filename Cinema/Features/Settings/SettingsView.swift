@@ -7,6 +7,10 @@ struct SettingsView: View {
     @AppStorage(StremioDefaults.emailKey) private var stremioEmail = ""
     @Query(sort: \Profile.sortIndex) private var profiles: [Profile]
     @State private var isPickingProfile = false
+    @State private var versionTaps = 0
+    @State private var cacheSize: Int64?
+    @State private var isClearingCache = false
+    @State private var cacheCleared = false
 
     private var activeProfile: Profile? {
         profiles.first { $0.id == ProfileSession.shared.activeID } ?? profiles.first
@@ -199,6 +203,45 @@ struct SettingsView: View {
                     Text("While on, nothing you watch is added to Continue Watching or your history, and no resume positions are saved.")
                 }
 
+                Section {
+                    Toggle(isOn: Binding(
+                        get: { PerformanceSettings.shared.isEnabled },
+                        set: { PerformanceSettings.shared.isEnabled = $0 }
+                    )) {
+                        Label {
+                            Text("Performance Mode")
+                        } icon: {
+                            SettingsIcon(systemName: "speedometer", color: .mint)
+                        }
+                    }
+                    Button {
+                        Task { await clearCache() }
+                    } label: {
+                        LabeledContent {
+                            if isClearingCache {
+                                ProgressView()
+                            } else if let cacheSize {
+                                Text(verbatim: ByteCountFormatter.string(fromByteCount: cacheSize, countStyle: .file))
+                            }
+                        } label: {
+                            Label {
+                                Text("Clear Cache")
+                                    .foregroundStyle(.primary)
+                            } icon: {
+                                SettingsIcon(systemName: "trash.fill", color: .gray)
+                            }
+                        }
+                    }
+                    .disabled(isClearingCache || cacheSize == 0)
+                } footer: {
+                    if PerformanceSettings.shared.isLowPower && !PerformanceSettings.shared.isEnabled {
+                        Text("On automatically while Low Power Mode is on. Fewer animations and lighter blur and shadows.")
+                    } else {
+                        Text("Fewer animations and lighter blur and shadows. Also turns on by itself in Low Power Mode. Clearing the cache keeps your library, downloads and settings.")
+                    }
+                }
+                .sensoryFeedback(.success, trigger: cacheCleared)
+
                 Section("Stremio Account") {
                     Label {
                         if stremioEmail.isEmpty {
@@ -227,9 +270,19 @@ struct SettingsView: View {
                             SettingsIcon(systemName: "info.circle.fill", color: .gray)
                         }
                     }
+                    // Five taps open the hidden Performance screen.
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        versionTaps += 1
+                        if versionTaps >= 5 {
+                            versionTaps = 0
+                            router.settingsPath.append(.performance)
+                        }
+                    }
                 }
             }
             .navigationTitle("Settings")
+            .task { cacheSize = await CacheMaintenance.sizes().total }
             .fullScreenCover(isPresented: $isPickingProfile) {
                 ProfilePickerView()
             }
@@ -255,11 +308,23 @@ struct SettingsView: View {
                     AppIconView()
                 case .security:
                     SecuritySettingsView()
+                case .performance:
+                    PerformanceView()
                 case .addon(let addon):
                     AddonDetailView(addon: addon)
                 }
             }
         }
+    }
+}
+
+extension SettingsView {
+    private func clearCache() async {
+        isClearingCache = true
+        await CacheMaintenance.clearAll()
+        cacheSize = await CacheMaintenance.sizes().total
+        isClearingCache = false
+        cacheCleared.toggle()
     }
 }
 

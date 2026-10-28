@@ -535,8 +535,12 @@ final class MPVEngine: NSObject, VideoEngine {
         handle.command(["loadfile", url.absoluteString, "replace"])
         handle.setFlag("pause", false)
         thumbnailer?.destroy()
+        // The second instance only opens when frames are first needed (scrubbing).
         thumbnailer = MPVThumbnailer(url: url)
-        thumbnailer?.startBackgroundFrames()
+        // Frames ahead of time only for downloaded files, or streams over Wi-Fi.
+        if url.isFileURL || (NetworkMonitor.shared.isConnected && !NetworkMonitor.shared.isExpensive) {
+            thumbnailer?.startBackgroundFrames()
+        }
     }
 
     func setPaused(_ paused: Bool) { handle.setFlag("pause", paused) }

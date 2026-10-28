@@ -41,6 +41,7 @@ struct RootView: View {
             if phase == .background { LockGate.shared.lockIfNeeded() }
         }
         .sensoryFeedback(.selection, trigger: router.selectedTab)
+        .onAppear { PerformanceMonitor.shared.markFirstFrame() }
         // Reading the accent here re-tints the whole app the moment it changes.
         .tint(Theme.accent)
         // The theme switches the whole app between dark and light instantly.
@@ -79,6 +80,9 @@ struct RootView: View {
             }
             // Swap any old-protocol addons (e.g. the original OpenSubtitles) for their modern versions.
             await AddonStore(context: context).migrateLegacyAddons()
+            // Housekeeping waits until the launch has settled, and runs at most once a day.
+            try? await Task.sleep(for: .seconds(8))
+            CacheMaintenance.trimIfDue()
         }
         .fullScreenCover(isPresented: $isPickingProfile) {
             ProfilePickerView()

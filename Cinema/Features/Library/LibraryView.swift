@@ -13,6 +13,7 @@ struct LibraryView: View {
     @Query private var allRatings: [TitleRating]
 
     @State private var launcher = PlaybackLauncher()
+    @State private var path = NavigationPath()
     @Namespace private var zoom
 
     private typealias Filter = LibraryFilter
@@ -93,7 +94,7 @@ struct LibraryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if history.isEmpty && watchlist.isEmpty && downloads.isEmpty && lists.isEmpty && likedCount == 0 {
                     ContentUnavailableView(
@@ -122,6 +123,8 @@ struct LibraryView: View {
                             if (filter == .all || filter == .downloads) && !downloads.isEmpty {
                                 DownloadsSection(items: downloads) { item in
                                     launcher.playDownloaded(item, context: context)
+                                } open: { route in
+                                    path.append(route)
                                 }
                             }
 
@@ -186,17 +189,13 @@ struct LibraryView: View {
             .navigationTitle("Library")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        EpisodeCalendarView()
-                    } label: {
+                    NavigationLink(value: LibraryRoute.calendar) {
                         Image(systemName: "calendar")
                     }
                     .accessibilityLabel("Calendar")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        StatsView()
-                    } label: {
+                    NavigationLink(value: LibraryRoute.stats) {
                         Image(systemName: "chart.bar.fill")
                     }
                     .accessibilityLabel("Statistics")
@@ -318,6 +317,7 @@ struct LibraryCard: View {
 private struct DownloadsSection: View {
     let items: [DownloadItem]
     let play: (DownloadItem) -> Void
+    let open: (MetaRoute) -> Void
 
     private var manager: DownloadManager { DownloadManager.shared }
 
@@ -334,7 +334,7 @@ private struct DownloadsSection: View {
             }
             VStack(spacing: 0) {
                 ForEach(items) { item in
-                    DownloadRow(item: item, progress: manager.progress[item.id], play: { play(item) })
+                    DownloadRow(item: item, progress: manager.progress[item.id], play: { play(item) }, openRoute: open)
                     if item.id != items.last?.id {
                         Divider().padding(.leading, 84)
                     }
@@ -355,6 +355,7 @@ private struct DownloadRow: View {
     let item: DownloadItem
     let progress: Double?
     let play: () -> Void
+    let openRoute: (MetaRoute) -> Void
 
     private var manager: DownloadManager { DownloadManager.shared }
 
@@ -387,18 +388,32 @@ private struct DownloadRow: View {
         .padding(.vertical, Theme.Spacing.s)
         .contentShape(Rectangle())
         .onTapGesture {
-            if item.state == .completed { play() }
+            // Online, the row opens the title's page (which also plays the download);
+            // offline there's no page to load, so it plays straight away.
+            if NetworkMonitor.shared.isConnected {
+                openPage()
+            } else if item.state == .completed {
+                play()
+            }
         }
         .contextMenu {
             if item.state == .completed {
                 Button(action: play) { Label("Play", systemImage: "play.fill") }
             }
+            Button(action: openPage) { Label("Details", systemImage: "info.circle") }
             Button(role: .destructive) {
                 withAnimation(Theme.Motion.spring) { manager.delete(item) }
             } label: {
                 Label("Delete Download", systemImage: "trash")
             }
         }
+    }
+
+    private func openPage() {
+        var route = MetaRoute(type: item.type, id: item.metaID, name: item.title, poster: item.poster, background: item.background)
+        route.logo = item.logo
+        route.addonID = item.addonID
+        openRoute(route)
     }
 
     @ViewBuilder

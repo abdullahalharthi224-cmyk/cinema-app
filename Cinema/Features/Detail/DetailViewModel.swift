@@ -12,9 +12,15 @@ final class DetailViewModel {
     var selectedSeason: Int?
     /// Streams fetched ahead of time for movies, so quality badges can be
     /// shown and the stream picker opens instantly.
-    private(set) var prefetchedStreams: [StreamGroup]?
+    private(set) var prefetchedStreams: [StreamGroup]? {
+        didSet { updateQualities() }
+    }
     /// The addons that have answered so far, so quality badges appear as each one does.
-    private(set) var partialStreams: [StreamGroup] = []
+    private(set) var partialStreams: [StreamGroup] = [] {
+        didSet { updateQualities() }
+    }
+    /// The best qualities on offer across every addon, e.g. ["4K", "Dolby Vision", "HDR"].
+    private(set) var availableQualities: [String] = []
     /// A colour sampled from the poster, used to tint the page.
     private(set) var tint: Color?
     /// Arabic title, synopsis and genres from TMDB when the app is in Arabic.
@@ -96,31 +102,40 @@ final class DetailViewModel {
         return URL(string: "https://www.youtube.com/watch?v=\(trailer.source)")
     }
 
-    /// Season numbers in order, with specials (season 0) last.
-    var seasons: [Int] {
-        let all = Set((meta?.videos ?? []).compactMap(\.season))
-        return all.filter { $0 > 0 }.sorted() + (all.contains(0) ? [0] : [])
-    }
+    // The episode lists are worked out once when the details arrive, not on
+    // every redraw: a long series has hundreds of episodes, and sorting them
+    // (and reading their dates) while scrolling made the page stutter.
 
+    /// The episode lists, worked out once (in the background) when the details arrive.
+    private var episodeIndex = EpisodeIndex()
+
+    /// Season numbers in order, with specials (season 0) last.
+    var seasons: [Int] { episodeIndex.seasons }
     /// Every regular episode in watching order (specials excluded), for "next episode".
-    var orderedEpisodes: [MetaVideo] {
-        (meta?.videos ?? [])
-            .filter { ($0.season ?? 1) > 0 }
-            .sorted { ($0.season ?? 0, $0.episode ?? 0) < ($1.season ?? 0, $1.episode ?? 0) }
-    }
+    var orderedEpisodes: [MetaVideo] { episodeIndex.ordered }
+    /// Regular episodes already out, for the completion percentage.
+    var airedEpisodes: [MetaVideo] { episodeIndex.aired }
 
     func episode(after video: MetaVideo) -> MetaVideo? {
-        let ordered = orderedEpisodes
-        guard let index = ordered.firstIndex(where: { $0.id == video.id }), index + 1 < ordered.count else { return nil }
-        return ordered[index + 1]
+        guard let index = episodeIndex.position[video.id], index + 1 < orderedEpisodes.count else { return nil }
+        return orderedEpisodes[index + 1]
+    }
+
+    /// The regular episodes before `video`, in order (for "Mark All Before as Watched").
+    func episodes(before video: MetaVideo) -> [MetaVideo] {
+        guard let index = episodeIndex.position[video.id] else { return [] }
+        return Array(orderedEpisodes[..<index])
+    }
+
+    /// Whether any regular episode comes before `video`.
+    func hasEpisodes(before video: MetaVideo) -> Bool {
+        (episodeIndex.position[video.id] ?? 0) > 0
     }
 
     var episodes: [MetaVideo] {
         guard let meta else { return [] }
         if seasons.isEmpty { return meta.videos }
-        return meta.videos
-            .filter { $0.season == selectedSeason }
-            .sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
+        return episodeIndex.bySeason[selectedSeason ?? -1] ?? []
     }
 
     func load(addons: [AddonSource]) async {
@@ -132,6 +147,9 @@ final class DetailViewModel {
             let meta = try await service.meta(
                 type: route.type, id: route.id, preferredAddonID: route.addonID, addons: addons
             )
+            // Sorting hundreds of episodes and reading their dates happens off the main thread.
+            let videos = meta.videos
+            episodeIndex = await Task.detached(priority: .userInitiated) { EpisodeIndex(videos: videos) }.value
             self.meta = meta
             if selectedSeason == nil { selectedSeason = seasons.first }
         } catch {
@@ -363,20 +381,18 @@ final class DetailViewModel {
         withAnimation(Theme.Motion.spring) { prefetchedStreams = groups }
     }
 
-    /// The best qualities on offer across every addon, e.g. ["4K", "Dolby Vision", "HDR"].
-    var availableQualities: [String] {
+    private func updateQualities() {
         let infos = (prefetchedStreams ?? partialStreams)
             .compactMap { try? $0.result.get() }
             .flatMap { $0 }
             .filter(\.stream.isSupported)
             .map(\.info)
-        guard !infos.isEmpty else { return [] }
         var badges: [String] = []
         if let best = infos.compactMap(\.resolution).max() { badges.append(best.label) }
         if infos.contains(where: \.isDolbyVision) { badges.append("Dolby Vision") }
         if infos.contains(where: \.isHDR) { badges.append("HDR") }
         if infos.contains(where: { $0.audio.contains("Atmos") }) { badges.append("Dolby Atmos") }
-        return badges
+        if badges != availableQualities { availableQualities = badges }
     }
 
     var historyEntryBase: WatchHistoryEntry {
@@ -390,6 +406,30 @@ final class DetailViewModel {
     func retry(addons: [AddonSource]) async {
         meta = nil
         await load(addons: addons)
+    }
+}
+
+/// A series' episodes, sorted and grouped once (a long series has hundreds).
+struct EpisodeIndex: Sendable {
+    var seasons: [Int] = []
+    var ordered: [MetaVideo] = []
+    var aired: [MetaVideo] = []
+    var bySeason: [Int: [MetaVideo]] = [:]
+    /// Each regular episode's place in `ordered`.
+    var position: [String: Int] = [:]
+
+    init() {}
+
+    init(videos: [MetaVideo]) {
+        let all = Set(videos.compactMap(\.season))
+        seasons = all.filter { $0 > 0 }.sorted() + (all.contains(0) ? [0] : [])
+        ordered = videos
+            .filter { ($0.season ?? 1) > 0 }
+            .sorted { ($0.season ?? 0, $0.episode ?? 0) < ($1.season ?? 0, $1.episode ?? 0) }
+        position = Dictionary(ordered.enumerated().map { ($0.element.id, $0.offset) }, uniquingKeysWith: { first, _ in first })
+        aired = SeriesProgress.airedEpisodes(videos)
+        bySeason = Dictionary(grouping: videos.filter { $0.season != nil }) { $0.season ?? 0 }
+            .mapValues { $0.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) } }
     }
 }
 

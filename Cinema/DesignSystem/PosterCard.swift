@@ -96,10 +96,10 @@ struct PosterArtwork: View {
                 RoundedRectangle(cornerRadius: Theme.Radius.poster, style: .continuous)
                     .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
             }
-            .shadow(color: .black.opacity(0.55), radius: 14, y: 8)
+            .cardShadow(radius: 10, y: 6, opacity: 0.5)
             .overlay(alignment: .topLeading) {
-                if let id, DownloadManager.shared.downloadedMetaIDs.contains(id) {
-                    DownloadedBadge().padding(6)
+                if let id {
+                    DownloadedTitleBadge(id: id)
                 }
             }
             .overlay(alignment: .bottomTrailing) {
@@ -107,6 +107,18 @@ struct PosterArtwork: View {
                     PosterRatingBadge(rating: rating).padding(6)
                 }
             }
+    }
+}
+
+/// Marks a title with a finished download. Its own view, so only the badge
+/// (not every poster's artwork) is redrawn when downloads change.
+private struct DownloadedTitleBadge: View {
+    let id: String
+
+    var body: some View {
+        if DownloadManager.shared.downloadedMetaIDs.contains(id) {
+            DownloadedBadge().padding(6)
+        }
     }
 }
 
@@ -187,7 +199,7 @@ struct GlassButtonStyle: ButtonStyle {
                 if prominent {
                     Capsule().fill(.white)
                 } else {
-                    Capsule().fill(.ultraThinMaterial)
+                    Capsule().fill(.adaptiveMaterial)
                         .overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
                 }
             }
@@ -210,7 +222,7 @@ struct GlassCircleButtonStyle: ButtonStyle {
             .foregroundStyle(.white)
             .frame(width: size, height: size)
             .background {
-                Circle().fill(.ultraThinMaterial)
+                Circle().fill(.adaptiveMaterial)
                     .overlay(Circle().strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
             }
             .environment(\.colorScheme, .dark)

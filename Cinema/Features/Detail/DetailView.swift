@@ -14,7 +14,9 @@ struct DetailView: View {
     @State private var model: DetailViewModel
     @State private var launcher = PlaybackLauncher()
     @State private var isDescriptionExpanded = false
-    @State private var scrollOffset: CGFloat = 0
+    /// The navigation bar frosts over once the backdrop has scrolled away. Only this
+    /// yes/no is kept (not the scroll position), so scrolling doesn't redraw the page.
+    @State private var isScrolledPastHeader = false
     @State private var watchlistFeedback: Bool?
     @State private var downloadRequest: DownloadRequest?
     @State private var seasonDownloadQueued = false
@@ -34,7 +36,8 @@ struct DetailView: View {
 
     // MARK: Per-profile state
 
-    /// This profile's progress per video.
+    /// This profile's progress per video. Worked out once per redraw and handed
+    /// down, rather than rebuilt for every episode card.
     private var progress: [String: PlaybackProgress] {
         let mine = progressRecords.filter { $0.profileID == ProfileSession.shared.activeID }
         return Dictionary(mine.map { ($0.videoID, $0) }, uniquingKeysWith: { first, _ in first })
@@ -45,9 +48,8 @@ struct DetailView: View {
     }
 
     /// The episode to play next: one in progress, else the first unwatched.
-    private var nextUpEpisode: MetaVideo? {
+    private func nextUpEpisode(_ progress: [String: PlaybackProgress]) -> MetaVideo? {
         let ordered = model.orderedEpisodes
-        let progress = progress
         if let resumable = ordered.last(where: { progress[$0.id]?.isResumable == true }) { return resumable }
         if let lastWatched = ordered.lastIndex(where: { progress[$0.id]?.watched == true }) {
             return ordered.indices.contains(lastWatched + 1) ? ordered[lastWatched + 1] : ordered.first
@@ -55,34 +57,25 @@ struct DetailView: View {
         return ordered.first
     }
 
-    /// Regular episodes already out, for the completion percentage.
-    private var airedEpisodes: [MetaVideo] { SeriesProgress.airedEpisodes(model.meta?.videos ?? []) }
-
-    private var watchedVideoIDs: Set<String> {
-        Set(progress.values.filter(\.watched).map(\.videoID))
-    }
-
-    private var isSeasonWatched: Bool {
+    private func isSeasonWatched(_ progress: [String: PlaybackProgress]) -> Bool {
         let regular = model.episodes
         return !regular.isEmpty && regular.allSatisfy { progress[$0.id]?.watched == true }
     }
 
-    /// The navigation bar frosts over once the backdrop has scrolled away.
-    private var isScrolledPastHeader: Bool { scrollOffset > backdropHeight - 140 }
-
     var body: some View {
+        let progress = self.progress
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 header
-                    .onGeometryChange(for: CGFloat.self) { geometry in
-                        geometry.frame(in: .scrollView(axis: .vertical)).minY
-                    } action: { minY in
-                        scrollOffset = -minY
+                    .onGeometryChange(for: Bool.self) { [backdropHeight] geometry in
+                        -geometry.frame(in: .scrollView(axis: .vertical)).minY > backdropHeight - 140
+                    } action: { scrolledPast in
+                        isScrolledPastHeader = scrolledPast
                     }
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                     VStack(spacing: Theme.Spacing.m) {
-                        actions
+                        actions(progress)
                         TasteButtons(route: model.route, name: model.name)
                     }
 
@@ -132,7 +125,7 @@ struct DetailView: View {
                 .padding(.top, Theme.Spacing.l)
 
                 if model.isSeries, !model.episodes.isEmpty {
-                    episodesSection
+                    episodesSection(progress)
                         .padding(.top, Theme.Spacing.xxl)
                 }
 
@@ -187,7 +180,7 @@ struct DetailView: View {
             async let translation: Void = model.loadTranslation()
             _ = await (details, translation)
             // Open the season the viewer is up to.
-            if let season = nextUpEpisode?.season { model.selectedSeason = season }
+            if let season = nextUpEpisode(self.progress)?.season { model.selectedSeason = season }
             await model.loadExtras(addons: addons.sources)
         }
         .playbackLauncher(launcher)
@@ -227,7 +220,7 @@ struct DetailView: View {
                 .overlay {
                     // A blur that grows towards the bottom edge…
                     Rectangle()
-                        .fill(.ultraThinMaterial)
+                        .fill(.adaptiveMaterial)
                         .mask(
                             LinearGradient(
                                 stops: [.init(color: .clear, location: 0.55), .init(color: .black, location: 0.95)],
@@ -285,12 +278,13 @@ struct DetailView: View {
 
     // MARK: Actions
 
-    private var actions: some View {
-        HStack(spacing: Theme.Spacing.m) {
+    private func actions(_ progress: [String: PlaybackProgress]) -> some View {
+        let targetWatched = isMainTargetWatched(progress)
+        return HStack(spacing: Theme.Spacing.m) {
             Button {
                 playMainTarget(choosingStream: false)
             } label: {
-                Label(playTitle, systemImage: "play.fill")
+                Label(playTitle(progress), systemImage: "play.fill")
                     // One line always: shrink a little rather than wrap.
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -322,13 +316,13 @@ struct DetailView: View {
             Button {
                 toggleWatched()
             } label: {
-                Image(systemName: isMainTargetWatched ? "checkmark.seal.fill" : "checkmark.seal")
+                Image(systemName: targetWatched ? "checkmark.seal.fill" : "checkmark.seal")
                     .contentTransition(.symbolEffect(.replace))
             }
             .buttonStyle(.glassCircle)
             .disabled(model.isSeries && model.episodes.isEmpty)
-            .accessibilityLabel(Text(isMainTargetWatched ? LocalizedStringKey("Mark as Unwatched") : "Mark as Watched"))
-            .sensoryFeedback(.success, trigger: isMainTargetWatched)
+            .accessibilityLabel(Text(targetWatched ? LocalizedStringKey("Mark as Unwatched") : "Mark as Watched"))
+            .sensoryFeedback(.success, trigger: targetWatched)
 
             if !model.isSeries {
                 DownloadCircleButton(videoID: model.route.id) {
@@ -347,8 +341,8 @@ struct DetailView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var playTitle: LocalizedStringKey {
-        if model.isSeries, let next = nextUpEpisode, let season = next.season, let episode = next.episode {
+    private func playTitle(_ progress: [String: PlaybackProgress]) -> LocalizedStringKey {
+        if model.isSeries, let next = nextUpEpisode(progress), let season = next.season, let episode = next.episode {
             return progress[next.id]?.isResumable == true ? "Resume S\(season) E\(episode)" : "Play S\(season) E\(episode)"
         }
         return progress[model.route.id]?.isResumable == true ? "Resume" : "Play"
@@ -384,22 +378,13 @@ struct DetailView: View {
         seasonDownloadQueued.toggle()
     }
 
-    private func downloadMark(for videoID: String) -> EpisodeCard.DownloadMark? {
-        let manager = DownloadManager.shared
-        if manager.downloadedVideoIDs.contains(videoID) { return .downloaded }
-        if manager.pendingVideoIDs.contains(videoID), let item = manager.item(videoID: videoID) {
-            return .downloading(manager.progress[item.id] ?? item.fraction)
-        }
-        return nil
-    }
-
     /// The movie, or the episode the viewer is up to.
-    private var mainTargetVideoID: String? {
-        model.isSeries ? (nextUpEpisode ?? model.episodes.first)?.id : model.route.id
+    private func mainTargetVideoID(_ progress: [String: PlaybackProgress]) -> String? {
+        model.isSeries ? (nextUpEpisode(progress) ?? model.episodes.first)?.id : model.route.id
     }
 
-    private var isMainTargetWatched: Bool {
-        mainTargetVideoID.flatMap { progress[$0]?.watched } ?? false
+    private func isMainTargetWatched(_ progress: [String: PlaybackProgress]) -> Bool {
+        mainTargetVideoID(progress).flatMap { progress[$0]?.watched } ?? false
     }
 
     /// Marks every episode of the shown season as watched (or not).
@@ -412,15 +397,16 @@ struct DetailView: View {
 
     /// Marks the movie (or the episode the viewer is up to) as watched, by hand.
     private func toggleWatched() {
-        guard let videoID = mainTargetVideoID else { return }
+        let progress = self.progress
+        guard let videoID = mainTargetVideoID(progress) else { return }
         withAnimation(Theme.Motion.spring) {
-            PlaybackProgressStore.setWatched(!isMainTargetWatched, metaID: model.route.id, videoID: videoID, in: context)
+            PlaybackProgressStore.setWatched(!isMainTargetWatched(progress), metaID: model.route.id, videoID: videoID, in: context)
         }
     }
 
     private func playMainTarget(choosingStream: Bool) {
         if model.isSeries {
-            if let next = nextUpEpisode ?? model.episodes.first { play(next, choosingStream: choosingStream) }
+            if let next = nextUpEpisode(progress) ?? model.episodes.first { play(next, choosingStream: choosingStream) }
         } else {
             let request = StreamRequest(
                 type: model.route.type, videoID: model.route.id, title: model.name, subtitle: nil,
@@ -495,8 +481,11 @@ struct DetailView: View {
         }
     }
 
-    private var episodesSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+    private func episodesSection(_ progress: [String: PlaybackProgress]) -> some View {
+        let seasonWatched = isSeasonWatched(progress)
+        let airedEpisodes = model.airedEpisodes
+        let nextUp = nextUpEpisode(progress)
+        return VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Episodes")
                     .font(.display(.title2))
@@ -511,15 +500,15 @@ struct DetailView: View {
                 .accessibilityLabel("Download Season")
                 Menu {
                     Button {
-                        markSeason(watched: !isSeasonWatched)
+                        markSeason(watched: !seasonWatched)
                     } label: {
                         Label(
-                            isSeasonWatched ? LocalizedStringKey("Mark Season as Unwatched") : "Mark Season as Watched",
-                            systemImage: isSeasonWatched ? "eye.slash" : "checkmark.circle"
+                            seasonWatched ? LocalizedStringKey("Mark Season as Unwatched") : "Mark Season as Watched",
+                            systemImage: seasonWatched ? "eye.slash" : "checkmark.circle"
                         )
                     }
                 } label: {
-                    Image(systemName: isSeasonWatched ? "checkmark.circle.fill" : "checkmark.circle")
+                    Image(systemName: seasonWatched ? "checkmark.circle.fill" : "checkmark.circle")
                         .font(.title3)
                         .contentTransition(.symbolEffect(.replace))
                 }
@@ -532,12 +521,12 @@ struct DetailView: View {
 
             if airedEpisodes.count > 1 {
                 SeriesCompletionBar(
-                    watched: airedEpisodes.filter { watchedVideoIDs.contains($0.id) }.count,
+                    watched: airedEpisodes.filter { progress[$0.id]?.watched == true }.count,
                     total: airedEpisodes.count
                 )
                 .padding(.horizontal, Theme.Spacing.l)
                 .task(id: airedEpisodes.count) {
-                    SeriesEpisodeCounts.set(airedEpisodes.count, for: model.route.id)
+                    SeriesEpisodeCounts.set(model.airedEpisodes.count, for: model.route.id)
                 }
             }
 
@@ -553,8 +542,7 @@ struct DetailView: View {
                                     title: model.episodeTitle(video),
                                     overview: model.episodeOverview(video),
                                     progress: progress[video.id],
-                                    images: model.episodeImages(video),
-                                    download: downloadMark(for: video.id)
+                                    images: model.episodeImages(video)
                                 )
                             }
                             .buttonStyle(.cardPress)
@@ -576,9 +564,10 @@ struct DetailView: View {
                                         systemImage: watched ? "eye.slash" : "checkmark.circle"
                                     )
                                 }
-                                let earlier = SeriesProgress.episodes(before: video, in: model.meta?.videos ?? [])
-                                if earlier.contains(where: { progress[$0.id]?.watched != true }) {
+                                // Only checked cheaply here; the list is worked out when tapped.
+                                if model.hasEpisodes(before: video) {
                                     Button {
+                                        let earlier = model.episodes(before: video)
                                         withAnimation(Theme.Motion.spring) {
                                             PlaybackProgressStore.setWatched(true, metaID: model.route.id, videoIDs: earlier.map(\.id), in: context)
                                         }
@@ -603,7 +592,7 @@ struct DetailView: View {
                 .scrollTargetBehavior(.viewAligned)
                 .task(id: model.selectedSeason) {
                     // Bring the episode the viewer is up to into view.
-                    if let next = nextUpEpisode, next.season == model.selectedSeason {
+                    if let next = nextUp, next.season == model.selectedSeason {
                         reader.scrollTo(next.id, anchor: .leading)
                     }
                     await model.loadEpisodeTexts(season: model.selectedSeason)
@@ -634,7 +623,7 @@ struct DetailView: View {
             .foregroundStyle(.white)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(.ultraThinMaterial, in: Capsule())
+            .background(.adaptiveMaterial, in: Capsule())
             .environment(\.colorScheme, .dark)
         }
         .sensoryFeedback(.selection, trigger: model.selectedSeason)
@@ -718,7 +707,7 @@ struct DetailView: View {
             .controlSize(.small)
         }
         .padding(Theme.Spacing.m)
-        .background(.ultraThinMaterial, in: .continuous(Theme.Radius.medium))
+        .background(.adaptiveMaterial, in: .continuous(Theme.Radius.medium))
         .environment(\.colorScheme, .dark)
     }
 }
@@ -751,12 +740,6 @@ private struct EpisodeCard: View {
     var progress: PlaybackProgress?
     /// The episode's still, then TMDB's, then the show's backdrop.
     var images: [URL] = []
-    var download: DownloadMark?
-
-    enum DownloadMark: Equatable {
-        case downloaded
-        case downloading(Double)
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
@@ -772,30 +755,18 @@ private struct EpisodeCard: View {
                 .clipShape(.continuous(Theme.Radius.poster))
                 .overlay(alignment: .bottomLeading) {
                     if let episode = video.episode {
+                        // A plain dark capsule: a blur on every card costs a lot while scrolling.
                         Text(verbatim: "\(episode)")
                             .font(.rounded(.caption, weight: .heavy))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .environment(\.colorScheme, .dark)
+                            .background(.black.opacity(0.55), in: Capsule())
                             .padding(Theme.Spacing.s)
                     }
                 }
                 .overlay(alignment: .topLeading) {
-                    switch download {
-                    case .downloaded:
-                        DownloadedBadge().padding(Theme.Spacing.s)
-                    case .downloading(let fraction):
-                        DownloadProgressRing(fraction: fraction)
-                            .frame(width: 18, height: 18)
-                            .padding(5)
-                            .background(.ultraThinMaterial, in: Circle())
-                            .environment(\.colorScheme, .dark)
-                            .padding(Theme.Spacing.s)
-                    case nil:
-                        EmptyView()
-                    }
+                    EpisodeDownloadBadge(videoID: video.id)
                 }
                 .overlay(alignment: .topTrailing) {
                     if progress?.watched == true {
@@ -827,7 +798,7 @@ private struct EpisodeCard: View {
                     RoundedRectangle(cornerRadius: Theme.Radius.poster, style: .continuous)
                         .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
                 }
-                .shadow(color: .black.opacity(0.45), radius: 12, y: 6)
+                .cardShadow(radius: 12, y: 6, opacity: 0.45)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title ?? "")
@@ -862,6 +833,25 @@ private struct EpisodeCard: View {
     }
 }
 
+/// An episode's download state. Its own view, so download progress redraws
+/// only this badge rather than the whole title page.
+private struct EpisodeDownloadBadge: View {
+    let videoID: String
+
+    var body: some View {
+        let manager = DownloadManager.shared
+        if manager.downloadedVideoIDs.contains(videoID) {
+            DownloadedBadge().padding(Theme.Spacing.s)
+        } else if manager.pendingVideoIDs.contains(videoID), let item = manager.item(videoID: videoID) {
+            DownloadProgressRing(fraction: manager.progress[item.id] ?? item.fraction)
+                .frame(width: 18, height: 18)
+                .padding(5)
+                .background(.black.opacity(0.55), in: Circle())
+                .padding(Theme.Spacing.s)
+        }
+    }
+}
+
 private struct CastBadge: View {
     let name: String
     var character: String?
@@ -888,13 +878,13 @@ private struct CastBadge: View {
                 }
                 .overlay {
                     if let photo {
-                        RemoteImage(url: photo) { Color.clear }
+                        RemoteImage(url: photo, size: .small) { Color.clear }
                             .clipShape(Circle())
                     }
                 }
                 .overlay(Circle().strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
                 .frame(width: 76, height: 76)
-                .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
+                .cardShadow(radius: 8, y: 4, opacity: 0.4)
             Text(name)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.primary)

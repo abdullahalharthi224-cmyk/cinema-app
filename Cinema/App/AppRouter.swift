@@ -21,6 +21,7 @@ enum SettingsRoute: Hashable {
     case backup
     case appIcon
     case security
+    case performance
     case addon(InstalledAddon)
 }
 

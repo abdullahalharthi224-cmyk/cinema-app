@@ -54,7 +54,7 @@ struct PlatformsRow: View {
                             .flipsForRightToLeftLayoutDirection(true)
                     }
                     .padding(Theme.Spacing.l)
-                    .background(.ultraThinMaterial, in: .continuous(Theme.Radius.medium))
+                    .background(.adaptiveMaterial, in: .continuous(Theme.Radius.medium))
                 }
                 .buttonStyle(.cardPress)
                 .padding(.horizontal, Theme.Spacing.l)
@@ -76,15 +76,15 @@ struct PlatformCard: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            Rectangle().fill(.ultraThinMaterial)
+            Rectangle().fill(.adaptiveMaterial)
 
             if let logo {
-                RemoteImage(url: logo, contentMode: .fit) {
+                RemoteImage(url: logo, contentMode: .fit, size: .small) {
                     name
                 }
                 .frame(width: 58, height: 58)
                 .clipShape(.continuous(Theme.Radius.medium))
-                .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
+                .cardShadow(radius: 8, y: 4, opacity: 0.4)
             } else {
                 name
             }
@@ -98,7 +98,7 @@ struct PlatformCard: View {
                     lineWidth: 0.75
                 )
         }
-        .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
+        .cardShadow(radius: 12, y: 6, opacity: 0.25)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: platform.name))
         .accessibilityAddTraits(.isButton)
