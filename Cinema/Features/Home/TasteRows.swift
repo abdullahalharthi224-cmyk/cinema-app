@@ -143,7 +143,21 @@ final class TasteModel {
 enum EpisodeNotifier {
     private static let prefix = "episode."
 
+    private static let signatureKey = "episodeNotifier.signature"
+    private static let dateKey = "episodeNotifier.date"
+
     static func schedule(_ entries: [TasteModel.EpisodeEntry]) async {
+        // At most once a day, unless the episodes (or the setting) changed.
+        let enabled = await MainActor.run { NotificationPreferences.shared.newEpisodes }
+        let signature = "\(enabled)|" + entries.prefix(30).map(\.id).joined(separator: ",")
+        let defaults = UserDefaults.standard
+        if defaults.string(forKey: signatureKey) == signature,
+           let last = defaults.object(forKey: dateKey) as? Date, Calendar.current.isDateInToday(last) {
+            return
+        }
+        defaults.set(signature, forKey: signatureKey)
+        defaults.set(Date.now, forKey: dateKey)
+
         let center = UNUserNotificationCenter.current()
         let pending = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
         center.removePendingNotificationRequests(withIdentifiers: pending)
@@ -217,9 +231,7 @@ struct EpisodeScheduleRow: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             Group {
                 if kind == .upcoming {
-                    NavigationLink {
-                        EpisodeCalendarView()
-                    } label: {
+                    NavigationLink(value: LibraryRoute.calendar) {
                         RowHeader(title: Text("Coming Soon"), showsChevron: true) {
                             Text("Upcoming episodes of series you follow")
                         }
@@ -239,7 +251,7 @@ struct EpisodeScheduleRow: View {
                         NavigationLink(value: MetaRoute(
                             type: "series", id: entry.metaID, name: entry.schedule.name,
                             poster: TMDBClient.imageURL(entry.schedule.posterPath, size: "w342")?.absoluteString,
-                            background: TMDBClient.imageURL(entry.schedule.backdropPath, size: "w1280")?.absoluteString
+                            background: TMDBClient.imageURL(entry.schedule.backdropPath, size: "w780")?.absoluteString
                         )) {
                             EpisodeScheduleCard(entry: entry, kind: kind)
                         }
@@ -275,7 +287,7 @@ private struct EpisodeScheduleCard: View {
                     badge.padding(Theme.Spacing.s)
                 }
                 .clipShape(.continuous(Theme.Radius.poster))
-                .shadow(color: .black.opacity(0.4), radius: 10, y: 5)
+                .cardShadow(radius: 10, y: 5, opacity: 0.4)
             Text(verbatim: entry.schedule.name)
                 .font(.footnote.weight(.semibold))
                 .lineLimit(1)

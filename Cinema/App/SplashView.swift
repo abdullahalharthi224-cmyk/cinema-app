@@ -85,7 +85,8 @@ struct SplashView: View {
     }
 
     private func play() async {
-        if reduceMotion {
+        // The short version with Reduce Motion, and in Performance Mode.
+        if reduceMotion || PerformanceSettings.shared.isActive {
             progress = 1
             playScale = 1
             glow = 1

@@ -85,7 +85,7 @@ struct CategoryCard: View {
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
             if let cover {
-                RemoteImage(url: cover) { Color.clear }
+                RemoteImage(url: cover, size: .medium) { Color.clear }
                     .opacity(0.55)
                     .blendMode(.overlay)
                     .transition(.opacity)
@@ -105,7 +105,7 @@ struct CategoryCard: View {
         }
         .frame(height: 96)
         .clipShape(.continuous(Theme.Radius.medium))
-        .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+        .cardShadow(radius: 8, y: 4, opacity: 0.25)
         .task {
             guard cover == nil, let client = TMDBAccount.shared.client else { return }
             let url = await CategoryArtwork.shared.cover(for: category, client: client)

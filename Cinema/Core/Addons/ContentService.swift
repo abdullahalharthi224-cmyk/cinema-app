@@ -66,10 +66,18 @@ struct ContentService: Sendable {
         let candidates = supporting.filter { $0.id == preferredAddonID }
             + supporting.filter { $0.id != preferredAddonID }
 
+        // Opening the same title again (or going back to it) needs no new request.
+        // Only the real network is cached; test doubles never are.
+        let key = client.http is URLSessionHTTPClient
+            ? "\(type)|\(id)|\(candidates.map(\.id).joined(separator: ","))" : nil
+        if let key, let cached = await ResponseCache.metas.value(for: key, as: MetaItem.self) { return cached }
+
         var lastError: AddonError = .notFound
         for addon in candidates {
             do {
-                return try await client.meta(base: addon.baseURL, type: type, id: id)
+                let meta = try await client.meta(base: addon.baseURL, type: type, id: id)
+                if let key { await ResponseCache.metas.store(meta, for: key) }
+                return meta
             } catch let error as AddonError {
                 lastError = error
             }

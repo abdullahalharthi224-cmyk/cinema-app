@@ -131,7 +131,7 @@ struct TrailerCard: View {
                             .font(.system(size: 26, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(width: 64, height: 64)
-                            .background(.ultraThinMaterial, in: Circle())
+                            .background(.adaptiveMaterial, in: Circle())
                             .environment(\.colorScheme, .dark)
                     }
                     .overlay(alignment: .bottomLeading) {
@@ -144,7 +144,7 @@ struct TrailerCard: View {
                         }
                     }
                     .clipShape(.continuous(Theme.Radius.poster))
-                    .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
+                    .cardShadow(radius: 12, y: 6, opacity: 0.35)
             }
             .buttonStyle(.cardPress)
             .accessibilityLabel("Play Trailer")
@@ -237,7 +237,7 @@ struct CompanyLogosRow: View {
                     ForEach(companies) { company in
                         Group {
                             if let logo = TMDBClient.imageURL(company.logoPath, size: "w185") {
-                                FallbackImage(urls: [logo], contentMode: .fit) {
+                                FallbackImage(urls: [logo], contentMode: .fit, size: .small) {
                                     Color.clear
                                 } failure: {
                                     companyName(company)
@@ -313,7 +313,7 @@ struct AvailableOnRow: View {
                 HStack(spacing: Theme.Spacing.s) {
                     ForEach(providers, id: \.providerID) { provider in
                         HStack(spacing: 6) {
-                            FallbackImage(urls: [TMDBClient.imageURL(provider.logoPath, size: "w92")].compactMap { $0 }) {
+                            FallbackImage(urls: [TMDBClient.imageURL(provider.logoPath, size: "w92")].compactMap { $0 }, size: .small) {
                                 Color.primary.opacity(0.08)
                             } failure: {
                                 Image(systemName: "tv").foregroundStyle(.secondary)

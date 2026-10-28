@@ -27,12 +27,11 @@ struct StatsView: View {
         var id: Int { year }
     }
 
-    private var stats: ViewingStats { model.stats }
-    private var currentYear: Int { Calendar.current.component(.year, from: .now) }
+    private var stats: ViewingSummary { model.summary }
 
     var body: some View {
         ScrollView {
-            if stats.entries.isEmpty {
+            if stats.isEmpty {
                 ContentUnavailableView(
                     "No Viewing Yet",
                     systemImage: "chart.bar.xaxis",
@@ -67,9 +66,9 @@ struct StatsView: View {
 
     private var totals: some View {
         HStack(spacing: Theme.Spacing.m) {
-            totalTile("This Week", stats.thisWeek(), color: Theme.accent)
-            totalTile("This Month", stats.thisMonth(), color: .orange)
-            totalTile("All Time", stats.totalSeconds, color: .pink)
+            totalTile("This Week", stats.thisWeek, color: Theme.accent)
+            totalTile("This Month", stats.thisMonth, color: .orange)
+            totalTile("All Time", stats.total, color: .pink)
         }
     }
 
@@ -95,9 +94,9 @@ struct StatsView: View {
 
     private var buckets: [ViewingStats.Bucket] {
         switch range {
-        case .week: return stats.daily(days: 7)
-        case .month: return stats.daily(days: 30)
-        case .year: return stats.monthly(year: currentYear)
+        case .week: return stats.lastWeek
+        case .month: return stats.lastMonth
+        case .year: return stats.thisYear
         }
     }
 
@@ -223,7 +222,7 @@ struct StatsView: View {
                 HStack(alignment: .top, spacing: Theme.Spacing.l) {
                     ForEach(model.insights.actors) { actor in
                         VStack(spacing: 6) {
-                            RemoteImage(url: actor.photo) { Color.primary.opacity(0.08) }
+                            RemoteImage(url: actor.photo, size: .small) { Color.primary.opacity(0.08) }
                                 .frame(width: 72, height: 72)
                                 .clipShape(Circle())
                             Text(verbatim: actor.name)
@@ -250,14 +249,13 @@ struct StatsView: View {
                 Text("Most Watched")
                     .font(.display(.title3))
                 Spacer()
-                NavigationLink {
-                    StatsManageView()
-                } label: {
+                NavigationLink(value: LibraryRoute.statsManage) {
                     Text("Edit")
                         .font(.subheadline.weight(.semibold))
                 }
             }
             ForEach(Array(stats.topTitles.prefix(5).enumerated()), id: \.element.id) { index, title in
+                NavigationLink(value: MetaRoute(type: title.type, id: title.metaID, name: title.name, poster: title.poster, background: title.background)) {
                 HStack(spacing: Theme.Spacing.m) {
                     Text(verbatim: "\(index + 1)")
                         .font(.system(size: 20, weight: .heavy, design: .rounded))
@@ -274,7 +272,14 @@ struct StatsView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
+                    Image(systemName: "chevron.forward")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.tertiary)
                 }
+                .foregroundStyle(.primary)
+                .contentShape(Rectangle())
+                }
+                .buttonStyle(.cardPress)
             }
         }
         .padding(Theme.Spacing.l)

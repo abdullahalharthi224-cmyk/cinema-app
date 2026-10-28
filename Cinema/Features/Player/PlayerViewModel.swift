@@ -315,6 +315,7 @@ final class PlayerViewModel {
         saveProgress()
         thumbnailTask?.cancel()
         overlayTask?.cancel()
+        noticeTask?.cancel()
         nowPlaying.deactivate()
         engine?.destroy()
         engine = nil

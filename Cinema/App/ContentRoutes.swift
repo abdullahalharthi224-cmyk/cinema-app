@@ -75,8 +75,20 @@ struct CatalogRoute: Hashable {
     var reference: CatalogReference
 }
 
+/// The Library's own screens. Pushed by value (like titles) so a title tapped
+/// inside them always opens: a stack that mixes view-built links with value
+/// links can leave the value links on those screens dead.
+enum LibraryRoute: Hashable {
+    case list(UUID)
+    case liked
+    case calendar
+    case stats
+    case statsManage
+}
+
 extension View {
-    /// Registers the detail and catalog destinations shared by Home and Search.
+    /// Registers every content destination, shared by Home, Search and the Library.
+    /// Every screen that shows titles is reached by value, never by a view-built link.
     func contentDestinations() -> some View {
         navigationDestination(for: MetaRoute.self) { route in
             KidsGated(id: route.id, type: route.type) {
@@ -94,6 +106,15 @@ extension View {
         }
         .navigationDestination(for: PersonRoute.self) { route in
             PersonView(route: route)
+        }
+        .navigationDestination(for: LibraryRoute.self) { route in
+            switch route {
+            case .list(let id): UserListLoaderView(id: id)
+            case .liked: LikedTitlesView()
+            case .calendar: EpisodeCalendarView()
+            case .stats: StatsView()
+            case .statsManage: StatsManageView()
+            }
         }
     }
 }

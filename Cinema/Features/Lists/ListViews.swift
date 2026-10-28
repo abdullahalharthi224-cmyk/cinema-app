@@ -86,7 +86,7 @@ struct TasteButtons: View {
                 .padding(.vertical, 10)
                 .foregroundStyle(active ? Theme.accent : .white)
                 .background {
-                    Capsule().fill(.ultraThinMaterial)
+                    Capsule().fill(.adaptiveMaterial)
                         .overlay(Capsule().strokeBorder(active ? Theme.accent.opacity(0.7) : .white.opacity(0.18), lineWidth: active ? 1 : 0.5))
                 }
                 .environment(\.colorScheme, .dark)
@@ -347,17 +347,13 @@ struct UserListsRow: View {
             ScrollView(.horizontal) {
                 HStack(spacing: Theme.Spacing.m) {
                     if likedCount > 0 {
-                        NavigationLink {
-                            LikedTitlesView()
-                        } label: {
+                        NavigationLink(value: LibraryRoute.liked) {
                             card(symbol: "hand.thumbsup.fill", colorHex: "#FF5FA2", title: Text("Liked"), count: likedCount)
                         }
                         .buttonStyle(.cardPress)
                     }
                     ForEach(lists) { list in
-                        NavigationLink {
-                            UserListDetailView(list: list)
-                        } label: {
+                        NavigationLink(value: LibraryRoute.list(list.id)) {
                             card(symbol: list.symbol, colorHex: list.colorHex, title: Text(verbatim: list.name), count: counts[list.id] ?? 0)
                         }
                         .buttonStyle(.cardPress)
@@ -407,6 +403,23 @@ struct UserListsRow: View {
         .frame(width: 128, height: 112, alignment: .leading)
         .padding(Theme.Spacing.m)
         .background(Theme.surface, in: .continuous(Theme.Radius.medium))
+    }
+}
+
+/// Finds a list by its id for the navigation stack (routes carry ids, not models).
+struct UserListLoaderView: View {
+    @Query private var lists: [UserList]
+
+    init(id: UUID) {
+        _lists = Query(filter: #Predicate<UserList> { $0.id == id })
+    }
+
+    var body: some View {
+        if let list = lists.first {
+            UserListDetailView(list: list)
+        } else {
+            Color.clear.background(Theme.background.ignoresSafeArea())
+        }
     }
 }
 

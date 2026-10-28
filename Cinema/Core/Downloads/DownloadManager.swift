@@ -92,6 +92,11 @@ final class DownloadManager {
     @ObservationIgnored private var lastSaved: [String: Date] = [:]
     @ObservationIgnored private var lastProgress: [String: Date] = [:]
     @ObservationIgnored private var extrasRequested: Set<String> = []
+    /// Every download, read from the database once per change (not on every lookup):
+    /// title pages look up each episode while drawing.
+    @ObservationIgnored private var items: [DownloadItem] = []
+    @ObservationIgnored private var byID: [String: DownloadItem] = [:]
+    @ObservationIgnored private var byVideoID: [String: DownloadItem] = [:]
     /// Handed over by the system when it wakes the app for finished downloads.
     @ObservationIgnored var backgroundCompletion: (() -> Void)?
 
@@ -103,6 +108,7 @@ final class DownloadManager {
     func configure(container: ModelContainer) {
         guard self.container == nil else { return }
         self.container = container
+        refreshIndex()
         let configuration = URLSessionConfiguration.background(withIdentifier: Self.sessionIdentifier)
         configuration.sessionSendsLaunchEvents = true
         configuration.isDiscretionary = false
@@ -131,16 +137,21 @@ final class DownloadManager {
 
     // MARK: Queries
 
+    /// Every download, oldest first.
     func allItems() -> [DownloadItem] {
+        items.filter { !$0.isDeleted }
+    }
+
+    private func fetchAll() -> [DownloadItem] {
         (try? context?.fetch(FetchDescriptor<DownloadItem>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
     }
 
     func item(id: String) -> DownloadItem? {
-        allItems().first { $0.id == id }
+        byID[id].flatMap { $0.isDeleted ? nil : $0 }
     }
 
     func item(videoID: String) -> DownloadItem? {
-        allItems().first { $0.videoID == videoID }
+        byVideoID[videoID].flatMap { $0.isDeleted ? nil : $0 }
     }
 
     /// The finished download for a video, if its file is there.
@@ -152,7 +163,10 @@ final class DownloadManager {
     }
 
     private func refreshIndex() {
-        let items = allItems()
+        let items = fetchAll()
+        self.items = items
+        byID = Dictionary(items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        byVideoID = Dictionary(items.map { ($0.videoID, $0) }, uniquingKeysWith: { first, _ in first })
         downloadedMetaIDs = Set(items.filter { $0.state == .completed }.map(\.metaID))
         downloadedVideoIDs = Set(items.filter { $0.state == .completed }.map(\.videoID))
         pendingVideoIDs = Set(items.filter { [.queued, .resolving, .downloading, .paused].contains($0.state) }.map(\.videoID))

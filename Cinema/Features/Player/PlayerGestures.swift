@@ -309,7 +309,7 @@ struct SpeedBoostBadge: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 14)
         .padding(.vertical, 7)
-        .background(.ultraThinMaterial, in: Capsule())
+        .background(.adaptiveMaterial, in: Capsule())
         .environment(\.colorScheme, .dark)
     }
 }
@@ -336,7 +336,7 @@ struct LevelIndicator: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 16)
         .padding(.vertical, 11)
-        .background(.ultraThinMaterial, in: Capsule())
+        .background(.adaptiveMaterial, in: Capsule())
         .environment(\.colorScheme, .dark)
     }
 

@@ -252,8 +252,8 @@ struct TMDBTitleLoaderView: View {
             type: route.media.stremioType,
             id: imdbID,
             name: route.title.title,
-            poster: TMDBClient.imageURL(route.title.posterPath, size: "w500")?.absoluteString,
-            background: TMDBClient.imageURL(route.title.backdropPath, size: "w1280")?.absoluteString,
+            poster: TMDBClient.imageURL(route.title.posterPath, size: "w342")?.absoluteString,
+            background: TMDBClient.imageURL(route.title.backdropPath, size: "w780")?.absoluteString,
             description: route.title.overview,
             releaseInfo: route.title.year,
             imdbRating: route.title.rating

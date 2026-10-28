@@ -77,17 +77,22 @@ final class MPVThumbnailer: @unchecked Sendable {
     }
 
     /// Slowly makes a coarse set of frames in the background: quickly for
-    /// downloaded files, gently for streams.
+    /// downloaded files, gently for streams (only offered on Wi-Fi). Pauses
+    /// while the iPhone is hot or in Low Power Mode, and stops with the player.
     func startBackgroundFrames() {
         queue.asyncAfter(deadline: .now() + (isLocal ? 5 : 45)) { [self] in
-            guard prepare(), duration > 0 else { return }
+            guard !lock.withLock({ closed }), prepare(), duration > 0 else { return }
+            BackgroundActivity.shared.begin("Scene preview frames")
             let count = isLocal ? 80 : 30
             let step = max(duration / Double(count), bucket)
             var time = step / 2
             func next() {
-                guard time < duration else { return }
-                let (isClosed, busy) = lock.withLock { (closed, mainIsBuffering) }
-                guard !isClosed else { return }
+                let (isClosed, buffering) = lock.withLock { (closed, mainIsBuffering) }
+                guard time < duration, !isClosed else {
+                    BackgroundActivity.shared.end("Scene preview frames")
+                    return
+                }
+                let busy = buffering || PerformanceSettings.shouldSpareDevice
                 if !busy {
                     let key = Int(time / bucket)
                     if lock.withLock({ cache[key] }) == nil { _ = frame(for: key) }
@@ -114,7 +119,8 @@ final class MPVThumbnailer: @unchecked Sendable {
 
     private func prepare() -> Bool {
         if isLoaded { return true }
-        if failed { return false }
+        // Never (re)open libmpv once the player has closed.
+        if failed || lock.withLock({ closed }) { return false }
         guard let mpv = mpv_create() else {
             failed = true
             return false

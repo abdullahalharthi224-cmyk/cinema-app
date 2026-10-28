@@ -108,8 +108,8 @@ struct ViewingInsights: Sendable {
             genres: details?.genres ?? [],
             cast: cast ?? [],
             title: details?.title,
-            backdrop: TMDBClient.imageURL(found?.title.backdropPath, size: "w1280"),
-            poster: TMDBClient.imageURL(found?.title.posterPath, size: "w500")
+            backdrop: TMDBClient.imageURL(found?.title.backdropPath, size: "w780"),
+            poster: TMDBClient.imageURL(found?.title.posterPath, size: "w342")
         )
         await Cache.shared.set(key, result)
         return result
@@ -121,16 +121,24 @@ struct ViewingInsights: Sendable {
 @Observable
 final class StatsModel {
     private(set) var stats = ViewingStats(entries: [])
+    /// The totals, charts and lists, worked out in the background.
+    private(set) var summary = ViewingSummary()
     private(set) var insights = ViewingInsights()
     private(set) var isLoadingInsights = false
 
     func load(context: ModelContext) async {
         let profileID = ProfileSession.shared.activeID
         let logs = (try? context.fetch(FetchDescriptor<ViewingLog>(predicate: #Predicate { $0.profileID == profileID }))) ?? []
-        stats = ViewingStats(entries: logs.map {
+        let entries = logs.map {
             ViewingEntry(day: $0.day, metaID: $0.metaID, type: $0.type, videoID: $0.videoID, name: $0.name,
                          poster: $0.poster, background: $0.background, seconds: $0.seconds)
-        })
+        }
+        let (stats, summary) = await Task.detached(priority: .userInitiated) {
+            let stats = ViewingStats(entries: entries)
+            return (stats, ViewingSummary(stats))
+        }.value
+        self.stats = stats
+        self.summary = summary
         isLoadingInsights = true
         let loaded = await ViewingInsights.load(for: stats)
         withAnimation(Theme.Motion.spring) {

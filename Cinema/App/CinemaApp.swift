@@ -35,8 +35,8 @@ struct CinemaApp: App {
     @State private var showsSplash = true
 
     init() {
-        // A roomier shared cache so posters and logos load instantly the second time.
-        URLCache.shared = URLCache(memoryCapacity: 64 * 1024 * 1024, diskCapacity: 512 * 1024 * 1024)
+        // Addon and API responses. Artwork has its own cache (ImagePipeline), so this stays modest.
+        URLCache.shared = URLCache(memoryCapacity: 16 * 1024 * 1024, diskCapacity: 150 * 1024 * 1024)
     }
 
     var body: some Scene {

@@ -7150,6 +7150,326 @@
           }
         }
       }
+    },
+    "Performance Mode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وضع الأداء"
+          }
+        }
+      }
+    },
+    "Clear Cache": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسح الذاكرة المؤقتة"
+          }
+        }
+      }
+    },
+    "On automatically while Low Power Mode is on. Fewer animations and lighter blur and shadows.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعمل تلقائياً ما دام وضع توفير الطاقة مفعّلاً. حركات أقل وتمويه وظلال أخف."
+          }
+        }
+      }
+    },
+    "Fewer animations and lighter blur and shadows. Also turns on by itself in Low Power Mode. Clearing the cache keeps your library, downloads and settings.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حركات أقل وتمويه وظلال أخف، ويتفعّل وحده مع وضع توفير الطاقة. مسح الذاكرة المؤقتة لا يمس مكتبتك ولا تحميلاتك ولا إعداداتك."
+          }
+        }
+      }
+    },
+    "Performance": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأداء"
+          }
+        }
+      }
+    },
+    "This Launch": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا التشغيل"
+          }
+        }
+      }
+    },
+    "App Launch": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح التطبيق"
+          }
+        }
+      }
+    },
+    "Home Ready": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ظهور الرئيسية"
+          }
+        }
+      }
+    },
+    "from saved copy": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "من النسخة المحفوظة"
+          }
+        }
+      }
+    },
+    "from network": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "من الشبكة"
+          }
+        }
+      }
+    },
+    "Measured from the moment iOS starts Cinema.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يُقاس من لحظة تشغيل iOS للتطبيق."
+          }
+        }
+      }
+    },
+    "Recent Launches": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "آخر مرات التشغيل"
+          }
+        }
+      }
+    },
+    "Now": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الآن"
+          }
+        }
+      }
+    },
+    "Memory": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الذاكرة"
+          }
+        }
+      }
+    },
+    "Network Requests": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "طلبات الشبكة"
+          }
+        }
+      }
+    },
+    "Running Now": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قيد التنفيذ الآن"
+          }
+        }
+      }
+    },
+    "Avoided (Shared)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "طلبات وُفّرت (مشتركة)"
+          }
+        }
+      }
+    },
+    "Thermal State": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حرارة الجهاز"
+          }
+        }
+      }
+    },
+    "Nothing": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا شيء"
+          }
+        }
+      }
+    },
+    "Working in the Background": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعمل في الخلفية"
+          }
+        }
+      }
+    },
+    "Cache": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الذاكرة المؤقتة"
+          }
+        }
+      }
+    },
+    "Artwork": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصور"
+          }
+        }
+      }
+    },
+    "Responses": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الردود المحفوظة"
+          }
+        }
+      }
+    },
+    "Saved Home Rows": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صفوف الرئيسية المحفوظة"
+          }
+        }
+      }
+    },
+    "Temporary Files": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملفات مؤقتة"
+          }
+        }
+      }
+    },
+    "Total": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المجموع"
+          }
+        }
+      }
+    },
+    "Copy Report": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نسخ التقرير"
+          }
+        }
+      }
+    },
+    "Paste the report in a message to share these numbers.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصق التقرير في رسالة لمشاركة هذه الأرقام."
+          }
+        }
+      }
+    },
+    "Home hero slideshow": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عرض البانر في الرئيسية"
+          }
+        }
+      }
+    },
+    "Scene preview frames": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لقطات معاينة المشهد"
+          }
+        }
+      }
+    },
+    "Home recommendations": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اقتراحات الرئيسية"
+          }
+        }
+      }
+    },
+    "Cache cleanup": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تنظيف الذاكرة المؤقتة"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

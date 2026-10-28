@@ -112,7 +112,7 @@ struct CatalogGridView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .foregroundStyle(isSelected ? Theme.background : Color.primary)
-                .background(isSelected ? AnyShapeStyle(Color.primary) : AnyShapeStyle(.ultraThinMaterial), in: Capsule())
+                .background(isSelected ? AnyShapeStyle(Color.primary) : AnyShapeStyle(.adaptiveMaterial), in: Capsule())
         }
         .buttonStyle(.plain)
     }

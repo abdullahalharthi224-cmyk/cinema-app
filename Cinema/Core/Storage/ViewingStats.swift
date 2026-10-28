@@ -132,3 +132,39 @@ struct ViewingStats: Sendable {
         Set(entries.map { calendar.component(.year, from: $0.day) }).sorted(by: >)
     }
 }
+
+/// Everything the statistics page shows, worked out once (away from the main
+/// thread) rather than on every redraw.
+struct ViewingSummary: Sendable {
+    var isEmpty = true
+    var thisWeek: Double = 0
+    var thisMonth: Double = 0
+    var total: Double = 0
+    var lastWeek: [ViewingStats.Bucket] = []
+    var lastMonth: [ViewingStats.Bucket] = []
+    var thisYear: [ViewingStats.Bucket] = []
+    var movieCount = 0
+    var episodeCount = 0
+    var seriesCount = 0
+    var longestStreak = 0
+    var topTitles: [ViewingStats.TitleTotal] = []
+    var years: [Int] = []
+
+    init() {}
+
+    init(_ stats: ViewingStats, now: Date = .now) {
+        isEmpty = stats.entries.isEmpty
+        thisWeek = stats.thisWeek(now: now)
+        thisMonth = stats.thisMonth(now: now)
+        total = stats.totalSeconds
+        lastWeek = stats.daily(days: 7, now: now)
+        lastMonth = stats.daily(days: 30, now: now)
+        thisYear = stats.monthly(year: stats.calendar.component(.year, from: now))
+        movieCount = stats.movieCount
+        episodeCount = stats.episodeCount
+        seriesCount = stats.seriesCount
+        longestStreak = stats.longestStreak
+        topTitles = Array(stats.topTitles.prefix(15))
+        years = stats.years
+    }
+}

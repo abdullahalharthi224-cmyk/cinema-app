@@ -100,7 +100,7 @@ struct LoadingOverlay: View {
                     .foregroundStyle(.secondary)
             }
             .padding(Theme.Spacing.xl)
-            .background(.ultraThinMaterial, in: .continuous(Theme.Radius.large))
+            .background(.adaptiveMaterial, in: .continuous(Theme.Radius.large))
         }
         .transition(.opacity)
     }
@@ -117,7 +117,7 @@ struct ToastView: View {
             .symbolRenderingMode(.hierarchical)
             .padding(.horizontal, Theme.Spacing.l)
             .padding(.vertical, Theme.Spacing.m)
-            .background(.ultraThinMaterial, in: Capsule())
+            .background(.adaptiveMaterial, in: Capsule())
             .shadow(color: .black.opacity(0.25), radius: 16, y: 6)
             .transition(.move(edge: .top).combined(with: .opacity))
     }

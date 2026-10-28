@@ -96,7 +96,7 @@ struct PersonView: View {
             Circle()
                 .fill(Theme.surface)
                 .overlay {
-                    RemoteImage(url: TMDBClient.imageURL(person?.profilePath ?? route.profilePath, size: "w342")) {
+                    RemoteImage(url: TMDBClient.imageURL(person?.profilePath ?? route.profilePath, size: "w342"), size: .medium) {
                         Image(systemName: "person.fill")
                             .font(.system(size: 44))
                             .foregroundStyle(.tertiary)
@@ -105,7 +105,7 @@ struct PersonView: View {
                 }
                 .overlay(Circle().strokeBorder(.white.opacity(0.15), lineWidth: 0.75))
                 .frame(width: 120, height: 120)
-                .shadow(color: .black.opacity(0.5), radius: 14, y: 6)
+                .cardShadow(radius: 14, y: 6, opacity: 0.5)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(verbatim: person?.name ?? route.name)
