@@ -683,12 +683,16 @@ final class PlayerViewModel {
     }
 
     /// Fetches a preview frame for the timeline while scrubbing, if the engine can.
+    /// The nearest frame already made shows at once; the exact one follows when
+    /// the finger slows down (a little later for streams, to spare the connection).
     func requestThumbnail() {
-        guard let engine, engine.kind == .apple else { return }
+        guard let engine else { return }
         thumbnailTask?.cancel()
         let time = scrubPosition
+        if let nearby = engine.cachedThumbnail(near: time) { scrubThumbnail = nearby }
+        let delay = engine.kind == .apple || session.url.isFileURL ? 120 : 250
         thumbnailTask = Task {
-            try? await Task.sleep(for: .milliseconds(120))
+            try? await Task.sleep(for: .milliseconds(delay))
             guard !Task.isCancelled, let image = await engine.thumbnail(at: time), !Task.isCancelled, isScrubbing else { return }
             scrubThumbnail = image
         }

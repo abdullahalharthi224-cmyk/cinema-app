@@ -43,6 +43,12 @@ protocol VideoEngine: AnyObject {
     func togglePictureInPicture()
     /// A small preview frame for the timeline, when the engine can make one.
     func thumbnail(at seconds: Double) async -> UIImage?
+    /// The closest preview already made, shown at once while the exact one loads.
+    func cachedThumbnail(near seconds: Double) -> UIImage?
 
     func destroy()
+}
+
+extension VideoEngine {
+    func cachedThumbnail(near seconds: Double) -> UIImage? { nil }
 }

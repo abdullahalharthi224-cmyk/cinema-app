@@ -71,6 +71,36 @@
         }
       }
     },
+    "%@ of %@ episodes watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شاهدت %@ من %@ حلقة"
+          }
+        }
+      }
+    },
+    "%@ seconds": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ثانية"
+          }
+        }
+      }
+    },
+    "%@ titles": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأعمال: %@"
+          }
+        }
+      }
+    },
     "%@ used · %@ free": {
       "localizations": {
         "ar": {
@@ -81,12 +111,32 @@
         }
       }
     },
+    "%@ watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تمت مشاهدة %@"
+          }
+        }
+      }
+    },
     "%@ · %@": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ · %@"
+          }
+        }
+      }
+    },
+    "%@))) watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تمت مشاهدة %@"
           }
         }
       }
@@ -161,12 +211,42 @@
         }
       }
     },
+    "%lld of %lld episodes watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شاهدت %lld من %lld حلقة"
+          }
+        }
+      }
+    },
     "%lld options": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "خيارات: %lld"
+          }
+        }
+      }
+    },
+    "%lld seconds": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ثانية"
+          }
+        }
+      }
+    },
+    "%lld titles": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأعمال: %lld"
           }
         }
       }
@@ -377,6 +457,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "أضف أعمالاً إلى قائمتي بزر +، وستظهر هنا أيضاً الأعمال التي تبدأ بمشاهدتها."
+          }
+        }
+      }
+    },
+    "Add to List": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أضف إلى قائمة"
           }
         }
       }
@@ -771,6 +861,26 @@
         }
       }
     },
+    "Back %@ seconds": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رجوع %@ ثانية"
+          }
+        }
+      }
+    },
+    "Back %lld seconds": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رجوع %lld ثانية"
+          }
+        }
+      }
+    },
     "Back 10 seconds": {
       "localizations": {
         "ar": {
@@ -907,6 +1017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "ذهب مصقول بلمسة سوداء لامعة"
+          }
+        }
+      }
+    },
+    "Calendar": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التقويم"
           }
         }
       }
@@ -1291,12 +1411,32 @@
         }
       }
     },
+    "Connect TMDB": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اربط TMDB"
+          }
+        }
+      }
+    },
     "Connect to the internet to browse. Your downloads play without a connection.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "اتصل بالإنترنت للتصفح. التحميلات تعمل بدون اتصال."
+          }
+        }
+      }
+    },
+    "Connect to the internet to see upcoming episodes.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اتصل بالإنترنت لترى الحلقات القادمة."
           }
         }
       }
@@ -1471,6 +1611,16 @@
         }
       }
     },
+    "Create": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إنشاء"
+          }
+        }
+      }
+    },
     "Create a Passcode": {
       "localizations": {
         "ar": {
@@ -1601,6 +1751,16 @@
         }
       }
     },
+    "Delete List": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حذف القائمة"
+          }
+        }
+      }
+    },
     "Delete Profile": {
       "localizations": {
         "ar": {
@@ -1617,6 +1777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "حذف كل التحميلات؟"
+          }
+        }
+      }
+    },
+    "Delete this list?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حذف هذه القائمة؟"
           }
         }
       }
@@ -1691,6 +1861,26 @@
         }
       }
     },
+    "Dislike": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يعجبني"
+          }
+        }
+      }
+    },
+    "Disliked": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم تعجبني"
+          }
+        }
+      }
+    },
     "Documentary": {
       "localizations": {
         "ar": {
@@ -1707,6 +1897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تم"
+          }
+        }
+      }
+    },
+    "Double-Tap to Skip": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "النقر المزدوج للتقديم والرجوع"
           }
         }
       }
@@ -1817,6 +2017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تعديل"
+          }
+        }
+      }
+    },
+    "Edit List": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعديل القائمة"
           }
         }
       }
@@ -2101,6 +2311,26 @@
         }
       }
     },
+    "Forward %@ seconds": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تقديم %@ ثانية"
+          }
+        }
+      }
+    },
+    "Forward %lld seconds": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تقديم %lld ثانية"
+          }
+        }
+      }
+    },
     "Forward 10 seconds": {
       "localizations": {
         "ar": {
@@ -2197,6 +2427,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "من المسلسلات التي تتابعها"
+          }
+        }
+      }
+    },
+    "Gestures ignore the very edges of the screen, so Control Center and notifications still open normally. They pause while a menu is open.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإيماءات لا تعمل عند حواف الشاشة تماماً، فيبقى مركز التحكم والإشعارات يفتحان كالمعتاد. وتتوقف أثناء فتح أي قائمة."
           }
         }
       }
@@ -2331,6 +2571,16 @@
         }
       }
     },
+    "Hold for 2× Speed": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الضغط المطوّل لسرعة ×2"
+          }
+        }
+      }
+    },
     "Home": {
       "localizations": {
         "ar": {
@@ -2401,6 +2651,16 @@
         }
       }
     },
+    "Icon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأيقونة"
+          }
+        }
+      }
+    },
     "If Arabic Isn't Available": {
       "localizations": {
         "ar": {
@@ -2437,6 +2697,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "مستوردة من حسابك في Stremio."
+          }
+        }
+      }
+    },
+    "In %@ days": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بعد %@ يوم"
+          }
+        }
+      }
+    },
+    "In %lld days": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بعد %lld يوم"
           }
         }
       }
@@ -2721,6 +3001,26 @@
         }
       }
     },
+    "Like": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أعجبني"
+          }
+        }
+      }
+    },
+    "Liked": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أعجبتني"
+          }
+        }
+      }
+    },
     "Link": {
       "localizations": {
         "ar": {
@@ -2747,6 +3047,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "الرابط منتهي — حُذفت الإضافة أو تغيّر عنوانها. أعد تثبيتها."
+          }
+        }
+      }
+    },
+    "List Name": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسم القائمة"
+          }
+        }
+      }
+    },
+    "Lists": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "القوائم"
           }
         }
       }
@@ -2861,6 +3181,16 @@
         }
       }
     },
+    "Make your own lists, like “Weekend” or “With the Family”, each with its own icon and colour.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أنشئ قوائمك الخاصة، مثل «نهاية الأسبوع» أو «مع العائلة»، لكل واحدة أيقونتها ولونها."
+          }
+        }
+      }
+    },
     "Manifest unreachable": {
       "localizations": {
         "ar": {
@@ -2877,6 +3207,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "ملف الإضافة يعمل"
+          }
+        }
+      }
+    },
+    "Mark All Before as Watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعليم كل ما قبل هذه الحلقة كمُشاهَد"
+          }
+        }
+      }
+    },
+    "Mark Season": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعليم الموسم"
+          }
+        }
+      }
+    },
+    "Mark Season as Unwatched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعليم الموسم كغير مُشاهَد"
+          }
+        }
+      }
+    },
+    "Mark Season as Watched": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعليم الموسم كمُشاهَد"
           }
         }
       }
@@ -3051,6 +3421,16 @@
         }
       }
     },
+    "My Lists": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قوائمي"
+          }
+        }
+      }
+    },
     "Name": {
       "localizations": {
         "ar": {
@@ -3117,6 +3497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "حلقات جديدة"
+          }
+        }
+      }
+    },
+    "New List": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قائمة جديدة"
           }
         }
       }
@@ -3277,6 +3667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "بدون ترجمة"
+          }
+        }
+      }
+    },
+    "No Upcoming Episodes": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد حلقات قادمة"
           }
         }
       }
@@ -3511,12 +3911,32 @@
         }
       }
     },
+    "Nothing Disliked": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا يوجد ما لم يعجبك"
+          }
+        }
+      }
+    },
     "Nothing Here": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "لا يوجد شيء هنا"
+          }
+        }
+      }
+    },
+    "Nothing Liked Yet": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يعجبك شيء بعد"
           }
         }
       }
@@ -3631,6 +4051,16 @@
         }
       }
     },
+    "Open any title and tap Lists to add it here.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "افتح أي عمل واضغط «القوائم» لتضيفه هنا."
+          }
+        }
+      }
+    },
     "Open in %@": {
       "localizations": {
         "ar": {
@@ -3677,6 +4107,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "فتح هذا الملف يحتاج Face ID أو الرمز."
+          }
+        }
+      }
+    },
+    "Opens the calendar": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يفتح التقويم"
           }
         }
       }
@@ -3947,6 +4387,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "المشغّل"
+          }
+        }
+      }
+    },
+    "Player Gestures": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إيماءات المشغّل"
           }
         }
       }
@@ -4271,6 +4721,16 @@
         }
       }
     },
+    "Remove Rating": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة التقييم"
+          }
+        }
+      }
+    },
     "Remove TMDB key?": {
       "localizations": {
         "ar": {
@@ -4287,6 +4747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "إزالة من متابعة المشاهدة"
+          }
+        }
+      }
+    },
+    "Remove from List": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة من القائمة"
           }
         }
       }
@@ -4851,6 +5321,16 @@
         }
       }
     },
+    "Skip Step": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مقدار التقديم"
+          }
+        }
+      }
+    },
     "Skipped intro": {
       "localizations": {
         "ar": {
@@ -5151,6 +5631,36 @@
         }
       }
     },
+    "Swipe Left Side for Brightness": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "السحب في الجهة اليسرى للسطوع"
+          }
+        }
+      }
+    },
+    "Swipe Right Side for Volume": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "السحب في الجهة اليمنى للصوت"
+          }
+        }
+      }
+    },
+    "Swipe Sideways to Seek": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "السحب أفقياً للتنقّل في المقطع"
+          }
+        }
+      }
+    },
     "Swipe a title to remove it from this profile's statistics and Wrapped. Your Library and Continue Watching aren't changed.": {
       "localizations": {
         "ar": {
@@ -5391,6 +5901,16 @@
         }
       }
     },
+    "The calendar uses TMDB for air dates. Add your key in Settings → TMDB.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعتمد التقويم على TMDB لمواعيد العرض. أضف مفتاحك من الإعدادات ← TMDB."
+          }
+        }
+      }
+    },
     "The cinematic Home screen arrives in the next update.": {
       "localizations": {
         "ar": {
@@ -5507,6 +6027,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "أزالت خدمة التوقيع صلاحية App Groups، لذلك لا يرى الويدجت ما تشاهده ويعرض «ابدأ المشاهدة». كل شيء آخر يعمل طبيعيًا."
+          }
+        }
+      }
+    },
+    "The titles stay in Cinema; only the list goes.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تبقى الأعمال في Cinema، وتُحذف القائمة فقط."
           }
         }
       }
@@ -6111,6 +6641,16 @@
         }
       }
     },
+    "Use the buttons under Play on any title.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدم الأزرار أسفل زر التشغيل في صفحة أي عمل."
+          }
+        }
+      }
+    },
     "Used by Downloads": {
       "localizations": {
         "ar": {
@@ -6287,6 +6827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "عند قفل Cinema يطلب هذا الرمز في كل مرة يُفتح. الملفات المقفلة وملفات الأطفال تستخدم رموزها الخاصة من «من يشاهد؟» ← تعديل."
+          }
+        }
+      }
+    },
+    "When a series you watch or saved has new episodes scheduled, they'll appear here by day.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عندما تُجدول حلقات جديدة لمسلسل تشاهده أو حفظته، ستظهر هنا مرتّبة حسب اليوم."
           }
         }
       }

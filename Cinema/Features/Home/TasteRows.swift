@@ -34,15 +34,29 @@ final class TasteModel {
     private(set) var comingSoon: [EpisodeEntry] = []
     private var loadedKey = ""
 
-    func load(recent: [Seed], series: [Seed], watched: Set<String>) async {
-        let key = (recent.prefix(2).map(\.metaID) + series.map(\.metaID)).joined(separator: ",")
+    /// - Parameters:
+    ///   - liked: titles the profile gave a thumbs up, newest first; they lead «Because You Watched».
+    ///   - disliked: titles given a thumbs down; never used as a starting point, and
+    ///     they and the titles TMDB considers like them are left out of the suggestions.
+    func load(recent: [Seed], series: [Seed], watched: Set<String>, liked: [Seed] = [], disliked: [Seed] = []) async {
+        let dislikedIDs = Set(disliked.map(\.metaID))
+        var seen = Set<String>()
+        let seeds = (liked.prefix(2) + recent).filter { !dislikedIDs.contains($0.metaID) && seen.insert($0.metaID).inserted }
+        let seedCount = liked.isEmpty ? 2 : 3
+        let key = (seeds.prefix(seedCount).map(\.metaID) + series.map(\.metaID) + ["-"] + disliked.prefix(8).map(\.metaID))
+            .joined(separator: ",")
         guard key != loadedKey, let client = TMDBAccount.shared.client, NetworkMonitor.shared.isConnected else { return }
         loadedKey = key
         let language = AppLanguage.current.tmdbCode
 
-        async let becauseRows = Self.becauseRows(for: Array(recent.prefix(2)), client: client, language: language)
+        async let excluded = Self.excludedTitles(for: Array(disliked.prefix(8)), client: client, language: language)
+        async let becauseRows = Self.becauseRows(for: Array(seeds.prefix(seedCount)), client: client, language: language)
         async let schedules = Self.schedules(for: Array(series.prefix(15)), client: client, language: language)
-        let (rows, found) = await (becauseRows, schedules)
+        let (unfiltered, found, banned) = await (becauseRows, schedules, excluded)
+        let rows = unfiltered.compactMap { row -> BecauseRow? in
+            let titles = row.titles.filter { !banned.contains(Self.titleKey(row.media, $0.id)) }
+            return titles.count >= 4 ? BecauseRow(sourceName: row.sourceName, media: row.media, titles: titles) : nil
+        }
 
         let today = Calendar.current.startOfDay(for: .now)
         let threeWeeksAgo = Calendar.current.date(byAdding: .day, value: -21, to: today) ?? today
@@ -82,6 +96,29 @@ final class TasteModel {
             }
         }
         return rows
+    }
+
+    nonisolated private static func titleKey(_ media: TMDBMediaType, _ id: Int) -> String { "\(media.rawValue)/\(id)" }
+
+    /// The disliked titles themselves and what TMDB recommends after each of them.
+    private static func excludedTitles(for seeds: [Seed], client: TMDBClient, language: String) async -> Set<String> {
+        await withTaskGroup(of: Set<String>.self) { group in
+            for seed in seeds {
+                group.addTask {
+                    guard let imdbID = IntroDBClient.reference(videoID: seed.metaID)?.imdbID,
+                          let found = try? await client.find(imdbID: imdbID)
+                    else { return [] }
+                    var keys: Set<String> = [Self.titleKey(found.media, found.id)]
+                    if let details = try? await client.richDetails(media: found.media, tmdbID: found.id, language: language) {
+                        keys.formUnion(details.recommendations.map { Self.titleKey(found.media, $0.id) })
+                    }
+                    return keys
+                }
+            }
+            var all = Set<String>()
+            for await keys in group { all.formUnion(keys) }
+            return all
+        }
     }
 
     private static func schedules(for seeds: [Seed], client: TMDBClient, language: String) async -> [(String, TMDBSchedule)] {
@@ -178,8 +215,22 @@ struct EpisodeScheduleRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            RowHeader(title: Text(kind == .new ? LocalizedStringKey("New Episodes") : "Coming Soon")) {
-                Text(kind == .new ? LocalizedStringKey("From series you watch") : "Upcoming episodes of series you follow")
+            Group {
+                if kind == .upcoming {
+                    NavigationLink {
+                        EpisodeCalendarView()
+                    } label: {
+                        RowHeader(title: Text("Coming Soon"), showsChevron: true) {
+                            Text("Upcoming episodes of series you follow")
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint(Text("Opens the calendar"))
+                } else {
+                    RowHeader(title: Text("New Episodes")) {
+                        Text("From series you watch")
+                    }
+                }
             }
             .padding(.horizontal, Theme.Spacing.l)
             ScrollView(.horizontal) {

@@ -53,7 +53,7 @@ Phase 4 – Luxury & customization
 Themes: Dark Cinematic (default), OLED Black, Light Glass; custom accent color.
 Reorder / hide Home rows, choose hero source, poster size, show/hide ratings.
 Multiple local profiles with avatar, each with its own library and history.
-Optional Trakt sync (postponed by the owner). App icon variants.
+App icon variants.
 Haptics, matchedGeometryEffect transitions, `.ultraThinMaterial` surfaces,
 SF Pro / SF Pro Rounded, SF Symbols, smooth skeleton loading states, Dynamic Type support.
 4. Design rules
@@ -83,7 +83,10 @@ Customization: hero source, poster size, show/hide ratings, alternate app icons 
 Every profile has its own passcode/lock and its own look and settings (Core/Storage/ProfileSettings.swift).
 Home Screen widget (CinemaWidget/, App Group group.com.personal.cinema; tools/adhoc-sign.sh puts the entitlement in the IPA; a signing service may strip it, then the widget shows "Start Watching").
 Viewing statistics (Library → chart button) and a yearly Wrapped per profile (Home card from mid-December).
-Not wanted: Siri / App Intents / Shortcuts, and any web/desktop/laptop version (iPhone only, decided by the owner).
+Player gestures (double-tap seek, hold for 2×, brightness/volume, swipe to seek; toggles + seek step in Settings → Playback) and a scrub preview (MPVThumbnailer: a second silent libmpv instance, keyframe frames).
+Custom lists (UserList) and like/dislike (TitleRating) per profile, in backups; likes lead «Because You Watched», dislikes are excluded with their TMDB recommendations.
+Series tracking: completion % (SeriesProgress, SeriesEpisodeCounts), mark season / all before as watched, an upcoming-episodes calendar (EpisodeCalendarView).
+Not wanted: Siri / App Intents / Shortcuts, any web/desktop/laptop version (iPhone only, decided by the owner), smart downloads, and Trakt sync.
 Polish pass done: cached Home rows (HomeRowCache), response caches (ResponseCache), image downsampling/prefetch,
 streams that settle early, throttled player/download updates, database recovery instead of a crash.
 Never write anything to the owner's Stremio account: it is used only to import addons.

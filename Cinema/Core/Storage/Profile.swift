@@ -163,6 +163,18 @@ enum ProfileStore {
         for log in logs {
             context.delete(log)
         }
+        let lists = (try? context.fetch(FetchDescriptor<UserList>(predicate: #Predicate { $0.profileID == optionalID }))) ?? []
+        for list in lists {
+            context.delete(list)
+        }
+        let listItems = (try? context.fetch(FetchDescriptor<UserListItem>(predicate: #Predicate { $0.profileID == optionalID }))) ?? []
+        for item in listItems {
+            context.delete(item)
+        }
+        let ratings = (try? context.fetch(FetchDescriptor<TitleRating>(predicate: #Predicate { $0.profileID == optionalID }))) ?? []
+        for rating in ratings {
+            context.delete(rating)
+        }
         context.delete(profile)
         if ProfileSession.shared.activeID == id, let next = profiles.first(where: { $0.id != id }) {
             ProfileSession.shared.activate(next)

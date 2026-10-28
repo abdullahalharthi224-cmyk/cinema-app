@@ -22,6 +22,25 @@ struct PlaybackSettingsView: View {
             }
 
             Section {
+                Toggle("Double-Tap to Skip", isOn: $settings.gestureDoubleTap)
+                if settings.gestureDoubleTap {
+                    Picker("Skip Step", selection: $settings.seekStep) {
+                        ForEach(PlaybackSettings.seekSteps, id: \.self) { step in
+                            Text("\(step) seconds").tag(step)
+                        }
+                    }
+                }
+                Toggle("Hold for 2× Speed", isOn: $settings.gestureLongPress)
+                Toggle("Swipe Left Side for Brightness", isOn: $settings.gestureBrightness)
+                Toggle("Swipe Right Side for Volume", isOn: $settings.gestureVolume)
+                Toggle("Swipe Sideways to Seek", isOn: $settings.gestureScrub)
+            } header: {
+                Text("Player Gestures")
+            } footer: {
+                Text("Gestures ignore the very edges of the screen, so Control Center and notifications still open normally. They pause while a menu is open.")
+            }
+
+            Section {
                 Picker("Subtitle Language", selection: $settings.subtitles) {
                     Text(verbatim: "العربية").tag(PlaybackSettings.SubtitleChoice.arabic)
                     Text(verbatim: "English").tag(PlaybackSettings.SubtitleChoice.english)

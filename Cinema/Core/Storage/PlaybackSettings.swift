@@ -72,6 +72,28 @@ final class PlaybackSettings {
     var autoSkipIntro: Bool {
         didSet { UserDefaults.standard.set(autoSkipIntro, forKey: "playback.autoSkipIntro") }
     }
+
+    // Player gestures, each of which can be turned off.
+    var gestureDoubleTap: Bool {
+        didSet { UserDefaults.standard.set(gestureDoubleTap, forKey: "playback.gesture.doubleTap") }
+    }
+    var gestureLongPress: Bool {
+        didSet { UserDefaults.standard.set(gestureLongPress, forKey: "playback.gesture.longPress") }
+    }
+    var gestureBrightness: Bool {
+        didSet { UserDefaults.standard.set(gestureBrightness, forKey: "playback.gesture.brightness") }
+    }
+    var gestureVolume: Bool {
+        didSet { UserDefaults.standard.set(gestureVolume, forKey: "playback.gesture.volume") }
+    }
+    var gestureScrub: Bool {
+        didSet { UserDefaults.standard.set(gestureScrub, forKey: "playback.gesture.scrub") }
+    }
+    /// Seconds skipped by a double tap and by the skip buttons.
+    var seekStep: Int {
+        didSet { UserDefaults.standard.set(seekStep, forKey: "playback.seekStep") }
+    }
+    static let seekSteps = [5, 10, 15, 30]
     /// Count down into the next episode when one ends.
     var autoPlayNext: Bool {
         didSet { UserDefaults.standard.set(autoPlayNext, forKey: "playback.autoPlayNext") }
@@ -171,6 +193,12 @@ final class PlaybackSettings {
         subtitleBackground = defaults.object(forKey: "playback.subtitleBackground") as? Double ?? 0
         audioPreference = AudioPreference(rawValue: defaults.string(forKey: "playback.audioPreference") ?? "") ?? .original
         autoSkipIntro = defaults.bool(forKey: "playback.autoSkipIntro")
+        gestureDoubleTap = defaults.object(forKey: "playback.gesture.doubleTap") as? Bool ?? true
+        gestureLongPress = defaults.object(forKey: "playback.gesture.longPress") as? Bool ?? true
+        gestureBrightness = defaults.object(forKey: "playback.gesture.brightness") as? Bool ?? true
+        gestureVolume = defaults.object(forKey: "playback.gesture.volume") as? Bool ?? true
+        gestureScrub = defaults.object(forKey: "playback.gesture.scrub") as? Bool ?? true
+        seekStep = Self.seekSteps.contains(defaults.integer(forKey: "playback.seekStep")) ? defaults.integer(forKey: "playback.seekStep") : 10
         autoPlayNext = defaults.object(forKey: "playback.autoPlayNext") as? Bool ?? true
         nightMode = defaults.bool(forKey: "playback.nightMode")
         dialogueBoost = defaults.bool(forKey: "playback.dialogueBoost")
@@ -189,6 +217,12 @@ final class PlaybackSettings {
         subtitleBackground = defaults.object(forKey: "playback.subtitleBackground") as? Double ?? 0
         audioPreference = AudioPreference(rawValue: defaults.string(forKey: "playback.audioPreference") ?? "") ?? .original
         autoSkipIntro = defaults.bool(forKey: "playback.autoSkipIntro")
+        gestureDoubleTap = defaults.object(forKey: "playback.gesture.doubleTap") as? Bool ?? true
+        gestureLongPress = defaults.object(forKey: "playback.gesture.longPress") as? Bool ?? true
+        gestureBrightness = defaults.object(forKey: "playback.gesture.brightness") as? Bool ?? true
+        gestureVolume = defaults.object(forKey: "playback.gesture.volume") as? Bool ?? true
+        gestureScrub = defaults.object(forKey: "playback.gesture.scrub") as? Bool ?? true
+        seekStep = Self.seekSteps.contains(defaults.integer(forKey: "playback.seekStep")) ? defaults.integer(forKey: "playback.seekStep") : 10
         autoPlayNext = defaults.object(forKey: "playback.autoPlayNext") as? Bool ?? true
         nightMode = defaults.bool(forKey: "playback.nightMode")
         dialogueBoost = defaults.bool(forKey: "playback.dialogueBoost")

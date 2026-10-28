@@ -18,6 +18,7 @@ struct DetailView: View {
     @State private var watchlistFeedback: Bool?
     @State private var downloadRequest: DownloadRequest?
     @State private var seasonDownloadQueued = false
+    @State private var bulkMarkFeedback = false
     @Environment(\.openURL) private var openURL
     @Environment(\.zoomNamespace) private var zoomNamespace
     @Environment(\.modelContext) private var context
@@ -54,6 +55,18 @@ struct DetailView: View {
         return ordered.first
     }
 
+    /// Regular episodes already out, for the completion percentage.
+    private var airedEpisodes: [MetaVideo] { SeriesProgress.airedEpisodes(model.meta?.videos ?? []) }
+
+    private var watchedVideoIDs: Set<String> {
+        Set(progress.values.filter(\.watched).map(\.videoID))
+    }
+
+    private var isSeasonWatched: Bool {
+        let regular = model.episodes
+        return !regular.isEmpty && regular.allSatisfy { progress[$0.id]?.watched == true }
+    }
+
     /// The navigation bar frosts over once the backdrop has scrolled away.
     private var isScrolledPastHeader: Bool { scrollOffset > backdropHeight - 140 }
 
@@ -68,7 +81,10 @@ struct DetailView: View {
                     }
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-                    actions
+                    VStack(spacing: Theme.Spacing.m) {
+                        actions
+                        TasteButtons(route: model.route, name: model.name)
+                    }
 
                     if !model.ratings.isEmpty {
                         RatingsBar(ratings: model.ratings)
@@ -179,6 +195,7 @@ struct DetailView: View {
             DownloadPickerView(request: request)
         }
         .sensoryFeedback(.success, trigger: seasonDownloadQueued)
+        .sensoryFeedback(.success, trigger: bulkMarkFeedback)
         .animation(Theme.Motion.spring, value: model.meta?.id)
         .animation(Theme.Motion.spring, value: model.availableQualities)
         .animation(Theme.Motion.spring, value: model.ratings)
@@ -385,6 +402,14 @@ struct DetailView: View {
         mainTargetVideoID.flatMap { progress[$0]?.watched } ?? false
     }
 
+    /// Marks every episode of the shown season as watched (or not).
+    private func markSeason(watched: Bool) {
+        withAnimation(Theme.Motion.spring) {
+            PlaybackProgressStore.setWatched(watched, metaID: model.route.id, videoIDs: model.episodes.map(\.id), in: context)
+        }
+        bulkMarkFeedback.toggle()
+    }
+
     /// Marks the movie (or the episode the viewer is up to) as watched, by hand.
     private func toggleWatched() {
         guard let videoID = mainTargetVideoID else { return }
@@ -484,11 +509,37 @@ struct DetailView: View {
                         .font(.title3)
                 }
                 .accessibilityLabel("Download Season")
+                Menu {
+                    Button {
+                        markSeason(watched: !isSeasonWatched)
+                    } label: {
+                        Label(
+                            isSeasonWatched ? LocalizedStringKey("Mark Season as Unwatched") : "Mark Season as Watched",
+                            systemImage: isSeasonWatched ? "eye.slash" : "checkmark.circle"
+                        )
+                    }
+                } label: {
+                    Image(systemName: isSeasonWatched ? "checkmark.circle.fill" : "checkmark.circle")
+                        .font(.title3)
+                        .contentTransition(.symbolEffect(.replace))
+                }
+                .accessibilityLabel("Mark Season")
                 if model.seasons.count > 1 {
                     seasonMenu
                 }
             }
             .padding(.horizontal, Theme.Spacing.l)
+
+            if airedEpisodes.count > 1 {
+                SeriesCompletionBar(
+                    watched: airedEpisodes.filter { watchedVideoIDs.contains($0.id) }.count,
+                    total: airedEpisodes.count
+                )
+                .padding(.horizontal, Theme.Spacing.l)
+                .task(id: airedEpisodes.count) {
+                    SeriesEpisodeCounts.set(airedEpisodes.count, for: model.route.id)
+                }
+            }
 
             ScrollViewReader { reader in
                 ScrollView(.horizontal) {
@@ -524,6 +575,17 @@ struct DetailView: View {
                                         watched ? LocalizedStringKey("Mark as Unwatched") : "Mark as Watched",
                                         systemImage: watched ? "eye.slash" : "checkmark.circle"
                                     )
+                                }
+                                let earlier = SeriesProgress.episodes(before: video, in: model.meta?.videos ?? [])
+                                if earlier.contains(where: { progress[$0.id]?.watched != true }) {
+                                    Button {
+                                        withAnimation(Theme.Motion.spring) {
+                                            PlaybackProgressStore.setWatched(true, metaID: model.route.id, videoIDs: earlier.map(\.id), in: context)
+                                        }
+                                        bulkMarkFeedback.toggle()
+                                    } label: {
+                                        Label("Mark All Before as Watched", systemImage: "checklist")
+                                    }
                                 }
                                 Button {
                                     play(video, choosingStream: true)

@@ -17,6 +17,13 @@ struct PlayerView: View {
     @State private var isClosing = false
     @State private var showsPauseScreen = false
     @State private var pauseScreenTask: Task<Void, Never>?
+    // Gesture feedback.
+    @State private var seekBubble: (forward: Bool, seconds: Int)?
+    @State private var seekBubbleTask: Task<Void, Never>?
+    @State private var speedBeforeBoost: Double?
+    @State private var levelIndicator: (level: PlayerGesture.Level, value: CGFloat)?
+    @State private var levelHideTask: Task<Void, Never>?
+    @State private var gestureScrubStart: Double?
 
     private enum ZoomNotice: Equatable { case fill, fit }
 
@@ -53,6 +60,36 @@ struct PlayerView: View {
             }
 
             gestureLayer
+
+            if let seekBubble {
+                SeekTapBubble(forward: seekBubble.forward, seconds: seekBubble.seconds)
+                    .frame(maxWidth: .infinity, alignment: seekBubble.forward ? .trailing : .leading)
+                    .padding(.horizontal, 90)
+                    .transition(.scale(scale: 0.85).combined(with: .opacity))
+                    .allowsHitTesting(false)
+            }
+
+            if speedBeforeBoost != nil || levelIndicator != nil {
+                Group {
+                    if let levelIndicator {
+                        LevelIndicator(level: levelIndicator.level, value: levelIndicator.value)
+                    } else {
+                        SpeedBoostBadge()
+                    }
+                }
+                .frame(maxHeight: .infinity, alignment: .top)
+                .padding(.top, Theme.Spacing.l)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .allowsHitTesting(false)
+            }
+
+            if gestureScrubStart != nil {
+                ScrubPreview(time: model.scrubPosition, image: model.scrubThumbnail, fallback: scrubFallbackArtwork)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .padding(.top, 60)
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
+                    .allowsHitTesting(false)
+            }
 
             if model.isPictureInPictureActive {
                 pictureInPicturePlaceholder
@@ -175,6 +212,13 @@ struct PlayerView: View {
         .animation(Theme.Motion.gentle, value: showsPauseScreen)
         .animation(Theme.Motion.gentle, value: model.hasLoaded)
         .animation(Theme.Motion.spring, value: zoomNotice)
+        .animation(Theme.Motion.snappy, value: seekBubble?.seconds)
+        .animation(Theme.Motion.snappy, value: seekBubble == nil)
+        .animation(Theme.Motion.snappy, value: speedBeforeBoost == nil)
+        .animation(Theme.Motion.snappy, value: levelIndicator == nil)
+        .animation(Theme.Motion.snappy, value: gestureScrubStart == nil)
+        .sensoryFeedback(.impact(weight: .light), trigger: seekBubble?.seconds)
+        .sensoryFeedback(.impact(weight: .medium), trigger: speedBeforeBoost == nil)
         .sensoryFeedback(.impact(weight: .medium), trigger: model.videoFill)
         .onAppear {
             OrientationController.lock(.landscape)
@@ -201,29 +245,89 @@ struct PlayerView: View {
 
     // MARK: Gestures
 
-    /// Tap to show or hide the controls; double-tap either side to skip 10
-    /// seconds; pinch to fill the screen or fit the picture.
+    /// Tap to show or hide the controls; double-tap either side to skip (taps
+    /// in a row add up); hold for double speed; drag up or down on the left for
+    /// brightness and on the right for volume; drag sideways to scrub; pinch
+    /// to fill the screen or fit the picture. Each can be turned off in Settings.
     private var gestureLayer: some View {
-        HStack(spacing: 0) {
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture(count: 2) { skip(-10) }
-                .onTapGesture { toggleControls() }
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture(count: 2) { skip(10) }
-                .onTapGesture { toggleControls() }
+        let settings = PlaybackSettings.shared
+        let options = PlayerGestureOptions(
+            doubleTap: settings.gestureDoubleTap,
+            hold: settings.gestureLongPress,
+            brightness: settings.gestureBrightness,
+            volume: settings.gestureVolume,
+            scrub: settings.gestureScrub,
+            advancedAllowed: !showsPanel && !showsPauseScreen && model.hasLoaded
+                && !model.isPictureInPictureActive && model.errorMessage == nil
+        )
+        return PlayerGestureLayer(options: options) { gesture in
+            handle(gesture)
         }
         .ignoresSafeArea()
-        .simultaneousGesture(
-            MagnifyGesture(minimumScaleDelta: 0.04)
-                .onEnded { value in
-                    let fill = value.magnification > 1
-                    guard fill != model.videoFill else { return }
-                    model.setVideoFill(fill)
-                    showZoomNotice(fill ? .fill : .fit)
+    }
+
+    private func handle(_ gesture: PlayerGesture) {
+        switch gesture {
+        case .tap:
+            toggleControls()
+        case .seekTap(let forward):
+            let step = PlaybackSettings.shared.seekStep
+            model.skip(Double(forward ? step : -step))
+            let total = (seekBubble?.forward == forward ? seekBubble?.seconds ?? 0 : 0) + step
+            seekBubble = (forward, total)
+            seekBubbleTask?.cancel()
+            seekBubbleTask = Task {
+                try? await Task.sleep(for: .milliseconds(800))
+                guard !Task.isCancelled else { return }
+                seekBubble = nil
+            }
+        case .hold(let active):
+            if active, speedBeforeBoost == nil, !model.isPaused {
+                speedBeforeBoost = model.speed
+                model.setSpeed(2)
+            } else if !active, let previous = speedBeforeBoost {
+                model.setSpeed(previous)
+                speedBeforeBoost = nil
+            }
+        case .level(let level, let value, let ended):
+            levelIndicator = (level, value)
+            levelHideTask?.cancel()
+            if ended {
+                levelHideTask = Task {
+                    try? await Task.sleep(for: .milliseconds(700))
+                    guard !Task.isCancelled else { return }
+                    levelIndicator = nil
                 }
-        )
+            }
+        case .scrub(let fraction, let phase):
+            guard model.duration > 0 else { return }
+            switch phase {
+            case .began:
+                gestureScrubStart = model.displayedPosition
+                model.scrubPosition = model.displayedPosition
+                model.isScrubbing = true
+                controlsVisible = false
+            case .changed:
+                guard let start = gestureScrubStart else { return }
+                // The full width of the screen covers a fifth of the video (90 seconds to 10 minutes).
+                let range = min(max(model.duration * 0.2, 90), 600)
+                model.scrubPosition = min(max(start + Double(fraction) * range, 0), model.duration)
+                model.requestThumbnail()
+            case .ended:
+                guard gestureScrubStart != nil else { return }
+                model.commitScrub()
+                gestureScrubStart = nil
+            }
+        case .pinch(let fill):
+            guard fill != model.videoFill else { return }
+            model.setVideoFill(fill)
+            showZoomNotice(fill ? .fill : .fit)
+        }
+    }
+
+    /// The title's artwork, blurred, behind the time while a preview frame isn't ready.
+    private var scrubFallbackArtwork: URL? {
+        (model.session.request.history?.background ?? model.session.request.history?.poster)?.asURL
     }
 
     /// After five seconds paused, the picture dims into a quiet title card.
@@ -368,14 +472,14 @@ struct PlayerView: View {
 
     private var centerButtons: some View {
         HStack(spacing: 72) {
-            Button { skip(-10) } label: {
-                Image(systemName: "gobackward.10")
+            Button { skip(-Double(PlaybackSettings.shared.seekStep)) } label: {
+                Image(systemName: "gobackward.\(PlaybackSettings.shared.seekStep)")
                     .font(.system(size: 34, weight: .medium))
                     .symbolEffect(.bounce, value: skipPulse == .back)
                     .frame(width: 70, height: 70)
                     .contentShape(Circle())
             }
-            .accessibilityLabel("Back 10 seconds")
+            .accessibilityLabel(Text("Back \(PlaybackSettings.shared.seekStep) seconds"))
 
             Button {
                 model.togglePlay()
@@ -388,14 +492,14 @@ struct PlayerView: View {
             }
             .accessibilityLabel(Text(model.isPaused ? LocalizedStringKey("Play") : "Pause"))
 
-            Button { skip(10) } label: {
-                Image(systemName: "goforward.10")
+            Button { skip(Double(PlaybackSettings.shared.seekStep)) } label: {
+                Image(systemName: "goforward.\(PlaybackSettings.shared.seekStep)")
                     .font(.system(size: 34, weight: .medium))
                     .symbolEffect(.bounce, value: skipPulse == .forward)
                     .frame(width: 70, height: 70)
                     .contentShape(Circle())
             }
-            .accessibilityLabel("Forward 10 seconds")
+            .accessibilityLabel(Text("Forward \(PlaybackSettings.shared.seekStep) seconds"))
         }
         .foregroundStyle(.white)
         .shadow(color: .black.opacity(0.45), radius: 10)
@@ -716,6 +820,10 @@ private struct Scrubber: View {
     @Bindable var model: PlayerViewModel
     var onEditingChanged: (Bool) -> Void
 
+    private var fallbackArtwork: URL? {
+        (model.session.request.history?.background ?? model.session.request.history?.poster)?.asURL
+    }
+
     var body: some View {
         GeometryReader { proxy in
             let fraction = model.duration > 0 ? min(max(model.displayedPosition / model.duration, 0), 1) : 0
@@ -748,9 +856,9 @@ private struct Scrubber: View {
             .animation(Theme.Motion.snappy, value: model.isScrubbing)
             .overlay(alignment: .bottomLeading) {
                 if model.isScrubbing {
-                    let width: CGFloat = model.scrubThumbnail == nil ? 84 : 172
+                    let width: CGFloat = model.scrubThumbnail == nil && fallbackArtwork == nil ? 84 : 172
                     let x = min(max(proxy.size.width * fraction - width / 2, 0), max(proxy.size.width - width, 0))
-                    ScrubPreview(time: model.scrubPosition, image: model.scrubThumbnail)
+                    ScrubPreview(time: model.scrubPosition, image: model.scrubThumbnail, fallback: fallbackArtwork)
                         .frame(width: width)
                         .offset(x: x, y: -36)
                         .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottom)))
@@ -770,9 +878,23 @@ private struct Scrubber: View {
 private struct ScrubPreview: View {
     let time: Double
     let image: UIImage?
+    /// Artwork shown blurred while the frame isn't available yet.
+    var fallback: URL? = nil
 
     var body: some View {
         VStack(spacing: 6) {
+            if image == nil, let fallback {
+                RemoteImage(url: fallback) { Color.white.opacity(0.08) }
+                    .frame(width: 172, height: 97)
+                    .blur(radius: 14)
+                    .overlay(Color.black.opacity(0.25))
+                    .clipShape(.continuous(Theme.Radius.small))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                            .strokeBorder(.white.opacity(0.3), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.5), radius: 10)
+            }
             if let image {
                 Image(uiImage: image)
                     .resizable()

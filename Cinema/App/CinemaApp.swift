@@ -6,7 +6,8 @@ import SwiftUI
 enum CinemaStore {
     static let container: ModelContainer = {
         let schema = Schema([InstalledAddon.self, WatchHistoryItem.self, Profile.self,
-                             PlaybackProgress.self, WatchlistItem.self, DownloadItem.self, ViewingLog.self])
+                             PlaybackProgress.self, WatchlistItem.self, DownloadItem.self, ViewingLog.self,
+                             UserList.self, UserListItem.self, TitleRating.self])
         if let container = try? ModelContainer(for: schema) { return container }
 
         // The saved database couldn't be opened (e.g. damaged). Rather than closing
