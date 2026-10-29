@@ -123,3 +123,19 @@ final class StatsAxisTests: XCTestCase {
         XCTAssertNotNil(arabic.first?.label.range(of: "\\p{Arabic}", options: .regularExpression))
     }
 }
+
+// MARK: - Tab bar clearance
+
+final class TabBarClearanceTests: XCTestCase {
+    /// When the system counts only the home indicator, the bar's full height is added.
+    func testAddsTheBarWhenTheSystemDoesNot() {
+        XCTAssertEqual(TabBarClearance.extraInset(systemBottomInset: 34), TabBarClearance.barHeight + TabBarClearance.breathingRoom)
+        XCTAssertEqual(TabBarClearance.extraInset(systemBottomInset: 0), TabBarClearance.barHeight + TabBarClearance.breathingRoom)
+    }
+
+    /// When the bar is already in the safe area, only breathing room is added (no double gap).
+    func testOnlyBreathingRoomWhenTheBarIsCounted() {
+        XCTAssertEqual(TabBarClearance.extraInset(systemBottomInset: 83), TabBarClearance.breathingRoom)
+        XCTAssertEqual(TabBarClearance.extraInset(systemBottomInset: 49), TabBarClearance.breathingRoom)
+    }
+}

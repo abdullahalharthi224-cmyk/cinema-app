@@ -15,20 +15,24 @@ struct RootView: View {
 
         TabView(selection: $router.selectedTab) {
             HomeView()
+                .tabBarClearance()
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(AppTab.home)
 
             SearchView()
+                .tabBarClearance()
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
                 .tag(AppTab.search)
 
             LibraryView()
+                .tabBarClearance()
                 .tabItem { Label("Library", systemImage: "square.stack.fill") }
                 .tag(AppTab.library)
 
             // A kids profile has no Settings (and so no addons or account details).
             if !ProfileSession.shared.isKids {
                 SettingsView()
+                    .tabBarClearance()
                     .tabItem { Label("Settings", systemImage: "gearshape.fill") }
                     .tag(AppTab.settings)
             }
