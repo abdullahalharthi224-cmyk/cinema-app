@@ -178,7 +178,7 @@ enum EpisodeNotifier {
             let content = UNMutableNotificationContent()
             content.title = localized("New episode of %@", entry.schedule.name)
             var body = localized("S%lld E%lld", entry.episode.season, entry.episode.episode)
-            if let name = entry.episode.name, !name.isEmpty { body += " · " + name }
+            if let name = entry.episode.name, !name.isEmpty { body += " · " + name.bidiIsolated }
             content.body = body
             content.sound = .default
             let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
@@ -301,7 +301,7 @@ private struct EpisodeScheduleCard: View {
 
     private var episodeText: String {
         var text = localized("S%lld E%lld", entry.episode.season, entry.episode.episode)
-        if let name = entry.episode.name, !name.isEmpty { text += " · " + name }
+        if let name = entry.episode.name, !name.isEmpty { text += " · " + name.bidiIsolated }
         return text
     }
 

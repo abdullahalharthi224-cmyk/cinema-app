@@ -260,7 +260,7 @@ private struct CalendarEpisodeRow: View {
 
     private var episodeText: String {
         var text = localized("S%lld E%lld", entry.season, entry.episode)
-        if let title = entry.title, !title.isEmpty, !title.lowercased().hasPrefix("episode") { text += " · " + title }
+        if let title = entry.title, !title.isEmpty, !title.lowercased().hasPrefix("episode") { text += " · " + title.bidiIsolated }
         return text
     }
 }

@@ -114,7 +114,7 @@ struct DownloadPickerView: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
-                    Text(verbatim: [addonNames[stream.addonID], stream.info.provider].compactMap { $0 }.joined(separator: " · "))
+                    Text(verbatim: Bidi.join([addonNames[stream.addonID], stream.info.provider].compactMap { $0 }))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
