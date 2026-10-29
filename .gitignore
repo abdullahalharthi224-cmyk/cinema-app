@@ -68,3 +68,6 @@ Cinema/Resources/Info.plist
 # Build output
 build/
 Payload/
+
+# graphify knowledge graph (local only)
+graphify-out/
