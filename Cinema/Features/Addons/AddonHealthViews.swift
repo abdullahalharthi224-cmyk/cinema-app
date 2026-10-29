@@ -307,6 +307,7 @@ struct AddonSingleCheckView: View {
                     }
                 } footer: {
                     Text("Tests the manifest, response time, and a stream lookup for The Shawshank Redemption.")
+                        .settingsFooter()
                 }
             }
             .navigationTitle("Addon Check")

@@ -46,6 +46,7 @@ struct TMDBSettingsView: View {
                 }
             } footer: {
                 Text("Sign in at themoviedb.org, open Settings → API, and copy the “API Read Access Token” (the long one). It's stored only in this iPhone's Keychain.")
+                    .settingsFooter()
             }
         }
         .navigationTitle(Text(verbatim: "TMDB"))

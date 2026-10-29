@@ -613,7 +613,7 @@ struct PlayerView: View {
         }
         if let title = track.title, !parts.contains(title) { parts.append(title) }
         if parts.isEmpty { parts.append(localized("Track %lld", track.id)) }
-        return parts.joined(separator: " · ")
+        return Bidi.join(parts)
     }
 
     private func speedLabel(_ speed: Double) -> String {

@@ -107,7 +107,7 @@ struct ProfilePickerView: View {
 
                     Text("Up to \(Profile.maxCount) profiles. Each has its own Continue Watching and Library.")
                         .font(.footnote)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Theme.secondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Theme.Spacing.xxl)
                 }
@@ -408,13 +408,16 @@ struct ProfileEditorView: View {
                         .pickerStyle(.segmented)
                     }
                 } footer: {
-                    if !canBeKids {
-                        Text("Keep at least one grown-up profile so the passcode can be used to leave kids profiles.")
-                    } else if isKids {
-                        Text("Shows only titles rated for this age on TMDB; titles without a rating are hidden. No Settings or addons. Leaving needs this profile's own passcode.")
-                    } else {
-                        Text("A kids profile shows only titles suitable for the age you choose.")
+                    Group {
+                        if !canBeKids {
+                            Text("Keep at least one grown-up profile so the passcode can be used to leave kids profiles.")
+                        } else if isKids {
+                            Text("Shows only titles rated for this age on TMDB; titles without a rating are hidden. No Settings or addons. Leaving needs this profile's own passcode.")
+                        } else {
+                            Text("A kids profile shows only titles suitable for the age you choose.")
+                        }
                     }
+                    .settingsFooter()
                 }
 
                 if editedProfile != nil, profiles.count > 1 {
@@ -424,6 +427,7 @@ struct ProfileEditorView: View {
                         }
                     } footer: {
                         Text("Deleting a profile also deletes its Continue Watching and Library.")
+                            .settingsFooter()
                     }
                 }
             }

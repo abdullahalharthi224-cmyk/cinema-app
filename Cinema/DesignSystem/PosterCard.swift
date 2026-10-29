@@ -84,8 +84,10 @@ struct PosterArtwork: View {
     var body: some View {
         Color.clear
             .overlay {
+                // The title card is there from the start, so a slow load or a still
+                // placeholder (Performance Mode) never leaves an empty grey box.
                 FallbackImage(urls: Artwork.posters(id: id, provided: url), resolveMore: resolveFromTMDB) {
-                    ShimmerPlaceholder()
+                    TitleCard(title: title).shimmering()
                 } failure: {
                     TitleCard(title: title)
                 }
@@ -122,7 +124,8 @@ private struct DownloadedTitleBadge: View {
     }
 }
 
-/// Stands in for missing artwork: the title on a soft, accent-tinted card.
+/// Stands in for missing artwork: the title, centred on a gradient of the theme's colours.
+/// The one fallback for posters and backdrops everywhere in the app.
 struct TitleCard: View {
     let title: String
     var symbol = "film"
@@ -130,7 +133,7 @@ struct TitleCard: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Theme.accent.opacity(0.28), Theme.surface, Theme.surface],
+                colors: [Theme.accent.opacity(0.38), Theme.surface, Theme.background],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -139,10 +142,11 @@ struct TitleCard: View {
                     .font(.title2.weight(.light))
                     .foregroundStyle(Theme.accent)
                 Text(title)
-                    .font(.system(.subheadline, design: .default, weight: .bold))
+                    .font(.display(.subheadline, weight: .bold))
                     .multilineTextAlignment(.center)
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.7)
+                    .lineLimit(4)
+                    .minimumScaleFactor(0.6)
+                    .allowsTightening(true)
                     .foregroundStyle(.primary)
             }
             .padding(Theme.Spacing.m)

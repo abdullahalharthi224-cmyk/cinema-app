@@ -188,7 +188,7 @@ struct SubtitlePanel: View {
                      ? language.options[0].source
                      : localized("%lld options", language.options.count))
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
                 if language.options.count > 1 {
                     Image(systemName: "chevron.down")
@@ -425,7 +425,7 @@ struct SubtitlePanel: View {
                 if let detail {
                     Text(verbatim: detail)
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -445,7 +445,7 @@ struct SubtitlePanel: View {
         }
         if let title = track.title, !parts.contains(title) { parts.append(title) }
         if parts.isEmpty { parts.append(localized("Track %lld", track.id)) }
-        return parts.joined(separator: " · ")
+        return Bidi.join(parts)
     }
 
     private func languageName(_ raw: String?) -> String {

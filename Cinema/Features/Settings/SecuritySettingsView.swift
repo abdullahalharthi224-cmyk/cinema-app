@@ -51,6 +51,7 @@ struct SecuritySettingsView: View {
                     .padding(.vertical, 4)
                 } footer: {
                     Text("This passcode belongs only to this profile. Every profile can set its own from here while it's open.")
+                        .settingsFooter()
                 }
 
                 if !hasPasscode {
@@ -98,6 +99,7 @@ struct SecuritySettingsView: View {
                         }
                     } footer: {
                         Text("When this profile is locked, opening it, or coming back to Cinema while it's open, needs Face ID or its passcode.")
+                            .settingsFooter()
                     }
 
                     Section {

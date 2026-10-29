@@ -95,6 +95,7 @@ struct MDBListSettingsView: View {
                 }
             } footer: {
                 Text("Sign in at mdblist.com, open Preferences, and copy your API key. It's stored only in this iPhone's Keychain.")
+                    .settingsFooter()
             }
         }
         .navigationTitle("Ratings")

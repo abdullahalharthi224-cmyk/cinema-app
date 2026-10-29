@@ -20,6 +20,7 @@ struct PerformanceView: View {
                     Text("This Launch")
                 } footer: {
                     Text("Measured from the moment iOS starts Cinema.")
+                        .settingsFooter()
                 }
 
                 if monitor.history.count > 1 {
@@ -83,6 +84,7 @@ struct PerformanceView: View {
                     }
                 } footer: {
                     Text("Paste the report in a message to share these numbers.")
+                        .settingsFooter()
                 }
             }
         }

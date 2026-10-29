@@ -97,6 +97,7 @@ struct AppIconView: View {
                 }
             } footer: {
                 Text("iOS confirms the change with a short message.")
+                    .settingsFooter()
             }
         }
         .navigationTitle("App Icon")

@@ -55,6 +55,11 @@ final class DetailViewModel {
 
     // Values that fall back to the preview data while full details load.
     var name: String { localizedTitle?.nonEmpty ?? meta?.name.nonEmpty ?? route.name }
+    /// The original name, shown smaller under an Arabic title.
+    var originalName: String? {
+        guard localizedTitle?.nonEmpty != nil else { return nil }
+        return TitleLocalizer.originalSubtitle(shown: name, original: meta?.name.nonEmpty ?? route.name)
+    }
     var backgroundURL: URL? {
         Artwork.background(id: route.id, provided: meta?.background ?? route.background)
             ?? (meta?.poster ?? route.poster)?.asURL
@@ -318,7 +323,7 @@ final class DetailViewModel {
 
         withAnimation(Theme.Motion.spring) {
             if let details {
-                localizedTitle = details.title
+                localizedTitle = TitleLocalizer.arabicTitle(details.title)
                 localizedOverview = details.overview
                 localizedGenres = details.genres
                 localizedRuntime = details.runtime

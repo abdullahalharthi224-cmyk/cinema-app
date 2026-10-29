@@ -30,14 +30,14 @@ actor TitleLocalizer {
         let task = Task<Localized?, Never> {
             guard let found = try? await client.findLocalized(imdbID: imdbID, language: language) else { return nil }
             var result = Localized(
-                title: found.title.title.isEmpty ? nil : found.title.title,
+                title: Self.arabicTitle(found.title.title),
                 poster: TMDBClient.imageURL(found.title.posterPath, size: "w342"),
                 logo: nil
             )
             // No title for this Arabic region: another Arabic region may have one.
             if language.hasPrefix("ar"), !(result.title?.containsArabicLetters ?? false),
                let arabic = try? await client.arabicTranslation(media: found.media, tmdbID: found.title.id),
-               let title = arabic.title {
+               let title = Self.arabicTitle(arabic.title) {
                 result.title = title
             }
             if wantsLogo {
@@ -52,6 +52,23 @@ actor TitleLocalizer {
         inFlight[key] = nil
         if let result { cache[key] = result }
         return result
+    }
+
+    /// A TMDB title only when it is really in Arabic. Without an Arabic title the card keeps
+    /// the original name its addon gives, so Home doesn't mix English (or other languages)
+    /// from TMDB with the addons' names.
+    static func arabicTitle(_ title: String?) -> String? {
+        guard let title = title?.trimmingCharacters(in: .whitespacesAndNewlines), title.containsArabicLetters else { return nil }
+        return title
+    }
+
+    /// The original name to show in smaller type under the main title, where there's room:
+    /// only when the main title is a translation that differs from it.
+    static func originalSubtitle(shown: String, original: String?) -> String? {
+        guard let original = original?.trimmingCharacters(in: .whitespacesAndNewlines), !original.isEmpty,
+              original.compare(shown, options: [.caseInsensitive, .diacriticInsensitive]) != .orderedSame
+        else { return nil }
+        return original
     }
 
     private static func imdbID(_ id: String) -> String? {

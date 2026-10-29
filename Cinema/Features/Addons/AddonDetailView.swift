@@ -36,6 +36,7 @@ struct AddonDetailView: View {
                     )
                 } footer: {
                     Text("Disabled addons are kept but never asked for content.")
+                        .settingsFooter()
                 }
 
                 if !manifest.catalogs.isEmpty {
@@ -79,6 +80,7 @@ struct AddonDetailView: View {
                 Text("Link")
             } footer: {
                 Text(addon.source == .stremio ? LocalizedStringKey("Imported from your Stremio account.") : "Added by link.")
+                    .settingsFooter()
             }
 
             Section {
@@ -100,6 +102,7 @@ struct AddonDetailView: View {
                 Text("Health")
             } footer: {
                 Text("Tests the manifest, response time, and a stream lookup for The Shawshank Redemption.")
+                    .settingsFooter()
             }
 
             Section {

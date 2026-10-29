@@ -19,6 +19,7 @@ struct PlaybackSettingsView: View {
                 Text("Play Button")
             } footer: {
                 Text("Play picks the best stream for you: your preferred quality, links already cached on your debrid service first, and a sensible file size. Use the list button to choose one yourself.")
+                    .settingsFooter()
             }
 
             Section {
@@ -38,6 +39,7 @@ struct PlaybackSettingsView: View {
                 Text("Player Gestures")
             } footer: {
                 Text("Gestures ignore the very edges of the screen, so Control Center and notifications still open normally. They pause while a menu is open.")
+                    .settingsFooter()
             }
 
             Section {
@@ -61,6 +63,7 @@ struct PlaybackSettingsView: View {
                 Text("Subtitles")
             } footer: {
                 Text("Subtitles in this language are turned on automatically — from the video itself or from subtitle addons like OpenSubtitles.")
+                    .settingsFooter()
             }
 
             Section {
@@ -74,6 +77,7 @@ struct PlaybackSettingsView: View {
                 Text("Audio")
             } footer: {
                 Text("Night mode evens out loud and quiet moments; dialogue boost lifts voices. Both use the built-in player.")
+                    .settingsFooter()
             }
 
             Section {
@@ -106,6 +110,7 @@ struct PlaybackSettingsView: View {
                 Text("Player")
             } footer: {
                 Text("MP4 and HLS streams play in Apple's player, with Picture in Picture and full AirPlay. Everything else (like MKV) plays in the built-in player, which handles any format. The controls are the same in both.")
+                    .settingsFooter()
             }
         }
         .navigationTitle("Playback")

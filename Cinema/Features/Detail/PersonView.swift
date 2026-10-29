@@ -70,7 +70,7 @@ struct PersonView: View {
                                         if let character = credit.character, !character.isEmpty {
                                             Text(character)
                                                 .font(.caption2)
-                                                .foregroundStyle(.tertiary)
+                                                .foregroundStyle(Theme.secondaryText)
                                                 .lineLimit(1)
                                         }
                                     }

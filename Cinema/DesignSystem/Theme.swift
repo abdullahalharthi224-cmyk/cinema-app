@@ -31,6 +31,26 @@ enum Theme {
     /// Cards and grouped surfaces, slightly lifted from the background.
     static var surface: Color { Appearance.shared.theme.surface }
 
+    /// Explanations, footers and captions: softer than the main text but still easy to read
+    /// (at least 4.5:1 against the theme's background, WCAG AA). Use with text styles so
+    /// Dynamic Type keeps working.
+    static var secondaryText: Color { Appearance.shared.theme.secondaryText }
+
+    /// The WCAG contrast ratio between two opaque colours, from 1 (none) to 21 (black on white).
+    static func contrastRatio(_ first: Color, _ second: Color) -> Double {
+        func luminance(_ color: Color) -> Double {
+            var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+            UIColor(color).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+            func linear(_ value: CGFloat) -> Double {
+                let value = Double(min(max(value, 0), 1))
+                return value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+            }
+            return 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue)
+        }
+        let (a, b) = (luminance(first), luminance(second))
+        return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+    }
+
     static var backgroundGradient: LinearGradient {
         LinearGradient(colors: [surface, background], startPoint: .top, endPoint: .bottom)
     }
@@ -85,6 +105,14 @@ enum AppTheme: String, CaseIterable, Identifiable {
         case .cinematic: return Color(white: 0.085)
         case .oled: return Color(white: 0.06)
         case .light: return .white
+        }
+    }
+
+    /// Secondary text: about 7.7:1 on the dark themes and 5.5:1 on Light Glass.
+    var secondaryText: Color {
+        switch self {
+        case .cinematic, .oled: return Color(white: 0.62)
+        case .light: return Color(white: 0.38)
         }
     }
 
@@ -178,6 +206,13 @@ extension Color {
         UIColor(self).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
         func byte(_ value: CGFloat) -> Int { Int((min(max(value, 0), 1) * 255).rounded()) }
         return String(format: "#%02X%02X%02X", byte(red), byte(green), byte(blue))
+    }
+}
+
+extension View {
+    /// The look of a settings section's explanation text: readable secondary text.
+    func settingsFooter() -> some View {
+        foregroundStyle(Theme.secondaryText)
     }
 }
 

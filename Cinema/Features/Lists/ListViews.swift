@@ -23,19 +23,24 @@ struct ListIcon: View {
 
 // MARK: - Detail page buttons
 
-/// Like, dislike and "Add to List", under the Play button of a title's page.
-struct TasteButtons: View {
+/// The title page's one row of labelled actions, under Play: the caller's own tiles
+/// (My List, Watched), then Like, Dislike and Lists, then the caller's trailing tile (Download).
+struct TitleActionsRow<Leading: View, Trailing: View>: View {
     let route: MetaRoute
     let name: String
+    let leading: Leading
+    let trailing: Trailing
 
     @Environment(\.modelContext) private var context
     @Query private var ratings: [TitleRating]
     @Query private var listItems: [UserListItem]
     @State private var showsLists = false
 
-    init(route: MetaRoute, name: String) {
+    init(route: MetaRoute, name: String, @ViewBuilder leading: () -> Leading, @ViewBuilder trailing: () -> Trailing) {
         self.route = route
         self.name = name
+        self.leading = leading()
+        self.trailing = trailing()
         let metaID = route.id
         _ratings = Query(filter: #Predicate<TitleRating> { $0.metaID == metaID })
         _listItems = Query(filter: #Predicate<UserListItem> { $0.metaID == metaID })
@@ -50,22 +55,39 @@ struct TasteButtons: View {
     }
 
     var body: some View {
+        let liked = rating?.liked == true
+        let disliked = rating?.liked == false
         HStack(spacing: Theme.Spacing.s) {
-            pill(
-                rating?.liked == true ? "hand.thumbsup.fill" : "hand.thumbsup",
-                title: "Like", active: rating?.liked == true
-            ) {
+            leading
+
+            Button {
                 withAnimation(Theme.Motion.spring) { RatingStore.rate(route, name: name, liked: true, in: context) }
+            } label: {
+                ActionTile("Like", systemImage: liked ? "hand.thumbsup.fill" : "hand.thumbsup", isOn: liked)
             }
-            pill(
-                rating?.liked == false ? "hand.thumbsdown.fill" : "hand.thumbsdown",
-                title: "Dislike", active: rating?.liked == false
-            ) {
+            .buttonStyle(.cardPress)
+            .accessibilityLabel(Text(liked ? LocalizedStringKey("Liked") : "Like"))
+            .accessibilityAddTraits(liked ? .isSelected : [])
+
+            Button {
                 withAnimation(Theme.Motion.spring) { RatingStore.rate(route, name: name, liked: false, in: context) }
+            } label: {
+                ActionTile("Dislike", systemImage: disliked ? "hand.thumbsdown.fill" : "hand.thumbsdown", isOn: disliked)
             }
-            pill(listCount > 0 ? "text.badge.checkmark" : "text.badge.plus", title: "Lists", active: listCount > 0) {
+            .buttonStyle(.cardPress)
+            .accessibilityLabel(Text(disliked ? LocalizedStringKey("Disliked") : "Dislike"))
+            .accessibilityAddTraits(disliked ? .isSelected : [])
+
+            Button {
                 showsLists = true
+            } label: {
+                ActionTile("Lists", systemImage: listCount > 0 ? "text.badge.checkmark" : "text.badge.plus", isOn: listCount > 0)
             }
+            .buttonStyle(.cardPress)
+            .accessibilityLabel("Add to List")
+            .accessibilityAddTraits(listCount > 0 ? .isSelected : [])
+
+            trailing
         }
         .sensoryFeedback(.selection, trigger: rating?.liked)
         .sheet(isPresented: $showsLists) {
@@ -74,30 +96,11 @@ struct TasteButtons: View {
                 .presentationDragIndicator(.visible)
         }
     }
-
-    private func pill(_ symbol: String, title: LocalizedStringKey, active: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Label(title, systemImage: symbol)
-                .font(.subheadline.weight(.semibold))
-                .contentTransition(.symbolEffect(.replace))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .foregroundStyle(active ? Theme.accent : .white)
-                .background {
-                    Capsule().fill(.adaptiveMaterial)
-                        .overlay(Capsule().strokeBorder(active ? Theme.accent.opacity(0.7) : .white.opacity(0.18), lineWidth: active ? 1 : 0.5))
-                }
-                .environment(\.colorScheme, .dark)
-        }
-        .buttonStyle(.plain)
-    }
 }
 
 // MARK: - Add to list
 
-/// Puts the title in My List or any of the profile's own lists, and makes new lists.
+/// Puts the title in any of the profile's own lists, and makes new lists.
 struct AddToListSheet: View {
     let route: MetaRoute
     let name: String
@@ -106,7 +109,6 @@ struct AddToListSheet: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \UserList.sortIndex) private var allLists: [UserList]
     @Query private var items: [UserListItem]
-    @Query private var watchlistItems: [WatchlistItem]
     @State private var showsEditor = false
 
     init(route: MetaRoute, name: String) {
@@ -114,7 +116,6 @@ struct AddToListSheet: View {
         self.name = name
         let metaID = route.id
         _items = Query(filter: #Predicate<UserListItem> { $0.metaID == metaID })
-        _watchlistItems = Query(filter: #Predicate<WatchlistItem> { $0.metaID == metaID })
     }
 
     private var lists: [UserList] { allLists.filter { $0.profileID == ProfileSession.shared.activeID } }
@@ -123,26 +124,23 @@ struct AddToListSheet: View {
         items.contains { $0.listID == list.id && $0.type == route.type }
     }
 
-    private var inWatchlist: Bool {
-        watchlistItems.contains { $0.profileID == ProfileSession.shared.activeID && $0.type == route.type }
-    }
-
     var body: some View {
         NavigationStack {
             List {
+                // My List has its own button on the title's page, so only the profile's own lists are here.
                 Section {
-                    row(symbol: "plus", colorHex: Profile.colors[0], title: Text("My List"), checked: inWatchlist) {
-                        WatchlistStore.toggle(route, name: name, in: context)
-                    }
                     ForEach(lists) { list in
                         row(symbol: list.symbol, colorHex: list.colorHex, title: Text(verbatim: list.name), checked: contains(list)) {
                             UserListStore.toggle(route, name: name, in: list, context: context)
                         }
                     }
                 } footer: {
-                    if lists.isEmpty {
-                        Text("Make your own lists, like “Weekend” or “With the Family”, each with its own icon and colour.")
+                    Group {
+                        if lists.isEmpty {
+                            Text("Make your own lists, like “Weekend” or “With the Family”, each with its own icon and colour.")
+                        }
                     }
+                    .settingsFooter()
                 }
 
                 Section {
@@ -166,7 +164,7 @@ struct AddToListSheet: View {
                     UserListStore.toggle(route, name: name, in: list, context: context)
                 }
             }
-            .sensoryFeedback(.selection, trigger: items.count + (inWatchlist ? 1000 : 0))
+            .sensoryFeedback(.selection, trigger: items.count)
         }
     }
 

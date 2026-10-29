@@ -64,6 +64,7 @@ struct AppearanceView: View {
                 Text("Accent Color")
             } footer: {
                 Text("Used for highlights, ratings, progress and buttons throughout the app.")
+                    .settingsFooter()
             }
         }
         .navigationTitle("Appearance")

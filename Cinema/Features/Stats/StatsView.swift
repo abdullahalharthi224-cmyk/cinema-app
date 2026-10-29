@@ -100,8 +100,15 @@ struct StatsView: View {
         }
     }
 
+    private var language: AppLanguage { Appearance.shared.language }
+
+    private var bars: [StatsAxis.Bar] {
+        StatsAxis.bars(for: buckets, range: range, language: language)
+    }
+
     private var chartCard: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+        let bars = self.bars
+        return VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             Picker("Range", selection: $range.animation(Theme.Motion.spring)) {
                 ForEach(Range.allCases) { range in
                     Text(range.title).tag(range)
@@ -109,36 +116,37 @@ struct StatsView: View {
             }
             .pickerStyle(.segmented)
 
-            Chart(buckets) { bucket in
+            Chart(bars) { bar in
                 BarMark(
-                    x: .value("Day", bucket.start, unit: range == .year ? .month : .day),
-                    y: .value("Hours", bucket.hours)
+                    x: .value("Day", bar.key),
+                    y: .value("Hours", bar.hours)
                 )
                 .foregroundStyle(Theme.accent.gradient)
                 .cornerRadius(range == .month ? 2 : 5)
+                .accessibilityLabel(Text(bar.date, format: range == .year
+                    ? .dateTime.month(.wide).locale(language.locale)
+                    : .dateTime.weekday(.wide).day().month(.wide).locale(language.locale)))
+                .accessibilityValue(Text(Duration.seconds(bar.hours * 3600), format: .units(allowed: [.hours, .minutes], width: .wide)))
             }
+            .chartXScale(domain: bars.map(\.key))
             .chartXAxis {
-                if range == .week {
-                    AxisMarks(values: .stride(by: .day)) { _ in
-                        AxisValueLabel(format: .dateTime.weekday(.narrow), centered: true)
-                    }
-                } else if range == .month {
-                    AxisMarks(values: .stride(by: .day, count: 7)) { _ in
-                        AxisValueLabel(format: .dateTime.day())
-                    }
-                } else {
-                    AxisMarks(values: .stride(by: .month)) { _ in
-                        AxisValueLabel(format: .dateTime.month(.narrow), centered: true)
+                AxisMarks(values: bars.filter(\.showsLabel).map(\.key)) { value in
+                    AxisValueLabel {
+                        if let key = value.as(String.self), let bar = bars.first(where: { $0.key == key }) {
+                            Text(verbatim: bar.label)
+                        }
                     }
                 }
             }
             .chartYAxis {
-                AxisMarks(position: .leading) { _ in
+                // The hours sit on the side the text starts from: left in English, right in Arabic.
+                AxisMarks(position: language.isRightToLeft ? .trailing : .leading) { _ in
                     AxisGridLine().foregroundStyle(Color.primary.opacity(0.08))
                     AxisValueLabel()
                 }
             }
             .frame(height: 190)
+            // StatsAxis already orders the bars for the app's direction.
             .environment(\.layoutDirection, .leftToRight)
         }
         .padding(Theme.Spacing.l)

@@ -35,6 +35,7 @@ struct SettingsView: View {
                     }
                 } footer: {
                     Text("Addons are where all content comes from. Cinema doesn't host or provide any content itself.")
+                        .settingsFooter()
                 }
 
                 Section {
@@ -181,11 +182,14 @@ struct SettingsView: View {
                         }
                     }
                 } footer: {
-                    if WidgetBridge.isAvailable {
-                        Text("Add it from the Home Screen: touch and hold, tap Edit → Add Widget, then choose Cinema.")
-                    } else {
-                        Text("The signing service removed the App Group permission, so the widget can't see what you're watching and shows \"Start Watching\". Everything else works normally.")
+                    Group {
+                        if WidgetBridge.isAvailable {
+                            Text("Add it from the Home Screen: touch and hold, tap Edit → Add Widget, then choose Cinema.")
+                        } else {
+                            Text("The signing service removed the App Group permission, so the widget can't see what you're watching and shows \"Start Watching\". Everything else works normally.")
+                        }
                     }
+                    .settingsFooter()
                 }
 
                 Section {
@@ -201,6 +205,7 @@ struct SettingsView: View {
                     }
                 } footer: {
                     Text("While on, nothing you watch is added to Continue Watching or your history, and no resume positions are saved.")
+                        .settingsFooter()
                 }
 
                 Section {
@@ -234,11 +239,14 @@ struct SettingsView: View {
                     }
                     .disabled(isClearingCache || cacheSize == 0)
                 } footer: {
-                    if PerformanceSettings.shared.isLowPower && !PerformanceSettings.shared.isEnabled {
-                        Text("On automatically while Low Power Mode is on. Fewer animations and lighter blur and shadows.")
-                    } else {
-                        Text("Fewer animations and lighter blur and shadows. Also turns on by itself in Low Power Mode. Clearing the cache keeps your library, downloads and settings.")
+                    Group {
+                        if PerformanceSettings.shared.isLowPower && !PerformanceSettings.shared.isEnabled {
+                            Text("On automatically while Low Power Mode is on. Fewer animations and lighter blur and shadows.")
+                        } else {
+                            Text("Fewer animations and lighter blur and shadows. Also turns on by itself in Low Power Mode. Clearing the cache keeps your library, downloads and settings.")
+                        }
                     }
+                    .settingsFooter()
                 }
                 .sensoryFeedback(.success, trigger: cacheCleared)
 
