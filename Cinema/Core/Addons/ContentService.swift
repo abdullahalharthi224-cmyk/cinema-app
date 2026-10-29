@@ -140,32 +140,6 @@ struct ContentService: Sendable {
         }
     }
 
-    /// External subtitles from every subtitles addon, preferred languages first.
-    func subtitles(type: String, id: String, addons: [AddonSource], preferredLanguages: [String]) async -> [SubtitleItem] {
-        let candidates = addons.filter { $0.supports(.subtitles, type: type, id: id) }
-        let lists = await withTaskGroup(of: (Int, [SubtitleItem]).self) { group in
-            for (offset, addon) in candidates.enumerated() {
-                group.addTask {
-                    let items = (try? await client.subtitles(base: addon.baseURL, type: type, id: id)) ?? []
-                    return (offset, items)
-                }
-            }
-            var results: [(Int, [SubtitleItem])] = []
-            for await result in group { results.append(result) }
-            return results.sorted { $0.0 < $1.0 }.flatMap(\.1)
-        }
-        func rank(_ item: SubtitleItem) -> Int {
-            let code = SubtitleLanguage.code(for: item.lang)
-            return preferredLanguages.firstIndex(of: code ?? "") ?? preferredLanguages.count
-        }
-        return lists.enumerated()
-            .sorted { lhs, rhs in
-                let left = rank(lhs.element), right = rank(rhs.element)
-                return left == right ? lhs.offset < rhs.offset : left < right
-            }
-            .map(\.element)
-    }
-
     /// Subtitles grouped by the addon that offers them, preferred languages first
     /// within each addon, so the viewer can pick by source.
     func subtitleSources(type: String, id: String, addons: [AddonSource], preferredLanguages: [String]) async -> [SubtitleSource] {
