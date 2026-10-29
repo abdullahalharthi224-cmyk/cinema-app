@@ -188,7 +188,7 @@ struct SubtitlePanel: View {
                      ? language.options[0].source
                      : localized("%lld options", language.options.count))
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
                 if language.options.count > 1 {
                     Image(systemName: "chevron.down")
@@ -425,7 +425,7 @@ struct SubtitlePanel: View {
                 if let detail {
                     Text(verbatim: detail)
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }

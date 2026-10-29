@@ -527,7 +527,7 @@ private struct StreamRow: View {
 
                 facts
                     .font(.rounded(.caption2, weight: .semibold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Theme.secondaryText)
 
                 if info.isUncached {
                     IconText("Not cached yet — may take a while to start.", systemImage: "hourglass")

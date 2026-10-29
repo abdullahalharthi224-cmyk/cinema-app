@@ -75,11 +75,14 @@ struct BackupSettingsView: View {
             } header: {
                 Text("Export")
             } footer: {
-                if lastBackup > 0 {
-                    Text("Last backup: \(Date(timeIntervalSince1970: lastBackup).formatted(date: .abbreviated, time: .shortened))")
-                } else {
-                    Text("No backup yet.")
+                Group {
+                    if lastBackup > 0 {
+                        Text("Last backup: \(Date(timeIntervalSince1970: lastBackup).formatted(date: .abbreviated, time: .shortened))")
+                    } else {
+                        Text("No backup yet.")
+                    }
                 }
+                .settingsFooter()
             }
 
             Section {
@@ -90,6 +93,7 @@ struct BackupSettingsView: View {
                 }
             } footer: {
                 Text("Restoring replaces your current profiles, library, addons and settings with the ones in the file.")
+                    .settingsFooter()
             }
         }
         .navigationTitle("Backup & Restore")

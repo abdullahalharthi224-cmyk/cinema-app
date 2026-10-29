@@ -56,6 +56,7 @@ struct HomeScreenSettingsView: View {
                 Text("Look")
             } footer: {
                 Text("The hero is the large artwork at the top of Home. Automatic uses the first row with artwork.")
+                    .settingsFooter()
             }
 
             Section {
@@ -71,6 +72,7 @@ struct HomeScreenSettingsView: View {
                 Text("Rows")
             } footer: {
                 Text("Drag to reorder. Tap the eye to show or hide a row. Rows from addons that fail or have no artwork are hidden automatically.")
+                    .settingsFooter()
             }
 
             Section {

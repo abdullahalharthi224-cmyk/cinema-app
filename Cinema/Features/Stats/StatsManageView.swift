@@ -44,6 +44,7 @@ struct StatsManageView: View {
                     }
                 } footer: {
                     Text("Swipe a title to remove it from this profile's statistics and Wrapped. Your Library and Continue Watching aren't changed.")
+                        .settingsFooter()
                 }
 
                 Section {

@@ -161,6 +161,7 @@ struct AddonsView: View {
             Text("Installed")
         } footer: {
             Text("Tap Edit to reorder or remove. Addons higher in the list are asked first.")
+                .settingsFooter()
         }
     }
 

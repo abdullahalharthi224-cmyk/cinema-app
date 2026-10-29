@@ -57,6 +57,7 @@ struct DownloadPickerView: View {
                                 Text("Recommended")
                             } footer: {
                                 Text("A good 1080p file at a sensible size. 4K files can be several times larger.")
+                                    .settingsFooter()
                             }
                         }
                         Section("All Links") {
@@ -116,7 +117,7 @@ struct DownloadPickerView: View {
                     }
                     Text(verbatim: Bidi.join([addonNames[stream.addonID], stream.info.provider].compactMap { $0 }))
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Theme.secondaryText)
                         .lineLimit(1)
                     if !downloadable {
                         Label("Can't be downloaded (torrent or external link)", systemImage: "nosign")

@@ -99,6 +99,7 @@ struct StremioImportView: View {
                     "Your password is only used to sign in and is never saved. Cinema keeps a secure session key in the Keychain.",
                     systemImage: "lock.fill"
                 )
+                .settingsFooter()
             }
             .disabled(phase == .working)
 
@@ -152,7 +153,7 @@ struct StremioImportView: View {
             if summary.skipped > 0 {
                 Text("\(summary.skipped) desktop-only addons were skipped because they can't work on iPhone.")
                     .font(.footnote)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Theme.secondaryText)
                     .multilineTextAlignment(.center)
             }
 

@@ -139,3 +139,20 @@ final class TabBarClearanceTests: XCTestCase {
         XCTAssertEqual(TabBarClearance.extraInset(systemBottomInset: 49), TabBarClearance.breathingRoom)
     }
 }
+
+// MARK: - Secondary text contrast
+
+final class ContrastTests: XCTestCase {
+    func testContrastFormula() {
+        XCTAssertEqual(Theme.contrastRatio(.black, .white), 21, accuracy: 0.01)
+        XCTAssertEqual(Theme.contrastRatio(.white, .white), 1, accuracy: 0.01)
+    }
+
+    /// Secondary text meets WCAG AA (4.5:1) on every theme's background and surface.
+    func testSecondaryTextIsReadableOnEveryTheme() {
+        for theme in AppTheme.allCases {
+            XCTAssertGreaterThanOrEqual(Theme.contrastRatio(theme.secondaryText, theme.background), 4.5, "\(theme) background")
+            XCTAssertGreaterThanOrEqual(Theme.contrastRatio(theme.secondaryText, theme.surface), 4.5, "\(theme) surface")
+        }
+    }
+}

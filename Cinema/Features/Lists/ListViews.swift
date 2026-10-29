@@ -140,9 +140,12 @@ struct AddToListSheet: View {
                         }
                     }
                 } footer: {
-                    if lists.isEmpty {
-                        Text("Make your own lists, like “Weekend” or “With the Family”, each with its own icon and colour.")
+                    Group {
+                        if lists.isEmpty {
+                            Text("Make your own lists, like “Weekend” or “With the Family”, each with its own icon and colour.")
+                        }
                     }
+                    .settingsFooter()
                 }
 
                 Section {

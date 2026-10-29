@@ -13,6 +13,7 @@ struct DownloadSettingsView: View {
                 Toggle("Delete Episodes After Watching", isOn: $settings.deleteWatched)
             } footer: {
                 Text("Downloads keep going in the background, two at a time. Expired links are renewed automatically.")
+                    .settingsFooter()
             }
 
             Section {
