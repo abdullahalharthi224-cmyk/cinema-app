@@ -8,6 +8,8 @@ extension DownloadRequest: Identifiable {
 /// cancel), or "downloaded" (with delete).
 struct DownloadCircleButton: View {
     let videoID: String
+    /// Drawn as a labelled `ActionTile` (in the detail page's action row) instead of a circle.
+    var labeled = false
     let start: () -> Void
 
     private var manager: DownloadManager { DownloadManager.shared }
@@ -24,8 +26,10 @@ struct DownloadCircleButton: View {
                         Label("Delete Download", systemImage: "trash")
                     }
                 } label: {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .foregroundStyle(Theme.accent)
+                    look("Downloaded", isOn: true) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .foregroundStyle(Theme.accent)
+                    }
                 }
                 .accessibilityLabel("Downloaded")
             } else if let item, manager.pendingVideoIDs.contains(videoID) {
@@ -41,19 +45,42 @@ struct DownloadCircleButton: View {
                         Label("Cancel Download", systemImage: "xmark")
                     }
                 } label: {
-                    DownloadProgressRing(fraction: manager.progress[item.id] ?? item.fraction, isPaused: item.state == .paused)
-                        .frame(width: 22, height: 22)
+                    look("Downloading", isOn: true) {
+                        DownloadProgressRing(fraction: manager.progress[item.id] ?? item.fraction, isPaused: item.state == .paused)
+                            .frame(width: 22, height: 22)
+                    }
                 }
                 .accessibilityLabel("Downloading")
             } else {
                 Button(action: start) {
-                    Image(systemName: "arrow.down.circle")
+                    look("Download") { Image(systemName: "arrow.down.circle") }
                 }
                 .accessibilityLabel("Download")
             }
         }
         .menuStyle(.button)
-        .buttonStyle(.glassCircle)
+        .modifier(DownloadButtonStyle(labeled: labeled))
+    }
+
+    @ViewBuilder
+    private func look<Icon: View>(_ title: LocalizedStringKey, isOn: Bool = false, @ViewBuilder icon: () -> Icon) -> some View {
+        if labeled {
+            ActionTile(title: title, isOn: isOn, icon: icon)
+        } else {
+            icon()
+        }
+    }
+}
+
+private struct DownloadButtonStyle: ViewModifier {
+    let labeled: Bool
+
+    func body(content: Content) -> some View {
+        if labeled {
+            content.buttonStyle(.cardPress)
+        } else {
+            content.buttonStyle(.glassCircle)
+        }
     }
 }
 

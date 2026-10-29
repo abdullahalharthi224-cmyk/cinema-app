@@ -74,10 +74,7 @@ struct DetailView: View {
                     }
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-                    VStack(spacing: Theme.Spacing.m) {
-                        actions(progress)
-                        TasteButtons(route: model.route, name: model.name)
-                    }
+                    actions(progress)
 
                     if !model.ratings.isEmpty {
                         RatingsBar(ratings: model.ratings)
@@ -286,55 +283,61 @@ struct DetailView: View {
 
     // MARK: Actions
 
+    /// Play with a labelled "Sources" button beside it, then one row of labelled actions.
     private func actions(_ progress: [String: PlaybackProgress]) -> some View {
         let targetWatched = isMainTargetWatched(progress)
-        return HStack(spacing: Theme.Spacing.m) {
-            Button {
-                playMainTarget(choosingStream: false)
-            } label: {
-                Label(playTitle(progress), systemImage: "play.fill")
-                    // One line always: shrink a little rather than wrap.
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.glassProminent)
-            .disabled(model.isSeries && model.episodes.isEmpty)
+        let unplayable = model.isSeries && model.episodes.isEmpty
+        return VStack(spacing: Theme.Spacing.m) {
+            HStack(spacing: Theme.Spacing.m) {
+                Button {
+                    playMainTarget(choosingStream: false)
+                } label: {
+                    Label(playTitle(progress), systemImage: "play.fill")
+                        // One line always: shrink a little rather than wrap.
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glassProminent)
+                .disabled(unplayable)
 
-            Button {
-                playMainTarget(choosingStream: true)
-            } label: {
-                Image(systemName: "list.bullet")
+                Button {
+                    playMainTarget(choosingStream: true)
+                } label: {
+                    Label("Sources", systemImage: "list.bullet")
+                        .lineLimit(1)
+                        .fixedSize()
+                }
+                .buttonStyle(.glass)
+                .disabled(unplayable)
+                .accessibilityLabel("Choose Stream")
             }
-            .buttonStyle(.glassCircle)
-            .disabled(model.isSeries && model.episodes.isEmpty)
-            .accessibilityLabel("Choose Stream")
 
-            Button {
-                let added = WatchlistStore.toggle(model.route, name: model.name, in: context)
-                watchlistFeedback = added
-            } label: {
-                Image(systemName: isInWatchlist ? "checkmark" : "plus")
-                    .contentTransition(.symbolEffect(.replace))
-            }
-            .buttonStyle(.glassCircle)
-            .accessibilityLabel(Text(isInWatchlist ? LocalizedStringKey("Remove from My List") : "Add to My List"))
-            .sensoryFeedback(.success, trigger: watchlistFeedback) { _, new in new == true }
+            TitleActionsRow(route: model.route, name: model.name) {
+                Button {
+                    let added = WatchlistStore.toggle(model.route, name: model.name, in: context)
+                    watchlistFeedback = added
+                } label: {
+                    ActionTile("My List", systemImage: isInWatchlist ? "checkmark" : "plus", isOn: isInWatchlist)
+                }
+                .buttonStyle(.cardPress)
+                .accessibilityLabel(Text(isInWatchlist ? LocalizedStringKey("Remove from My List") : "Add to My List"))
+                .sensoryFeedback(.success, trigger: watchlistFeedback) { _, new in new == true }
 
-            Button {
-                toggleWatched()
-            } label: {
-                Image(systemName: targetWatched ? "checkmark.seal.fill" : "checkmark.seal")
-                    .contentTransition(.symbolEffect(.replace))
-            }
-            .buttonStyle(.glassCircle)
-            .disabled(model.isSeries && model.episodes.isEmpty)
-            .accessibilityLabel(Text(targetWatched ? LocalizedStringKey("Mark as Unwatched") : "Mark as Watched"))
-            .sensoryFeedback(.success, trigger: targetWatched)
-
-            if !model.isSeries {
-                DownloadCircleButton(videoID: model.route.id) {
-                    downloadRequest = movieDownloadRequest
+                Button {
+                    toggleWatched()
+                } label: {
+                    ActionTile("Watched", systemImage: targetWatched ? "checkmark.seal.fill" : "checkmark.seal", isOn: targetWatched)
+                }
+                .buttonStyle(.cardPress)
+                .disabled(unplayable)
+                .accessibilityLabel(Text(targetWatched ? LocalizedStringKey("Mark as Unwatched") : "Mark as Watched"))
+                .sensoryFeedback(.success, trigger: targetWatched)
+            } trailing: {
+                if !model.isSeries {
+                    DownloadCircleButton(videoID: model.route.id, labeled: true) {
+                        downloadRequest = movieDownloadRequest
+                    }
                 }
             }
         }
