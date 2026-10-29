@@ -11,8 +11,7 @@ struct ActionTile<Icon: View>: View {
     var body: some View {
         VStack(spacing: 6) {
             icon
-                .font(.system(size: 19, weight: .semibold))
-                .frame(height: 24)
+                .font(.title3.weight(.semibold))
                 .contentTransition(.symbolEffect(.replace))
             Text(title)
                 .font(.caption2.weight(.semibold))

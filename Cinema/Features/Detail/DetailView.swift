@@ -310,7 +310,6 @@ struct DetailView: View {
                 }
                 .buttonStyle(.glass)
                 .disabled(unplayable)
-                .accessibilityLabel("Choose Stream")
             }
 
             TitleActionsRow(route: model.route, name: model.name) {
