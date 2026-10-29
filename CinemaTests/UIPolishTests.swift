@@ -71,3 +71,55 @@ final class BidiTests: XCTestCase {
         return result
     }
 }
+
+// MARK: - Statistics chart axis
+
+final class StatsAxisTests: XCTestCase {
+    private var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }
+
+    /// Sunday 25 October 2026 … Saturday 31 October 2026.
+    private var week: [ViewingStats.Bucket] {
+        let sunday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 25))!
+        return (0..<7).map { ViewingStats.Bucket(start: calendar.date(byAdding: .day, value: $0, to: sunday)!, seconds: Double($0) * 600) }
+    }
+
+    func testEnglishWeekReadsLeftToRight() {
+        let bars = StatsAxis.bars(for: week, range: .week, language: .english, calendar: calendar)
+        XCTAssertEqual(bars.map(\.label), ["S", "M", "T", "W", "T", "F", "S"])
+        XCTAssertEqual(bars.first?.key, "2026-10-25", "Oldest on the left")
+        XCTAssertTrue(bars.allSatisfy(\.showsLabel))
+    }
+
+    func testArabicWeekUsesArabicDaysAndRunsRightToLeft() {
+        let bars = StatsAxis.bars(for: week, range: .week, language: .arabic, calendar: calendar)
+        XCTAssertEqual(bars.first?.key, "2026-10-31", "Newest on the left, so time runs from the right")
+        XCTAssertEqual(bars.last?.key, "2026-10-25")
+        for bar in bars {
+            XCTAssertNotNil(bar.label.range(of: "\\p{Arabic}", options: .regularExpression), "\(bar.label) should be Arabic")
+        }
+        XCTAssertEqual(bars.map(\.hours), Array(week.map(\.hours).reversed()))
+    }
+
+    func testMonthLabelsOneDayAWeekInTheAppLanguage() {
+        let start = calendar.date(from: DateComponents(year: 2026, month: 10, day: 1))!
+        let month = (0..<30).map { ViewingStats.Bucket(start: calendar.date(byAdding: .day, value: $0, to: start)!, seconds: 0) }
+        let english = StatsAxis.bars(for: month, range: .month, language: .english, calendar: calendar)
+        XCTAssertEqual(english.filter(\.showsLabel).map(\.label), ["1", "8", "15", "22", "29"])
+        let arabic = StatsAxis.bars(for: month, range: .month, language: .arabic, calendar: calendar)
+        XCTAssertEqual(arabic.filter(\.showsLabel).count, 5)
+        XCTAssertEqual(arabic.last?.key, "2026-10-1", "Oldest on the right in Arabic")
+    }
+
+    func testYearUsesMonthInitials() {
+        let months = (1...12).map { ViewingStats.Bucket(start: calendar.date(from: DateComponents(year: 2026, month: $0, day: 1))!, seconds: 0) }
+        let english = StatsAxis.bars(for: months, range: .year, language: .english, calendar: calendar)
+        XCTAssertEqual(english.map(\.label).joined(), "JFMAMJJASOND")
+        let arabic = StatsAxis.bars(for: months, range: .year, language: .arabic, calendar: calendar)
+        XCTAssertEqual(arabic.first?.key, "2026-12-1")
+        XCTAssertNotNil(arabic.first?.label.range(of: "\\p{Arabic}", options: .regularExpression))
+    }
+}
