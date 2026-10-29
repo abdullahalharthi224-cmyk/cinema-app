@@ -156,3 +156,23 @@ final class ContrastTests: XCTestCase {
         }
     }
 }
+
+// MARK: - Title language
+
+final class TitleLanguageTests: XCTestCase {
+    func testOnlyArabicTitlesReplaceTheOriginal() {
+        XCTAssertEqual(TitleLocalizer.arabicTitle("الرجل الحديدي"), "الرجل الحديدي")
+        XCTAssertEqual(TitleLocalizer.arabicTitle("  لعبة الحبار "), "لعبة الحبار")
+        XCTAssertNil(TitleLocalizer.arabicTitle("Iron Man"), "No Arabic title: keep the addon's original name")
+        XCTAssertNil(TitleLocalizer.arabicTitle("오징어 게임"), "Nor another language from TMDB")
+        XCTAssertNil(TitleLocalizer.arabicTitle(""))
+        XCTAssertNil(TitleLocalizer.arabicTitle(nil))
+    }
+
+    func testOriginalShownUnderATranslatedTitleOnly() {
+        XCTAssertEqual(TitleLocalizer.originalSubtitle(shown: "الرجل الحديدي", original: "Iron Man"), "Iron Man")
+        XCTAssertNil(TitleLocalizer.originalSubtitle(shown: "Iron Man", original: "iron man"))
+        XCTAssertNil(TitleLocalizer.originalSubtitle(shown: "الرجل الحديدي", original: "  "))
+        XCTAssertNil(TitleLocalizer.originalSubtitle(shown: "الرجل الحديدي", original: nil))
+    }
+}

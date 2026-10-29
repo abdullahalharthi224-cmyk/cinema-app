@@ -265,6 +265,14 @@ struct DetailView: View {
                 } else {
                     TitleArtwork(name: model.name, logo: model.logoURL, maxHeight: 120)
                         .transition(.opacity)
+                    if let original = model.originalName {
+                        Text(verbatim: original)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Theme.secondaryText)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
+                            .transition(.opacity)
+                    }
                 }
                 MetadataLine(year: model.year, rating: model.rating, runtime: model.runtimeText)
             }
