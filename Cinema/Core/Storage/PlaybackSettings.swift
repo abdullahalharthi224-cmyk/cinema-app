@@ -108,6 +108,11 @@ final class PlaybackSettings {
         didSet { UserDefaults.standard.set(dialogueBoost, forKey: "playback.dialogueBoost") }
     }
 
+    /// Lines addon subtitles up with the dialogue by listening for the first voices.
+    var smartSubtitleSync: Bool {
+        didSet { UserDefaults.standard.set(smartSubtitleSync, forKey: "playback.smartSubtitleSync") }
+    }
+
     /// Audio processing needs the built-in player (Apple's can't filter sound).
     var needsAudioProcessing: Bool { nightMode || dialogueBoost }
 
@@ -202,6 +207,7 @@ final class PlaybackSettings {
         autoPlayNext = defaults.object(forKey: "playback.autoPlayNext") as? Bool ?? true
         nightMode = defaults.bool(forKey: "playback.nightMode")
         dialogueBoost = defaults.bool(forKey: "playback.dialogueBoost")
+        smartSubtitleSync = defaults.bool(forKey: "playback.smartSubtitleSync")
     }
 
     /// Re-reads the saved values (after switching profile or restoring a backup).
@@ -226,5 +232,6 @@ final class PlaybackSettings {
         autoPlayNext = defaults.object(forKey: "playback.autoPlayNext") as? Bool ?? true
         nightMode = defaults.bool(forKey: "playback.nightMode")
         dialogueBoost = defaults.bool(forKey: "playback.dialogueBoost")
+        smartSubtitleSync = defaults.bool(forKey: "playback.smartSubtitleSync")
     }
 }

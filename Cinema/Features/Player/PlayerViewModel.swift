@@ -26,6 +26,8 @@ final class PlayerViewModel {
     }
     private(set) var subtitleRaise: Double = 40
     private(set) var sync: SyncState = .idle
+    /// Smart subtitle sync: listening for the dialogue to line the subtitle up with it.
+    private(set) var dialogueSync: DialogueSync = .idle
     private(set) var supportsPictureInPicture = false
     private(set) var isPictureInPictureActive = false
     private(set) var videoFill = false
@@ -83,6 +85,10 @@ final class PlayerViewModel {
     @ObservationIgnored private var sleepTask: Task<Void, Never>?
     @ObservationIgnored private var sleepDeadline: Date?
     @ObservationIgnored private var routeObserver: NSObjectProtocol?
+    @ObservationIgnored private var dialogueSyncTask: Task<Void, Never>?
+    @ObservationIgnored private var speechDetector: SpeechDetector?
+    /// The subtitle smart sync last ran for, so it runs once per subtitle.
+    @ObservationIgnored private var dialogueSyncedURL: String?
     @ObservationIgnored private weak var context: ModelContext?
     @ObservationIgnored private let launcher: PlaybackLauncher
 
@@ -99,6 +105,15 @@ final class PlayerViewModel {
 
     enum Notice: Equatable {
         case skippedIntro, skippedRecap, tryingAnother, airPlayAudioOnly, sleepTimerSet
+        case subtitlesSynced, subtitlesAlreadyInSync, subtitleSyncFailed
+    }
+
+    enum DialogueSync: Equatable {
+        case idle
+        case listening
+        /// Moved by this many seconds (0: it already matched).
+        case done(Double)
+        case failed
     }
 
     enum SleepTimer: Hashable {
@@ -239,6 +254,9 @@ final class PlayerViewModel {
         subtitleDelay = 0
         overlayCues = nil
         sync = .idle
+        cancelDialogueSync()
+        dialogueSync = .idle
+        dialogueSyncedURL = nil
         position = session.startPosition
         precisePosition = session.startPosition
         duration = 0
@@ -316,6 +334,7 @@ final class PlayerViewModel {
         thumbnailTask?.cancel()
         overlayTask?.cancel()
         noticeTask?.cancel()
+        cancelDialogueSync()
         nowPlaying.deactivate()
         engine?.destroy()
         engine = nil
@@ -403,6 +422,7 @@ final class PlayerViewModel {
 
     /// Positive shows subtitles later, negative earlier (seconds).
     func adjustSubtitleDelay(by step: Double) {
+        cancelDialogueSync()
         setSubtitleDelay(((subtitleDelay + step) * 100).rounded() / 100)
     }
 
@@ -494,6 +514,7 @@ final class PlayerViewModel {
             self.audioTracks = tracks.filter { $0.kind == .audio }
             self.subtitleTracks = tracks.filter { $0.kind == .sub }
             self.updateOverlay()
+            self.syncToDialogueIfWanted()
             completion?()
         }
     }
@@ -652,7 +673,67 @@ final class PlayerViewModel {
 
     /// The viewer heard `cue` right now: shift subtitles so it shows at this moment.
     func syncSubtitle(to cue: SubtitleCue) {
+        cancelDialogueSync()
         setSubtitleDelay(((precisePosition - cue.start) * 100).rounded() / 100)
+    }
+
+    /// With smart sync on (Settings → Playback), each addon subtitle is lined up with
+    /// the dialogue once, when it's first shown.
+    private func syncToDialogueIfWanted() {
+        guard PlaybackSettings.shared.smartSubtitleSync, hasLoaded,
+              let url = selectedSubtitleURL, url != dialogueSyncedURL
+        else { return }
+        syncToDialogue(automatic: true)
+    }
+
+    /// Listens to the next few minutes of the video for voices and moves the subtitle so its
+    /// lines fall where people speak. Lines that aren't dialogue (the translator's name,
+    /// the episode title, links) are ignored. Only for subtitles from addons.
+    func syncToDialogue(automatic: Bool = false) {
+        guard let url = selectedSubtitleURL else { return }
+        cancelDialogueSync()
+        dialogueSyncedURL = url
+        let detector = SpeechDetector(url: session.url)
+        speechDetector = detector
+        dialogueSync = .listening
+        let isLocal = session.url.isFileURL
+        let start = max(0, precisePosition - 5)
+        let length: Double = isLocal ? 360 : 240
+        let audioTrack = engineKind == .mpv ? audioTracks.first(where: \.isSelected)?.id : nil
+        dialogueSyncTask = Task {
+            // Let a stream get going first, so the two don't compete for the connection.
+            if automatic && !isLocal { try? await Task.sleep(for: .seconds(4)) }
+            guard !Task.isCancelled else { return }
+            let cues = await cues(for: url)
+            let speech = await detector.speech(from: start, length: length, audioTrack: audioTrack)
+            guard !Task.isCancelled, selectedSubtitleURL == url else { return }
+            var delay: Double?
+            if let cues, let speech {
+                delay = await Task.detached { SubtitleAligner.delay(for: cues, speech: speech) }.value
+            }
+            guard !Task.isCancelled, selectedSubtitleURL == url else { return }
+            speechDetector = nil
+            guard let delay else {
+                dialogueSync = .failed
+                if !automatic { show(.subtitleSyncFailed, for: 3.5) }
+                return
+            }
+            dialogueSync = .done(delay)
+            if delay == 0 {
+                show(.subtitlesAlreadyInSync)
+            } else {
+                setSubtitleDelay(delay)
+                show(.subtitlesSynced)
+            }
+        }
+    }
+
+    private func cancelDialogueSync() {
+        dialogueSyncTask?.cancel()
+        dialogueSyncTask = nil
+        speechDetector?.cancel()
+        speechDetector = nil
+        if dialogueSync == .listening { dialogueSync = .idle }
     }
 
     // MARK: Controls
