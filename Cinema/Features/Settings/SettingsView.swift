@@ -268,7 +268,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("About") {
+                Section {
                     LabeledContent {
                         Text(Bundle.main.appVersion)
                     } label: {
@@ -287,6 +287,12 @@ struct SettingsView: View {
                             router.settingsPath.append(.performance)
                         }
                     }
+                } header: {
+                    Text("About")
+                } footer: {
+                    MadeWithLove()
+                        .padding(.top, Theme.Spacing.xl)
+                        .padding(.bottom, Theme.Spacing.l)
                 }
             }
             .navigationTitle("Settings")

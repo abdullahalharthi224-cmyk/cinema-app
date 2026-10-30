@@ -7460,6 +7460,136 @@
           }
         }
       }
+    },
+    "Best Stream": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفضل رابط"
+          }
+        }
+      }
+    },
+    "Starting": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بدء العرض"
+          }
+        }
+      }
+    },
+    "Menu": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "القائمة"
+          }
+        }
+      }
+    },
+    "Categories": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التصنيفات"
+          }
+        }
+      }
+    },
+    "My Library": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مكتبتي"
+          }
+        }
+      }
+    },
+    "Made with love by %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صُنع بكل حب بواسطة ⁨%@⁩"
+          }
+        }
+      }
+    },
+    "Support the Developer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ادعم المطوّر"
+          }
+        }
+      }
+    },
+    "Dimming the lights…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نطفئ الأنوار…"
+          }
+        }
+      }
+    },
+    "Finding you the best seat…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نختار لك أفضل مقعد…"
+          }
+        }
+      }
+    },
+    "Threading the film…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نلفّ بكرة الفيلم…"
+          }
+        }
+      }
+    },
+    "Popping the popcorn…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نحضّر الفشار…"
+          }
+        }
+      }
+    },
+    "Tuning the sound…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نضبط الصوت…"
+          }
+        }
+      }
+    },
+    "Polishing the screen…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نلمّع الشاشة…"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

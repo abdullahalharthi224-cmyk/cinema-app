@@ -75,6 +75,11 @@ struct CatalogRoute: Hashable {
     var reference: CatalogReference
 }
 
+/// Browsing pages opened from the side menu.
+enum BrowseRoute: Hashable {
+    case platforms
+}
+
 /// The Library's own screens. Pushed by value (like titles) so a title tapped
 /// inside them always opens: a stack that mixes view-built links with value
 /// links can leave the value links on those screens dead.
@@ -100,6 +105,14 @@ extension View {
         }
         .navigationDestination(for: Platform.self) { platform in
             PlatformView(platform: platform)
+        }
+        .navigationDestination(for: BrowseCategory.self) { category in
+            CategoryView(category: category)
+        }
+        .navigationDestination(for: BrowseRoute.self) { route in
+            switch route {
+            case .platforms: PlatformsGridView()
+            }
         }
         .navigationDestination(for: TMDBTitleRoute.self) { route in
             TMDBTitleLoaderView(route: route)

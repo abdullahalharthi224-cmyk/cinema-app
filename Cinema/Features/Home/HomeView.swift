@@ -44,7 +44,9 @@ struct HomeView: View {
     private var sources: [AddonSource] { addons.sources }
 
     var body: some View {
-        NavigationStack {
+        @Bindable var router = router
+
+        NavigationStack(path: $router.homePath) {
             Group {
                 if !NetworkMonitor.shared.isConnected && !model.hasLoadedRows {
                     offline
@@ -173,6 +175,11 @@ struct HomeView: View {
             .overlay(alignment: .topTrailing) {
                 ProfileButton()
                     .padding(.trailing, Theme.Spacing.l)
+                    .padding(.top, 3)
+            }
+            .overlay(alignment: .topLeading) {
+                MenuButton()
+                    .padding(.leading, Theme.Spacing.l)
                     .padding(.top, 3)
             }
             .refreshable {
