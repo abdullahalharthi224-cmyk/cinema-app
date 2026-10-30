@@ -91,7 +91,8 @@ final class SpeechDetector: @unchecked Sendable {
         mpv_request_log_messages(mpv, "no")
         guard mpv_initialize(mpv) >= 0 else { return false }
 
-        var arguments: [UnsafePointer<CChar>?] = ["loadfile", url.absoluteString, "replace"].map { UnsafePointer(strdup($0)) }
+        let words: [String] = ["loadfile", url.absoluteString, "replace"]
+        var arguments: [UnsafePointer<CChar>?] = words.map { UnsafePointer(strdup($0)) }
         arguments.append(nil)
         defer {
             for pointer in arguments where pointer != nil { free(UnsafeMutablePointer(mutating: pointer)) }
