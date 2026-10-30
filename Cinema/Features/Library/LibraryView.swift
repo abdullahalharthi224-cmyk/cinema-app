@@ -359,8 +359,8 @@ private struct DownloadRow: View {
 
     private var manager: DownloadManager { DownloadManager.shared }
 
-    @State private var localized: TitleLocalizer.Localized?
-    private var title: String { localized?.title ?? item.title }
+    @State private var localizedName: TitleLocalizer.Localized?
+    private var title: String { localizedName?.title ?? item.title }
 
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
@@ -410,7 +410,7 @@ private struct DownloadRow: View {
                 Label("Delete Download", systemImage: "trash")
             }
         }
-        .localizedTitle(id: item.metaID, name: item.title, into: $localized)
+        .localizedTitle(id: item.metaID, name: item.title, into: $localizedName)
     }
 
     private func openPage() {
