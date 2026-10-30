@@ -195,7 +195,7 @@ private struct RankedPoster: View {
                 .frame(width: HomeCustomization.shared.width(118))
                 .zoomSource(id: transitionID, in: namespace)
         }
-        .localizedTitle(id: item.id, into: $localized)
+        .localizedTitle(id: item.id, name: item.name, into: $localized)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("\(rank). \(item.name)"))
     }
@@ -277,6 +277,9 @@ private struct ContinueWatchingCard: View {
     let item: WatchHistoryItem
     var completion: Double?
 
+    @State private var localized: TitleLocalizer.Localized?
+    private var name: String { localized?.title ?? item.name }
+
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             Color.clear
@@ -294,16 +297,16 @@ private struct ContinueWatchingCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 if let logo = Artwork.logo(id: item.metaID, provided: item.logo) {
                     RemoteImage(url: logo, contentMode: .fit, size: .medium) {
-                        Text(item.name).font(.display(.headline))
+                        Text(name).font(.display(.headline))
                     }
                     .frame(maxWidth: 150, maxHeight: 40, alignment: .leading)
                 } else {
-                    Text(item.name)
+                    Text(name)
                         .font(.display(.headline))
                         .lineLimit(1)
                 }
 
-                if let label = item.episodeLabel {
+                if let label = item.displayEpisodeLabel {
                     Text(verbatim: label)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
@@ -344,6 +347,7 @@ private struct ContinueWatchingCard: View {
                 .background(.adaptiveMaterial, in: Circle())
                 .environment(\.colorScheme, .dark)
         }
+        .localizedTitle(id: item.metaID, name: item.name, into: $localized)
     }
 }
 
@@ -428,7 +432,7 @@ struct WatchlistPoster: View {
                 .lineLimit(1)
                 .frame(width: width, alignment: .leading)
         }
-        .localizedTitle(id: item.metaID, into: $localized)
+        .localizedTitle(id: item.metaID, name: item.name, into: $localized)
     }
 }
 

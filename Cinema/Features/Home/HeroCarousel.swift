@@ -62,12 +62,14 @@ struct HeroCarousel: View {
         }
         .onDisappear { isShown = false }
         .sensoryFeedback(.selection, trigger: currentID)
-        // Stretch when pulled down; drift slower than the page when scrolled (parallax).
+        // Stretch when pulled down; drift slower than the page when scrolled (parallax),
+        // fading out before Home's title bar frosts in, so the logo never shows through it.
         .visualEffect { [height] content, proxy in
             let minY = proxy.frame(in: .scrollView(axis: .vertical)).minY
             return content
                 .scaleEffect(minY > 0 ? 1 + minY / height : 1, anchor: .bottom)
                 .offset(y: minY < 0 ? -minY * 0.45 : 0)
+                .opacity(minY < 0 ? Double(max(0, 1 - -minY / (height * 0.55))) : 1)
         }
     }
 

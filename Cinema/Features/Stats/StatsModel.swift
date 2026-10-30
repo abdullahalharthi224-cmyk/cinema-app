@@ -152,10 +152,10 @@ enum Hours {
     /// "45 min" or "12.5 h".
     static func text(_ seconds: Double) -> String {
         if seconds < 3600 { return localized("%lld min", Int((seconds / 60).rounded())) }
-        return localized("%@ h", (seconds / 3600).formatted(.number.precision(.fractionLength(0...1))))
+        return localized("%@ h", (seconds / 3600).formatted(.number.precision(.fractionLength(0...1)).locale(AppLanguage.current.locale)))
     }
 
     static func number(_ seconds: Double) -> String {
-        (seconds / 3600).formatted(.number.precision(.fractionLength(0...1)))
+        (seconds / 3600).formatted(.number.precision(.fractionLength(0...1)).locale(AppLanguage.current.locale))
     }
 }

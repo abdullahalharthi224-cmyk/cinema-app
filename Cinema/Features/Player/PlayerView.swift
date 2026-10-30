@@ -1107,6 +1107,6 @@ private struct PauseScreen: View {
             .padding(.bottom, Theme.Spacing.xxl + Theme.Spacing.l)
         }
         .contentShape(Rectangle())
-        .localizedTitle(id: metaID, wantsLogo: true, into: $localized)
+        .localizedTitle(id: metaID, name: session.title, wantsLogo: true, into: $localized)
     }
 }

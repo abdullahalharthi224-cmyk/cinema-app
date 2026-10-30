@@ -34,21 +34,43 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     var tmdbCode: String { self == .arabic ? "ar-SA" : "en-US" }
 
     /// The bundle holding this language's strings, so strings built in code
-    /// switch instantly too (not only after a relaunch).
-    var bundle: Bundle {
-        guard let path = Bundle.main.path(forResource: rawValue, ofType: "lproj"),
-              let bundle = Bundle(path: path)
-        else { return .main }
-        return bundle
+    /// switch instantly too (not only after a relaunch). Nil when the app has no folder
+    /// for it, as can happen for English, the language the strings are written in.
+    var bundle: Bundle? {
+        guard let path = Bundle.main.path(forResource: rawValue, ofType: "lproj") else { return nil }
+        return Bundle(path: path)
+    }
+
+    /// `key` in this language. Never falls back to the iPhone's language: that put Arabic
+    /// text into the English app on an Arabic iPhone.
+    func string(_ key: String) -> String {
+        if let bundle { return bundle.localizedString(forKey: key, value: key, table: nil) }
+        return self == .english ? key : Bundle.main.localizedString(forKey: key, value: key, table: nil)
     }
 }
 
 /// Looks up a UI string in the language chosen in Settings.
 func localized(_ key: String) -> String {
-    AppLanguage.current.bundle.localizedString(forKey: key, value: key, table: nil)
+    AppLanguage.current.string(key)
 }
 
 /// Looks up a format string (e.g. "Synced %lld addons") and fills it in.
 func localized(_ key: String, _ arguments: CVarArg...) -> String {
     String(format: localized(key), locale: AppLanguage.current.locale, arguments: arguments)
+}
+
+/// Sizes, numbers and dates in the app's language. The system formatters follow the iPhone's
+/// language instead, which put "غ.ب." and Arabic digits inside the English app.
+enum AppFormat {
+    static func bytes(_ count: Int64, _ style: ByteCountFormatStyle.Style = .file) -> String {
+        count.formatted(.byteCount(style: style).locale(AppLanguage.current.locale))
+    }
+
+    static func number(_ value: some BinaryInteger) -> String {
+        Int(value).formatted(.number.locale(AppLanguage.current.locale))
+    }
+
+    static func date(_ date: Date, date dateStyle: Date.FormatStyle.DateStyle, time: Date.FormatStyle.TimeStyle) -> String {
+        date.formatted(Date.FormatStyle(date: dateStyle, time: time).locale(AppLanguage.current.locale))
+    }
 }

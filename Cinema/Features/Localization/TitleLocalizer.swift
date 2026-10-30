@@ -30,7 +30,7 @@ actor TitleLocalizer {
         let task = Task<Localized?, Never> {
             guard let found = try? await client.findLocalized(imdbID: imdbID, language: language) else { return nil }
             var result = Localized(
-                title: Self.arabicTitle(found.title.title),
+                title: language.hasPrefix("ar") ? Self.arabicTitle(found.title.title) : Self.latinTitle(found.title.title),
                 poster: TMDBClient.imageURL(found.title.posterPath, size: "w342"),
                 logo: nil
             )
@@ -62,6 +62,24 @@ actor TitleLocalizer {
         return title
     }
 
+    /// For the English app: TMDB's English title, never one in Arabic letters.
+    static func latinTitle(_ title: String?) -> String? {
+        guard let title = title?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty, !title.containsArabicLetters else { return nil }
+        return title
+    }
+
+    /// The TMDB language to look a title up in, or nil when the name shown is already right:
+    /// Arabic names in the Arabic app, and in the English app, only names saved in Arabic
+    /// (Continue Watching, My List and Downloads keep the name from when they were added).
+    @MainActor
+    static func lookupLanguage(for shownName: String?) -> String? {
+        guard TMDBAccount.shared.isConnected else { return nil }
+        switch Appearance.shared.language {
+        case .arabic: return AppLanguage.arabic.tmdbCode
+        case .english: return (shownName?.containsArabicLetters ?? false) ? AppLanguage.english.tmdbCode : nil
+        }
+    }
+
     /// The original name to show in smaller type under the main title, where there's room:
     /// only when the main title is a translation that differs from it.
     static func originalSubtitle(shown: String, original: String?) -> String? {
@@ -78,17 +96,18 @@ actor TitleLocalizer {
 }
 
 extension View {
-    /// Swaps in the localized title/poster/logo for an addon title when the app is in Arabic.
+    /// Swaps in the localized title/poster/logo for an addon title when the app is in Arabic,
+    /// and the English title in the English app when `name` was saved in Arabic.
     func localizedTitle(
-        id: String, wantsLogo: Bool = false, into result: Binding<TitleLocalizer.Localized?>
+        id: String, name: String? = nil, wantsLogo: Bool = false, into result: Binding<TitleLocalizer.Localized?>
     ) -> some View {
         task(id: "\(id)|\(Appearance.shared.language.rawValue)|\(TMDBAccount.shared.isConnected)") {
-            guard TitleLocalizer.isActive, let client = TMDBAccount.shared.client else {
+            guard let language = TitleLocalizer.lookupLanguage(for: name), let client = TMDBAccount.shared.client else {
                 result.wrappedValue = nil
                 return
             }
             let localized = await TitleLocalizer.shared.localize(
-                id: id, wantsLogo: wantsLogo, client: client, language: AppLanguage.arabic.tmdbCode
+                id: id, wantsLogo: wantsLogo && language.hasPrefix("ar"), client: client, language: language
             )
             withAnimation(Theme.Motion.spring) { result.wrappedValue = localized }
         }

@@ -77,7 +77,7 @@ struct BackupSettingsView: View {
             } footer: {
                 Group {
                     if lastBackup > 0 {
-                        Text("Last backup: \(Date(timeIntervalSince1970: lastBackup).formatted(date: .abbreviated, time: .shortened))")
+                        Text("Last backup: \(AppFormat.date(Date(timeIntervalSince1970: lastBackup), date: .abbreviated, time: .shortened))")
                     } else {
                         Text("No backup yet.")
                     }
@@ -126,7 +126,7 @@ struct BackupSettingsView: View {
             }
         } message: {
             if let backup = pendingRestore {
-                Text("From \(backup.createdAt.formatted(date: .abbreviated, time: .shortened)): \(backup.profiles.count) profiles, \(backup.addons.count) addons, \(backup.history.count) titles watched.")
+                Text("From \(AppFormat.date(backup.createdAt, date: .abbreviated, time: .shortened)): \(backup.profiles.count) profiles, \(backup.addons.count) addons, \(backup.history.count) titles watched.")
             }
         }
         .alert(item: $message) { message in

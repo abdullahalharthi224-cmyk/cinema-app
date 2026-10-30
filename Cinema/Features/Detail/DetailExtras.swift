@@ -168,7 +168,7 @@ struct TitleFactsSection: View {
             facts.append((isSeries ? "Episode Length" : "Runtime", localized("%lld min", runtime)))
         }
         if let seasons = details.seasonCount, isSeries, seasons > 0 {
-            facts.append(("Seasons", seasons.formatted()))
+            facts.append(("Seasons", AppFormat.number(seasons)))
         }
         if let rating = details.certification { facts.append(("Age Rating", rating)) }
         let countries = details.countries.compactMap { locale.localizedString(forRegionCode: $0) }

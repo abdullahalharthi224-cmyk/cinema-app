@@ -60,7 +60,7 @@ struct PosterCard: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(title))
         .accessibilityAddTraits(.isButton)
-        .localizedTitle(id: item.id, into: $localized)
+        .localizedTitle(id: item.id, name: item.name, into: $localized)
     }
 }
 

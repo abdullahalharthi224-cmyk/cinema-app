@@ -123,7 +123,7 @@ struct PerformanceView: View {
     }
 
     private func bytes(_ value: Int64?) -> Text {
-        Text(verbatim: value.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .memory) } ?? "—")
+        Text(verbatim: value.map { AppFormat.bytes($0, .memory) } ?? "—")
     }
 
     private var thermalState: String {
@@ -139,7 +139,7 @@ struct PerformanceView: View {
     /// The same numbers as plain text, to send.
     private var report: String {
         let network = NetworkStats.shared.snapshot
-        let memory = PerformanceMonitor.memoryFootprint().map { ByteCountFormatter.string(fromByteCount: Int64($0), countStyle: .memory) } ?? "—"
+        let memory = PerformanceMonitor.memoryFootprint().map { AppFormat.bytes(Int64($0), .memory) } ?? "—"
         var lines = [
             "Cinema \(Bundle.main.appVersion) · iOS \(UIDevice.current.systemVersion)",
             "Launch: \(secondsText(monitor.firstFrame)) · Home: \(secondsText(monitor.homeReady))\(monitor.homeFromCache ? " (saved)" : "")",
@@ -148,7 +148,7 @@ struct PerformanceView: View {
             "Thermal: \(thermalState) · Performance mode: \(PerformanceSettings.shared.isActive)",
         ]
         if let sizes {
-            lines.append("Cache: \(ByteCountFormatter.string(fromByteCount: sizes.total, countStyle: .file))")
+            lines.append("Cache: \(AppFormat.bytes(sizes.total, .file))")
         }
         let activities = BackgroundActivity.shared.current.map { "\($0.name)×\($0.count)" }
         lines.append("Background: " + (activities.isEmpty ? "none" : activities.joined(separator: ", ")))

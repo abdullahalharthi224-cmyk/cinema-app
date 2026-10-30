@@ -455,9 +455,7 @@ struct DetailView: View {
 
     private func episodeLabel(_ video: MetaVideo) -> String? {
         guard let season = video.season, let episode = video.episode else { return model.episodeTitle(video) }
-        var label = localized("S%lld E%lld", season, episode)
-        if let title = model.episodeTitle(video), !title.isEmpty { label += " · " + title.bidiIsolated }
-        return label
+        return EpisodeLabel.make(season: season, episode: episode, title: model.episodeTitle(video))
     }
 
     private func play(_ video: MetaVideo, choosingStream: Bool = false) {

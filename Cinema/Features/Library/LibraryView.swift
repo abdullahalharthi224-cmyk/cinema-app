@@ -158,7 +158,7 @@ struct LibraryView: View {
                                         NavigationLink(value: libraryRoute(item, transitionID: transitionID)) {
                                             LibraryCard(
                                                 id: item.metaID, name: item.name, poster: item.poster,
-                                                caption: item.episodeLabel.map { Text(verbatim: $0) }
+                                                caption: item.displayEpisodeLabel.map { Text(verbatim: $0) }
                                                     ?? Text(item.type == "movie" ? "Movie" : "TV Series"),
                                                 progress: saved.flatMap { $0.isResumable ? $0.fraction : nil },
                                                 watched: item.type == "series" ? (shares[item.metaID] ?? 0) >= 1 : saved?.watched == true,
@@ -308,7 +308,7 @@ struct LibraryCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .localizedTitle(id: id, into: $localized)
+        .localizedTitle(id: id, name: name, into: $localized)
         .accessibilityElement(children: .combine)
     }
 }
@@ -345,8 +345,8 @@ private struct DownloadsSection: View {
     }
 
     private var storageText: String {
-        let used = ByteCountFormatter.string(fromByteCount: DownloadFiles.usedBytes(), countStyle: .file)
-        let free = DownloadFiles.availableBytes().map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "—"
+        let used = AppFormat.bytes(DownloadFiles.usedBytes(), .file)
+        let free = DownloadFiles.availableBytes().map { AppFormat.bytes($0, .file) } ?? "—"
         return localized("%@ used · %@ free", used, free)
     }
 }
@@ -359,16 +359,19 @@ private struct DownloadRow: View {
 
     private var manager: DownloadManager { DownloadManager.shared }
 
+    @State private var localizedName: TitleLocalizer.Localized?
+    private var title: String { localizedName?.title ?? item.title }
+
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
-            PosterArtwork(url: item.poster?.asURL, title: item.title)
+            PosterArtwork(url: item.poster?.asURL, title: title)
                 .frame(width: 56)
                 .shadow(radius: 0)
             VStack(alignment: .leading, spacing: 3) {
-                Text(item.title)
+                Text(title)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
-                if let label = item.episodeLabel {
+                if let label = item.displayEpisodeLabel {
                     Text(verbatim: label)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -407,6 +410,7 @@ private struct DownloadRow: View {
                 Label("Delete Download", systemImage: "trash")
             }
         }
+        .localizedTitle(id: item.metaID, name: item.title, into: $localizedName)
     }
 
     private func openPage() {
@@ -418,7 +422,7 @@ private struct DownloadRow: View {
 
     @ViewBuilder
     private var status: some View {
-        let size = ByteCountFormatter.string(fromByteCount: max(item.expectedBytes, item.receivedBytes), countStyle: .file)
+        let size = AppFormat.bytes(max(item.expectedBytes, item.receivedBytes), .file)
         switch item.state {
         case .completed:
             Label(item.qualityLabel.map { "\($0) · \(size)" } ?? size, systemImage: "checkmark.circle.fill")
@@ -429,7 +433,7 @@ private struct DownloadRow: View {
             } else {
                 // Live from the progress, which updates more often than the saved byte count.
                 let liveBytes = progress.map { Int64(Double(item.expectedBytes) * $0) } ?? item.receivedBytes
-                let received = ByteCountFormatter.string(fromByteCount: max(liveBytes, item.receivedBytes), countStyle: .file)
+                let received = AppFormat.bytes(max(liveBytes, item.receivedBytes), .file)
                 Text(verbatim: item.expectedBytes > 0 ? "\(received) / \(size)" : received)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()

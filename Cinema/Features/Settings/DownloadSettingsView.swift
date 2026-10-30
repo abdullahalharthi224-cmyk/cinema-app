@@ -18,10 +18,10 @@ struct DownloadSettingsView: View {
 
             Section {
                 LabeledContent("Used by Downloads") {
-                    Text(verbatim: ByteCountFormatter.string(fromByteCount: usedBytes, countStyle: .file))
+                    Text(verbatim: AppFormat.bytes(usedBytes, .file))
                 }
                 LabeledContent("Free on This iPhone") {
-                    Text(verbatim: DownloadFiles.availableBytes().map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "—")
+                    Text(verbatim: DownloadFiles.availableBytes().map { AppFormat.bytes($0, .file) } ?? "—")
                 }
                 Button("Delete All Downloads", role: .destructive) {
                     isConfirmingDeleteAll = true
