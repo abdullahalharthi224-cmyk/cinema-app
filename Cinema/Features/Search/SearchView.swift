@@ -39,9 +39,6 @@ struct SearchView: View {
                 .searchable(text: $query, prompt: Text("Movies, series and more"))
                 .onSubmit(of: .search) { remember(trimmedQuery) }
                 .contentDestinations()
-                .navigationDestination(for: BrowseCategory.self) { category in
-                    CategoryView(category: category)
-                }
         }
         // A result was opened: the search was worth keeping.
         .onChange(of: path.count) { old, new in

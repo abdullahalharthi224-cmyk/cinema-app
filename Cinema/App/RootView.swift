@@ -37,6 +37,9 @@ struct RootView: View {
                     .tag(AppTab.settings)
             }
         }
+        // The side menu, over everything (the tab bar included).
+        .overlay { SideMenu() }
+        .onChange(of: router.selectedTab) { _, _ in router.showsMenu = false }
         .onChange(of: ProfileSession.shared.isKids) { _, isKids in
             if isKids && router.selectedTab == .settings { router.selectedTab = .home }
         }
