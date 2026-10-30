@@ -24,7 +24,7 @@ enum WidgetBridge {
         var used = Set<String>()
         var items: [WidgetSnapshot.Item] = []
         for item in recent {
-            let localized = await localizedTitle(id: item.metaID)
+            let localized = await localizedTitle(id: item.metaID, name: item.name)
             let poster = await saveImage(
                 from: Artwork.posters(id: item.metaID, provided: item.poster?.asURL),
                 name: "poster-\(safeName(item.metaID)).jpg", width: 360, into: imagesURL
@@ -37,7 +37,7 @@ enum WidgetBridge {
             items.append(WidgetSnapshot.Item(
                 id: item.key,
                 title: localized ?? item.name,
-                subtitle: item.episodeLabel,
+                subtitle: item.displayEpisodeLabel,
                 progress: item.progress,
                 posterFile: poster,
                 backdropFile: backdrop,
@@ -73,10 +73,10 @@ enum WidgetBridge {
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetShared.kind)
     }
 
-    private static func localizedTitle(id: String) async -> String? {
-        guard TitleLocalizer.isActive, let client = TMDBAccount.shared.client else { return nil }
+    private static func localizedTitle(id: String, name: String) async -> String? {
+        guard let language = TitleLocalizer.lookupLanguage(for: name), let client = TMDBAccount.shared.client else { return nil }
         return await TitleLocalizer.shared.localize(
-            id: id, wantsLogo: false, client: client, language: AppLanguage.arabic.tmdbCode
+            id: id, wantsLogo: false, client: client, language: language
         )?.title
     }
 

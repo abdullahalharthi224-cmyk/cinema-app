@@ -218,7 +218,7 @@ struct EpisodeCalendarView: View {
     private func dayTitle(_ date: Date) -> String {
         if Calendar.current.isDateInToday(date) { return localized("Today") }
         if Calendar.current.isDateInTomorrow(date) { return localized("Tomorrow") }
-        return date.formatted(.dateTime.weekday(.wide))
+        return date.formatted(.dateTime.weekday(.wide).locale(AppLanguage.current.locale))
     }
 }
 

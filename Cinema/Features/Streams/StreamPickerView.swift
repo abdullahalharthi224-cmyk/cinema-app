@@ -554,14 +554,14 @@ private struct StreamRow: View {
     private var facts: some View {
         HStack(spacing: Theme.Spacing.m) {
             if let size = info.sizeBytes {
-                IconText(verbatim: ByteCountFormatter.string(fromByteCount: size, countStyle: .binary), systemImage: "internaldrive")
+                IconText(verbatim: AppFormat.bytes(size, .binary), systemImage: "internaldrive")
             }
             if let seeders = info.seeders {
-                IconText(verbatim: seeders.formatted(), systemImage: "person.2.fill")
+                IconText(verbatim: AppFormat.number(seeders), systemImage: "person.2.fill")
             }
             if info.languages.count > 1 {
                 // Many flags collapse into one "multi-language" mark with a count.
-                IconText(verbatim: info.languages.count.formatted(), systemImage: "globe")
+                IconText(verbatim: AppFormat.number(info.languages.count), systemImage: "globe")
                     .accessibilityLabel(Text("\(info.languages.count) languages"))
             }
             if let provider = info.provider {

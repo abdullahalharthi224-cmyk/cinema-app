@@ -216,7 +216,7 @@ final class PlaybackLauncher {
             episodeLabel: item.episodeLabel, addonID: item.addonID
         )
         var request = StreamRequest(
-            type: item.type, videoID: item.videoID, title: item.title, subtitle: item.episodeLabel,
+            type: item.type, videoID: item.videoID, title: item.title, subtitle: item.displayEpisodeLabel,
             history: history, overview: item.overview
         )
         let position = (item.season ?? 0, item.episode ?? 0)

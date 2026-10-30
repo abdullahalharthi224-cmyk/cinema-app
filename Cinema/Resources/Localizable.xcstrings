@@ -158,6 +158,24 @@
             "state": "translated",
             "value": "كتالوجات: %lld"
           }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld catalog"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld catalogs"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -167,6 +185,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "أيام متتالية: %lld"
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld day in a row"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld days in a row"
+                }
+              }
+            }
           }
         }
       }
@@ -178,6 +214,24 @@
             "state": "translated",
             "value": "تم تخطي إضافات خاصة بالكمبيوتر لا تعمل على الآيفون: %lld"
           }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld desktop-only addon was skipped because it can't work on iPhone."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld desktop-only addons were skipped because they can't work on iPhone."
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -187,6 +241,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "لغات: %lld"
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld language"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld languages"
+                }
+              }
+            }
           }
         }
       }
@@ -228,6 +300,24 @@
             "state": "translated",
             "value": "خيارات: %lld"
           }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld option"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld options"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -238,6 +328,24 @@
             "state": "translated",
             "value": "%lld ثانية"
           }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld second"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld seconds"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -247,6 +355,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "الأعمال: %lld"
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld title"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld titles"
+                }
+              }
+            }
           }
         }
       }
@@ -2688,6 +2814,24 @@
             "state": "translated",
             "value": "تم استيراد الإضافات من حسابك في ⁨Stremio⁩: %lld"
           }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Imported %lld addon from your Stremio account."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Imported %lld addons from your Stremio account."
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -2717,6 +2861,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "بعد %lld يوم"
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "In %lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "In %lld days"
+                }
+              }
+            }
           }
         }
       }
@@ -5718,6 +5880,24 @@
             "state": "translated",
             "value": "تمت مزامنة الإضافات: %lld"
           }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Synced %lld addon"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Synced %lld addons"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -5877,6 +6057,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "أي ما يعادل %lld يوم كامل من الحكايات."
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "That's %lld whole day of stories."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "That's %lld whole days of stories."
+                }
+              }
+            }
           }
         }
       }

@@ -223,7 +223,7 @@ struct HomeView: View {
         router.continueKey = nil
         guard let item = history.first(where: { $0.key == key }) else { return }
         let request = StreamRequest(
-            type: item.type, videoID: item.videoID, title: item.name, subtitle: item.episodeLabel,
+            type: item.type, videoID: item.videoID, title: item.name, subtitle: item.displayEpisodeLabel,
             history: MetaRoute(history: item).historyEntryBase
         )
         await launcher.smartPlay(request, context: context)

@@ -226,7 +226,7 @@ struct SettingsView: View {
                             if isClearingCache {
                                 ProgressView()
                             } else if let cacheSize {
-                                Text(verbatim: ByteCountFormatter.string(fromByteCount: cacheSize, countStyle: .file))
+                                Text(verbatim: AppFormat.bytes(cacheSize, .file))
                             }
                         } label: {
                             Label {
