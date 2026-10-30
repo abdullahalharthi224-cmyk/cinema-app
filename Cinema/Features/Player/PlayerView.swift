@@ -708,33 +708,19 @@ struct PlayerView: View {
 }
 
 /// Shown while a stream opens: the title's artwork, blurred, with its name.
+/// Until the first frame: the same loading screen as before the player opened, at its last step.
 private struct LoadingCurtain: View {
     let session: PlaybackSession
 
     var body: some View {
-        ZStack {
-            Color.black
-            if let background = session.request.history.flatMap({ Artwork.background(id: $0.metaID, provided: $0.background) }) {
-                RemoteImage(url: background) { Color.black }
-                    .blur(radius: 30)
-                    .opacity(0.45)
-                    .clipped()
-            }
-            VStack(spacing: Theme.Spacing.m) {
-                ProgressView()
-                    .controlSize(.large)
-                    .tint(.white)
-                Text(verbatim: session.title)
-                    .font(.display(.title3))
-                if let subtitle = session.subtitle {
-                    Text(verbatim: subtitle)
-                        .font(.footnote)
-                        .foregroundStyle(.white.opacity(0.7))
-                }
-            }
-            .padding(.horizontal, Theme.Spacing.xxl)
-        }
-        .ignoresSafeArea()
+        PlaybackLoadingView(
+            info: .init(
+                title: session.title, subtitle: session.subtitle,
+                background: session.artwork,
+                logo: session.request.history.flatMap { Artwork.logo(id: $0.metaID, provided: $0.logo) }
+            ),
+            stage: .starting
+        )
         .allowsHitTesting(false)
     }
 }

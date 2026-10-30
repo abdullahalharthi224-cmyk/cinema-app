@@ -46,6 +46,12 @@ struct PlaybackSession: Identifiable {
 final class PlaybackLauncher {
     var isResolving = false
     var status: Status = .findingStream
+    /// What the full-screen loading screen shows while a stream is found and prepared.
+    private(set) var loadingRequest: StreamRequest?
+    /// The loading screen is up (set a moment after a stream is picked, so it never covers the closing list).
+    private(set) var showsLoading = false
+    /// Bumped by `cancel()`, so a search that's been called off quietly ends.
+    private var generation = 0
 
     enum Status {
         case findingStream, preparing
@@ -64,7 +70,9 @@ final class PlaybackLauncher {
         guard !isResolving else { return }
         isResolving = true
         status = .findingStream
-        defer { isResolving = false }
+        generation += 1
+        let run = generation
+        defer { if run == generation { isResolving = false; showsLoading = false } }
 
         // Downloaded? Play the file — no link needed, works offline.
         if let item = DownloadManager.shared.completedItem(videoID: request.videoID),
@@ -74,6 +82,8 @@ final class PlaybackLauncher {
             return
         }
 
+        loadingRequest = request
+        showsLoading = true
         var request = request
         if request.prefetched == nil {
             // Once a playable link is in, slow addons get 3 more seconds rather than holding everything up.
@@ -81,23 +91,53 @@ final class PlaybackLauncher {
                 type: request.type, id: request.videoID, addons: Self.enabledAddons(in: context), settle: .seconds(3)
             )
         }
+        guard run == generation else { return }
         guard let session = makeSession(for: request, preferring: nil, context: context) else {
+            // Nothing to play automatically: let the loading screen close before the list opens.
+            showsLoading = false
+            try? await Task.sleep(for: .milliseconds(450))
+            guard run == generation else { return }
             pickerRequest = request
             return
         }
-        await start(session, request: request, context: context)
+        let ready = await prepare(session, context: context)
+        guard run == generation else { return }
+        if let history = request.history { WatchHistoryItem.record(history, in: context) }
+        self.session = ready
+    }
+
+    /// Calls off finding and preparing a stream (the loading screen's close button).
+    func cancel() {
+        generation += 1
+        isResolving = false
+        showsLoading = false
+        status = .findingStream
+    }
+
+    /// The loading screen or the player is on screen.
+    var isCoverShown: Bool { showsLoading || session != nil }
+
+    /// The cover was closed (the player finished, or the loading screen was cancelled).
+    func coverDismissed() {
+        session = nil
+        if showsLoading { cancel() }
     }
 
     /// Plays a stream the user chose from the list.
     func play(_ stream: ParsedStream, for request: StreamRequest, context: ModelContext) {
         guard let session = makeSession(for: request, preferring: stream, context: context), !isResolving else { return }
         isResolving = true
+        generation += 1
+        let run = generation
+        loadingRequest = request
         Task {
-            defer { isResolving = false }
-            // Subtitles load while the stream list closes, so the player never covers it mid-animation.
+            defer { if run == generation { isResolving = false; showsLoading = false } }
+            // Subtitles load while the stream list closes, so the loading screen never covers it mid-animation.
             async let prepared = prepare(session, context: context)
             try? await Task.sleep(for: .milliseconds(450))
+            if run == generation { showsLoading = true }
             let ready = await prepared
+            guard run == generation else { return }
             if let history = request.history { WatchHistoryItem.record(history, in: context) }
             self.session = ready
         }
@@ -219,12 +259,6 @@ final class PlaybackLauncher {
         return next
     }
 
-    private func start(_ session: PlaybackSession, request: StreamRequest, context: ModelContext) async {
-        let ready = await prepare(session, context: context)
-        if let history = request.history { WatchHistoryItem.record(history, in: context) }
-        self.session = ready
-    }
-
     /// Picks the engine and fetches subtitles in the preferred language in
     /// parallel, waiting at most a few seconds for subtitles so playback starts
     /// with the right ones instead of switching a moment later.
@@ -306,20 +340,14 @@ private struct PlaybackLauncherModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .overlay {
-                if launcher.isResolving {
-                    ResolvingIndicator(status: launcher.status)
-                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
-                }
-            }
-            .animation(Theme.Motion.spring, value: launcher.isResolving)
             .sheet(item: $launcher.pickerRequest) { request in
                 StreamPickerView(request: request) { stream in
                     launcher.play(stream, for: request, context: context)
                 }
             }
-            .fullScreenCover(item: $launcher.session) { session in
-                PlayerView(session: session, launcher: launcher)
+            // One cover for the loading screen and then the player, so one flows into the other.
+            .fullScreenCover(isPresented: Binding(get: { launcher.isCoverShown }, set: { if !$0 { launcher.coverDismissed() } })) {
+                PlaybackCover(launcher: launcher)
             }
             .navigationDestination(item: $launcher.suggestedTitle) { route in
                 TMDBTitleLoaderView(route: route)
@@ -327,28 +355,26 @@ private struct PlaybackLauncherModifier: ViewModifier {
     }
 }
 
-private struct ResolvingIndicator: View {
-    let status: PlaybackLauncher.Status
+/// The loading screen until a session is ready, then the player.
+private struct PlaybackCover: View {
+    let launcher: PlaybackLauncher
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.m) {
-            ProgressView()
-                .controlSize(.large)
-                .tint(.white)
-            Group {
-                switch status {
-                case .findingStream: Text("Finding the best stream…")
-                case .preparing: Text("Preparing subtitles…")
-                }
+        ZStack {
+            Color.black.ignoresSafeArea()
+            if let session = launcher.session {
+                PlayerView(session: session, launcher: launcher)
+                    .id(session.id)
+                    .transition(.opacity)
+            } else if let request = launcher.loadingRequest {
+                PlaybackLoadingView(
+                    info: .init(request: request),
+                    stage: launcher.status == .findingStream ? .finding : .preparing,
+                    onCancel: { launcher.cancel() }
+                )
+                .transition(.opacity)
             }
-            .font(.subheadline.weight(.semibold))
-            .contentTransition(.opacity)
-            .animation(Theme.Motion.snappy, value: status)
         }
-        .padding(.horizontal, Theme.Spacing.xl)
-        .padding(.vertical, Theme.Spacing.l)
-        .background(.adaptiveMaterial, in: .continuous(Theme.Radius.large))
-        .environment(\.colorScheme, .dark)
-        .shadow(color: .black.opacity(0.4), radius: 20, y: 8)
+        .animation(.easeInOut(duration: 0.35), value: launcher.session?.id)
     }
 }
