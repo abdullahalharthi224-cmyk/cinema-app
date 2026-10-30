@@ -41,29 +41,7 @@ struct SplashView: View {
             let size = proxy.size
             let center = CGPoint(x: size.width / 2, y: size.height * 0.44)
             TimelineView(.animation(minimumInterval: 1 / 60, paused: reduceMotion || isFinished)) { timeline in
-                let now = timeline.date
-                let t = reduceMotion ? 10 : now.timeIntervalSince(start)
-                let exit = reduceMotion ? 0 : exitStart.map { SplashArt.progress(now.timeIntervalSince($0), 0, Self.exitDuration) } ?? 0
-                let tilt = touch.tilt(at: now, center: center, in: size)
-                ZStack {
-                    // Matches the launch screen's colour, so the hand-off is seamless.
-                    Color(red: 3 / 255, green: 3 / 255, blue: 4 / 255)
-                    Canvas { context, size in
-                        SplashBackdrop.draw(in: &context, size: size, t: t, exit: exit, center: center,
-                                            touch: touch, now: now, lite: isLite)
-                    }
-                    Canvas { context, size in
-                        SplashArt.draw(in: &context, size: size, t: t)
-                    }
-                    .frame(width: 210, height: 210)
-                    .rotation3DEffect(.degrees(tilt.degrees), axis: (x: tilt.axis.dx, y: tilt.axis.dy, z: 0), perspective: 0.55)
-                    .scaleEffect((1 + 0.06 * touch.press) * (1 + 4 * exit * exit))
-                    .position(center)
-                    Wordmark(t: t)
-                        .position(x: center.x, y: center.y + 150)
-                        .opacity(1 - min(1, exit * 2))
-                }
-                .opacity(1 - SplashArt.ease(exit))
+                scene(at: timeline.date, size: size, center: center)
             }
         }
         .ignoresSafeArea()
@@ -87,6 +65,35 @@ struct SplashView: View {
         .sensoryFeedback(.impact(weight: .medium, intensity: 0.8), trigger: popped)
         .accessibilityHidden(true)
         .task { await play() }
+    }
+
+    /// One frame of the animation.
+    private func scene(at now: Date, size: CGSize, center: CGPoint) -> some View {
+        let t: Double = reduceMotion ? 10 : now.timeIntervalSince(start)
+        var exit: Double = 0
+        if !reduceMotion, let exitStart {
+            exit = SplashArt.progress(now.timeIntervalSince(exitStart), 0, Self.exitDuration)
+        }
+        let tilt = touch.tilt(at: now, center: center, in: size)
+        let markScale: Double = (1 + 0.06 * touch.press) * (1 + 4 * exit * exit)
+        let wordmarkOpacity: Double = 1 - min(1, exit * 2)
+        let sceneOpacity: Double = 1 - SplashArt.ease(exit)
+        let lite = isLite
+        let touch = touch
+        return ZStack {
+            // Matches the launch screen's colour, so the hand-off is seamless.
+            Color(red: 3 / 255, green: 3 / 255, blue: 4 / 255)
+            Canvas { context, size in
+                SplashBackdrop.draw(in: &context, size: size, t: t, exit: exit, center: center,
+                                    touch: touch, now: now, lite: lite)
+            }
+            SplashMark(t: t, tilt: tilt, scale: markScale)
+                .position(center)
+            Wordmark(t: t)
+                .position(x: center.x, y: center.y + 150)
+                .opacity(wordmarkOpacity)
+        }
+        .opacity(sceneOpacity)
     }
 
     private func play() async {
@@ -116,6 +123,23 @@ struct SplashView: View {
             isFinished = true
             onFinished()
         }
+    }
+}
+
+/// The mark itself, leaning towards the finger.
+private struct SplashMark: View {
+    let t: Double
+    let tilt: (degrees: Double, axis: CGVector)
+    let scale: Double
+
+    var body: some View {
+        let axis: (x: CGFloat, y: CGFloat, z: CGFloat) = (tilt.axis.dx, tilt.axis.dy, 0)
+        Canvas { context, size in
+            SplashArt.draw(in: &context, size: size, t: t)
+        }
+        .frame(width: 210, height: 210)
+        .rotation3DEffect(.degrees(tilt.degrees), axis: axis, perspective: 0.55)
+        .scaleEffect(scale)
     }
 }
 
@@ -213,14 +237,14 @@ enum SplashBackdrop {
 
         // warm light around the mark, breathing once it's drawn
         let breathe = t > 1.6 ? 0.04 * sin((t - 1.6) * 2.2) : 0
-        let warm = A.progress(t, 0.2, 1.3) * (0.17 + breathe) + 0.08 * touch.press
+        let warm: Double = A.progress(t, 0.2, 1.3) * (0.17 + breathe) + 0.08 * touch.press
         context.fill(Path(CGRect(origin: .zero, size: size)),
                      with: .radialGradient(Gradient(colors: [gold.opacity(warm), .clear]), center: c, startRadius: 0, endRadius: reach * 0.55))
 
         // the projector beam from above, flickering like film
         let beam = A.progress(t, 0.1, 0.9) * (1 - exit)
         if beam > 0 {
-            let flicker = 0.85 + 0.15 * sin(t * 23) * sin(t * 7.3)
+            let flicker: Double = 0.85 + 0.15 * sin(t * 23) * sin(t * 7.3)
             var cone = Path()
             cone.move(to: CGPoint(x: c.x - 18, y: -20))
             cone.addLine(to: CGPoint(x: c.x + 18, y: -20))
@@ -237,10 +261,11 @@ enum SplashBackdrop {
         let count = lite ? 45 : 90
         for i in 0..<count {
             let s = Double(i) * 7.31
-            let speed = 0.025 + 0.04 * frac(sin(s) * 4375)
-            let phase = (t * speed + frac(sin(s * 2.3) * 913)).truncatingRemainder(dividingBy: 1)
-            var q = CGPoint(x: frac(sin(s * 3.7) * 2711) * size.width + 18 * sin(t * 0.6 + s),
-                            y: size.height * (1.05 - phase * 1.1))
+            let speed: Double = 0.025 + 0.04 * frac(sin(s) * 4375)
+            let phase: Double = (t * speed + frac(sin(s * 2.3) * 913)).truncatingRemainder(dividingBy: 1)
+            let x0: Double = frac(sin(s * 3.7) * 2711) * size.width + 18 * sin(t * 0.6 + s)
+            let y0: Double = size.height * (1.05 - phase * 1.1)
+            var q = CGPoint(x: x0, y: y0)
             var glow = 0.0
             if let p = touch.point {
                 let dx = q.x - p.x, dy = q.y - p.y, d = max(hypot(dx, dy), 1)
@@ -252,13 +277,17 @@ enum SplashBackdrop {
                 }
             }
             let d = 1 + 1.8 * frac(sin(s * 5.1) * 1931)
-            let twinkle = 0.55 + 0.45 * sin(t * (1.5 + frac(sin(s * 1.3) * 77) * 3) + s)
-            let alpha = min(1, (sin(phase * .pi) * 0.5 * twinkle + glow * 0.6) * fadeIn)
+            let rate: Double = 1.5 + frac(sin(s * 1.3) * 77) * 3
+            let twinkle: Double = 0.55 + 0.45 * sin(t * rate + s)
+            let base: Double = sin(phase * .pi) * 0.5 * twinkle + glow * 0.6
+            let alpha: Double = min(1, base * fadeIn)
             if exit > 0 {
                 // warp: streaks rushing outwards from the mark
-                let k = 1 + 3.5 * exit * exit
-                let from = CGPoint(x: c.x + (q.x - c.x) * (1 + 0.5 * (k - 1)), y: c.y + (q.y - c.y) * (1 + 0.5 * (k - 1)))
-                let to = CGPoint(x: c.x + (q.x - c.x) * k, y: c.y + (q.y - c.y) * k)
+                let k: Double = 1 + 3.5 * exit * exit
+                let half: Double = 1 + 0.5 * (k - 1)
+                let dx: Double = q.x - c.x, dy: Double = q.y - c.y
+                let from = CGPoint(x: c.x + dx * half, y: c.y + dy * half)
+                let to = CGPoint(x: c.x + dx * k, y: c.y + dy * k)
                 var streak = Path()
                 streak.move(to: from)
                 streak.addLine(to: to)
@@ -314,7 +343,9 @@ enum SplashBackdrop {
         for (i, mark) in trail.enumerated() where i % 2 == 0 {
             let age = now.timeIntervalSince(mark.time), u = age / life
             let s = Double(i) * 2.7 + mark.time.timeIntervalSinceReferenceDate
-            let p = CGPoint(x: mark.point.x + (frac(sin(s) * 431) - 0.5) * 40 * u, y: mark.point.y + 30 * u * u + (frac(sin(s * 1.7) * 97) - 0.5) * 20 * u)
+            let driftX: Double = (frac(sin(s) * 431) - 0.5) * 40 * u
+            let driftY: Double = 30 * u * u + (frac(sin(s * 1.7) * 97) - 0.5) * 20 * u
+            let p = CGPoint(x: mark.point.x + driftX, y: mark.point.y + driftY)
             let r = 1.6 * (1 - u)
             context.fill(Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)), with: .color(gold.opacity(1 - u)))
         }
@@ -329,8 +360,8 @@ enum SplashBackdrop {
                            with: .color(gold.opacity(0.7 * (1 - u))), lineWidth: 2 * (1 - u) + 0.3)
             for i in 0..<12 {
                 let s = Double(i) * 3.17 + burst.time.timeIntervalSinceReferenceDate
-                let a = Double(i) / 12 * 2 * .pi + frac(sin(s) * 4375) * 0.5
-                let d0 = 10 + (40 + 50 * frac(sin(s * 1.9) * 913)) * e
+                let a: Double = Double(i) / 12 * 2 * .pi + frac(sin(s) * 4375) * 0.5
+                let d0: Double = 10 + (40 + 50 * frac(sin(s * 1.9) * 913)) * e
                 let d1 = d0 - 14 * (1 - u)
                 var spark = Path()
                 spark.move(to: CGPoint(x: burst.point.x + cos(a) * d1, y: burst.point.y + sin(a) * d1))
