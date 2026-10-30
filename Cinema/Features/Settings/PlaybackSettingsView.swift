@@ -67,6 +67,13 @@ struct PlaybackSettingsView: View {
             }
 
             Section {
+                Toggle("Smart Subtitle Sync", isOn: $settings.smartSubtitleSync)
+            } footer: {
+                Text("Before each episode starts, Cinema listens for the first voices — not music — and lines subtitles from addons up with them. The translator's name, the episode title and links at the start are ignored. Everything happens on this iPhone.")
+                    .settingsFooter()
+            }
+
+            Section {
                 Picker("Preferred Audio", selection: $settings.audioPreference) {
                     Text("Original Audio").tag(PlaybackSettings.AudioPreference.original)
                     Text("Arabic When Available").tag(PlaybackSettings.AudioPreference.arabic)

@@ -7788,6 +7788,136 @@
           }
         }
       }
+    },
+    "Listening for the dialogue…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نستمع إلى الحوار…"
+          }
+        }
+      }
+    },
+    "Sync to the Dialogue": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مزامنة مع الحوار"
+          }
+        }
+      }
+    },
+    "Sync Automatically": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مزامنة تلقائية"
+          }
+        }
+      }
+    },
+    "Works with subtitles from addons.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعمل مع الترجمات القادمة من الإضافات."
+          }
+        }
+      }
+    },
+    "Listens for the first voices and moves the subtitle to match. Credits and titles are ignored.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تستمع لأول الأصوات وتضبط توقيت الترجمة عليها، وتتجاهل أسماء المترجمين والعناوين."
+          }
+        }
+      }
+    },
+    "Already matches the dialogue.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متطابقة مع الحوار أصلاً."
+          }
+        }
+      }
+    },
+    "Moved by %@.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حُرّكت بمقدار ⁨%@⁩."
+          }
+        }
+      }
+    },
+    "Couldn't hear enough dialogue. Try again later in the episode.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم نسمع حواراً كافياً. جرّب مرة أخرى في جزء لاحق من الحلقة."
+          }
+        }
+      }
+    },
+    "Subtitles synced to the dialogue": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ضُبطت الترجمة على الحوار"
+          }
+        }
+      }
+    },
+    "Subtitles already match the dialogue": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الترجمة متطابقة مع الحوار أصلاً"
+          }
+        }
+      }
+    },
+    "Couldn't hear enough dialogue to sync. Try the timing buttons.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم نسمع حواراً كافياً للمزامنة. جرّب أزرار التوقيت."
+          }
+        }
+      }
+    },
+    "Smart Subtitle Sync": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المزامنة الذكية للترجمة"
+          }
+        }
+      }
+    },
+    "Before each episode starts, Cinema listens for the first voices — not music — and lines subtitles from addons up with them. The translator's name, the episode title and links at the start are ignored. Everything happens on this iPhone.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قبل بداية كل حلقة يستمع ⁨Cinema⁩ لأول الأصوات — لا الموسيقى — ويضبط عليها توقيت ترجمات الإضافات. يتجاهل اسم المترجم وعنوان الحلقة والروابط في البداية. وكل ذلك يتم على هذا الآيفون."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

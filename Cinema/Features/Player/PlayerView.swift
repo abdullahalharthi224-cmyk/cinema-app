@@ -1038,6 +1038,16 @@ private struct NoticeCapsule: View {
             case .sleepTimerSet:
                 Image(systemName: "moon.zzz.fill")
                 Text("Sleep timer set")
+            case .subtitlesSynced:
+                Image(systemName: "waveform.badge.checkmark")
+                Text("Subtitles synced to the dialogue")
+            case .subtitlesAlreadyInSync:
+                Image(systemName: "checkmark.circle.fill")
+                Text("Subtitles already match the dialogue")
+            case .subtitleSyncFailed:
+                Image(systemName: "waveform.slash")
+                Text("Couldn't hear enough dialogue to sync. Try the timing buttons.")
+                    .lineLimit(2)
             }
         }
         .font(.subheadline.weight(.semibold))

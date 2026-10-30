@@ -247,8 +247,65 @@ struct SubtitlePanel: View {
 
     // MARK: Adjust
 
+    /// Smart sync: line the subtitle up with the dialogue, now or automatically.
+    private var dialogueSyncCard: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            Button {
+                model.syncToDialogue()
+            } label: {
+                HStack(spacing: Theme.Spacing.s) {
+                    if model.dialogueSync == .listening {
+                        ProgressView().controlSize(.small).tint(Theme.accent)
+                    } else {
+                        Image(systemName: "waveform.badge.magnifyingglass")
+                            .foregroundStyle(Theme.accent)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(model.dialogueSync == .listening ? LocalizedStringKey("Listening for the dialogue…") : LocalizedStringKey("Sync to the Dialogue"))
+                            .font(.subheadline.weight(.semibold))
+                        Text(dialogueSyncDetail)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(model.selectedSubtitleURL == nil || model.dialogueSync == .listening)
+
+            Divider()
+            Toggle(isOn: Binding(
+                get: { PlaybackSettings.shared.smartSubtitleSync },
+                set: { PlaybackSettings.shared.smartSubtitleSync = $0 }
+            )) {
+                Text("Sync Automatically")
+                    .font(.subheadline)
+            }
+            .tint(Theme.accent)
+        }
+        .padding(Theme.Spacing.m)
+        .background(.white.opacity(0.06), in: .continuous(Theme.Radius.medium))
+    }
+
+    private var dialogueSyncDetail: String {
+        guard model.selectedSubtitleURL != nil else {
+            return localized("Works with subtitles from addons.")
+        }
+        switch model.dialogueSync {
+        case .idle, .listening:
+            return localized("Listens for the first voices and moves the subtitle to match. Credits and titles are ignored.")
+        case .done(let delay):
+            return delay == 0 ? localized("Already matches the dialogue.") : localized("Moved by %@.", String(format: "%+.1fs", delay))
+        case .failed:
+            return localized("Couldn't hear enough dialogue. Try again later in the episode.")
+        }
+    }
+
     @ViewBuilder
     private var adjustTab: some View {
+        dialogueSyncCard
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             Text("Timing")
                 .font(.footnote.weight(.semibold))
