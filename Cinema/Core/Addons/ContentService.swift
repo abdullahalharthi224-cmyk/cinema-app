@@ -32,6 +32,28 @@ struct SearchSection: Sendable, Identifiable {
     var items: [MetaPreview]
 
     var id: String { catalog.id }
+
+    /// The row's name and addon, to spot two rows called the same.
+    var nameKey: String { catalog.addon.id + "|" + (catalog.catalog.name ?? catalog.catalog.id).lowercased() }
+
+    /// Whether the row lists files by their names (a debrid library) rather than titles.
+    var listsFiles: Bool {
+        guard !items.isEmpty else { return false }
+        let files = items.filter { ReleaseName.looksLikeFile($0.name) }.count
+        return Double(files) / Double(items.count) >= 0.5
+    }
+
+    /// Real titles first, rows of file names last, otherwise in the addons' order.
+    static func arranged(_ sections: [SearchSection]) -> [SearchSection] {
+        sections.filter { !$0.listsFiles } + sections.filter(\.listsFiles)
+    }
+
+    /// Names used by more than one row of the same addon (one for movies, one for series).
+    static func repeatedNames(in sections: [SearchSection]) -> Set<String> {
+        var counts: [String: Int] = [:]
+        for section in sections { counts[section.nameKey, default: 0] += 1 }
+        return Set(counts.filter { $0.value > 1 }.keys)
+    }
 }
 
 /// High-level content operations across all enabled addons, following the

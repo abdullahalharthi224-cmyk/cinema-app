@@ -185,8 +185,12 @@ struct SearchView: View {
     private func results(_ sections: [SearchSection]) -> some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
-                ForEach(sections) { section in
-                    PosterRow(reference: section.catalog, content: .items(section.items), showsSeeAll: false)
+                let repeated = SearchSection.repeatedNames(in: sections)
+                ForEach(SearchSection.arranged(sections)) { section in
+                    PosterRow(
+                        reference: section.catalog, content: .items(section.items), showsSeeAll: false,
+                        showsType: repeated.contains(section.nameKey)
+                    )
                 }
             }
             .padding(.vertical, Theme.Spacing.l)

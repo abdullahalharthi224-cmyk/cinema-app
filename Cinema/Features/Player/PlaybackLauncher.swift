@@ -29,6 +29,14 @@ struct PlaybackSession: Identifiable {
     var subtitleSources: [SubtitleSource]?
     /// Playing a downloaded file rather than streaming.
     var isLocal = false
+    /// The file's name, as the addon gave it.
+    var fileName: String?
+    /// What subtitle addons are asked for: the video's own type and ID, or, for a file
+    /// recognised by name (a debrid library has no IMDb IDs), the title it turned out to be.
+    var subtitleType: String?
+    var subtitleID: String?
+
+    var subtitleQuery: (type: String, id: String) { (subtitleType ?? type, subtitleID ?? videoID) }
 
     /// The episode's or movie's synopsis, for the pause screen.
     var overview: String? { request.overview }
@@ -270,9 +278,23 @@ final class PlaybackLauncher {
         let allowApple = settings.useApplePlayer
         async let engine = PlayerEngineKind.choose(for: url, allowApple: allowApple)
 
+        // A file from a debrid library: recognise the title from its name so subtitles can be found.
+        if !session.videoID.hasPrefix("tt") {
+            let names = [session.fileName, session.url.lastPathComponent, session.title, session.subtitle].compactMap { $0 }
+            let videoID = session.videoID
+            if let match = await Self.withTimeout(seconds: 3, { await VideoIdentity.resolve(videoID: videoID, names: names) }) ?? nil {
+                session.subtitleType = match.type
+                session.subtitleID = match.id
+                session.title = match.title
+                if let season = match.season, let episode = match.episode {
+                    session.subtitle = EpisodeLabel.make(season: season, episode: episode, title: nil)
+                }
+            }
+        }
+
         if settings.preferredSubtitleLanguage != nil {
             let service = service
-            let type = session.type, id = session.videoID
+            let (type, id) = session.subtitleQuery
             let addons = Self.enabledAddons(in: context)
             let languages = settings.subtitleLanguages
             session.subtitleSources = await Self.withTimeout(seconds: 3.5) {
@@ -315,7 +337,8 @@ final class PlaybackLauncher {
             videoID: request.videoID,
             startPosition: saved?.isResumable == true ? saved?.position ?? 0 : 0,
             next: request.next,
-            request: request
+            request: request,
+            fileName: stream.stream.behaviorHints?.filename
         )
     }
 
