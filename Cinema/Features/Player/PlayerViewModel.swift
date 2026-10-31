@@ -584,7 +584,7 @@ final class PlayerViewModel {
 
         let languages = PlaybackSettings.shared.subtitleLanguages
         let sources = await ContentService().subtitleSources(
-            type: session.type, id: session.videoID,
+            type: session.subtitleQuery.type, id: session.subtitleQuery.id,
             addons: PlaybackLauncher.enabledAddons(in: context),
             preferredLanguages: languages.isEmpty ? ["ar", "en"] : languages
         )

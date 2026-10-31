@@ -79,7 +79,7 @@ struct SubtitlePanel: View {
         if !model.embeddedSubtitles.isEmpty {
             group(title: localized("In the Video")) {
                 ForEach(model.embeddedSubtitles) { track in
-                    row(title: trackName(track), detail: track.codec?.uppercased(), checked: track.isSelected) {
+                    row(title: trackName(track), detail: Self.subtitleFormat(track.codec), checked: track.isSelected) {
                         model.selectSubtitle(track)
                     }
                 }
@@ -458,8 +458,9 @@ struct SubtitlePanel: View {
             if let title {
                 Text(verbatim: title)
                     .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Self.quietText)
                     .padding(.horizontal, 4)
+                    .accessibilityAddTraits(.isHeader)
             }
             VStack(spacing: 0) {
                 content()
@@ -482,7 +483,7 @@ struct SubtitlePanel: View {
                 if let detail {
                     Text(verbatim: detail)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Self.quietText)
                         .lineLimit(1)
                 }
             }
@@ -491,6 +492,23 @@ struct SubtitlePanel: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    /// Secondary text that stays readable on the panel's dark glass (`.secondary` nearly vanished there).
+    static let quietText = Color.white.opacity(0.62)
+
+    /// A subtitle format people recognise, instead of the decoder's name ("HDMV_PGS_SUBTITLE").
+    static func subtitleFormat(_ codec: String?) -> String? {
+        guard let codec = codec?.lowercased(), !codec.isEmpty else { return nil }
+        switch codec {
+        case "subrip", "srt": return "SRT"
+        case "ass", "ssa": return "ASS"
+        case "webvtt", "vtt": return "VTT"
+        case "mov_text", "tx3g", "text": return localized("Text")
+        case "hdmv_pgs_subtitle", "pgssub", "pgs", "dvd_subtitle", "dvdsub", "dvb_subtitle", "dvbsub", "xsub", "vobsub":
+            return localized("Picture")
+        default: return codec.uppercased()
+        }
     }
 
     private func trackName(_ track: PlayerTrack) -> String {

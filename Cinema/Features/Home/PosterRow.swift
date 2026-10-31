@@ -44,6 +44,8 @@ struct PosterRow: View {
     let reference: CatalogReference
     let content: Content
     var showsSeeAll = true
+    /// Adds "· Movies" or "· Series" to the title, to tell apart two rows with the same name.
+    var showsType = false
     var retry: (() -> Void)?
 
     private var cardWidth: CGFloat {
@@ -101,7 +103,10 @@ struct PosterRow: View {
 
     @ViewBuilder
     private var header: some View {
-        let title = RowHeader(title: Text(reference.displayTitle), showsChevron: showsSeeAll) {
+        let name = showsType
+            ? Text("\(Text(reference.displayTitle)) · \(Text(reference.type.localizedContentType))")
+            : Text(reference.displayTitle)
+        let title = RowHeader(title: name, showsChevron: showsSeeAll) {
             Text(verbatim: reference.addon.name)
         }
 
