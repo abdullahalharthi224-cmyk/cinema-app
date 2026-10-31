@@ -54,6 +54,7 @@ struct SearchSection: Sendable, Identifiable {
         for section in sections { counts[section.nameKey, default: 0] += 1 }
         return Set(counts.filter { $0.value > 1 }.keys)
     }
+}
 
 /// High-level content operations across all enabled addons, following the
 /// same rules the official Stremio clients use to decide which addon to ask.
