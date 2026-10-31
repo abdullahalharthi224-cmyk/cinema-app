@@ -7938,6 +7938,36 @@
           }
         }
       }
+    },
+    "Syncing subtitles to the dialogue…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نضبط الترجمة على الحوار…"
+          }
+        }
+      }
+    },
+    "Couldn't read this episode's sound to sync. Use the timing buttons in Adjust.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّرت قراءة صوت الحلقة للمزامنة. استخدم أزرار التوقيت في تبويب الضبط."
+          }
+        }
+      }
+    },
+    "This subtitle couldn't be read to sync. Try another one.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّرت قراءة ملف الترجمة للمزامنة. جرّب ترجمة أخرى."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -298,7 +298,19 @@ struct SubtitlePanel: View {
             return localized("Listens for the first voices and moves the subtitle to match. Credits and titles are ignored.")
         case .done(let delay):
             return delay == 0 ? localized("Already matches the dialogue.") : localized("Moved by %@.", String(format: "%+.1fs", delay))
-        case .failed:
+        case .failed(let failure):
+            return Self.failureText(failure)
+        }
+    }
+
+    /// Why smart sync couldn't line the subtitle up, in words that say what to try.
+    static func failureText(_ failure: PlayerViewModel.DialogueSync.Failure) -> String {
+        switch failure {
+        case .noSound:
+            return localized("Couldn't read this episode's sound to sync. Use the timing buttons in Adjust.")
+        case .unreadableSubtitle:
+            return localized("This subtitle couldn't be read to sync. Try another one.")
+        case .notEnoughDialogue:
             return localized("Couldn't hear enough dialogue. Try again later in the episode.")
         }
     }
