@@ -1044,10 +1044,13 @@ private struct NoticeCapsule: View {
             case .subtitlesAlreadyInSync:
                 Image(systemName: "checkmark.circle.fill")
                 Text("Subtitles already match the dialogue")
-            case .subtitleSyncFailed:
+            case .syncingSubtitles:
+                ProgressView().controlSize(.small).tint(.white)
+                Text("Syncing subtitles to the dialogue…")
+            case .subtitleSyncFailed(let failure):
                 Image(systemName: "waveform.slash")
-                Text("Couldn't hear enough dialogue to sync. Try the timing buttons.")
-                    .lineLimit(2)
+                Text(SubtitlePanel.failureText(failure))
+                    .lineLimit(3)
             }
         }
         .font(.subheadline.weight(.semibold))
