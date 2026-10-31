@@ -278,7 +278,11 @@ struct SubtitlePanel: View {
             Divider()
             Toggle(isOn: Binding(
                 get: { PlaybackSettings.shared.smartSubtitleSync },
-                set: { PlaybackSettings.shared.smartSubtitleSync = $0 }
+                set: { isOn in
+                    PlaybackSettings.shared.smartSubtitleSync = isOn
+                    // Turning it on syncs the subtitle showing now.
+                    if isOn && model.selectedSubtitleURL != nil && model.dialogueSync != .listening { model.syncToDialogue() }
+                }
             )) {
                 Text("Sync Automatically")
                     .font(.subheadline)

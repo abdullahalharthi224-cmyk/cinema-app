@@ -90,6 +90,8 @@ final class PlayerViewModel {
     /// The subtitle smart sync last ran for, so it runs once per subtitle.
     @ObservationIgnored private var dialogueSyncedURL: String?
     @ObservationIgnored private var refreshedTracksForSync = false
+    /// The speech found in this video, kept so syncing again (or another subtitle) is instant.
+    @ObservationIgnored private var heardSpeech: (key: String, map: SpeechMap)?
     @ObservationIgnored private weak var context: ModelContext?
     @ObservationIgnored private let launcher: PlaybackLauncher
 
@@ -269,6 +271,7 @@ final class PlayerViewModel {
         dialogueSync = .idle
         dialogueSyncedURL = nil
         refreshedTracksForSync = false
+        heardSpeech = nil
         position = session.startPosition
         precisePosition = session.startPosition
         duration = 0
@@ -439,6 +442,12 @@ final class PlayerViewModel {
     }
 
     func setSubtitleDelay(_ seconds: Double) {
+        applySubtitleDelay(seconds)
+        // Timing changed by hand: the last smart sync result no longer describes it.
+        if dialogueSync != .listening { dialogueSync = .idle }
+    }
+
+    private func applySubtitleDelay(_ seconds: Double) {
         subtitleDelay = seconds
         engine?.setSubtitleDelay(seconds)
     }
@@ -725,9 +734,15 @@ final class PlayerViewModel {
             // Let a stream get going first, so the two don't compete for the connection.
             if automatic && !isLocal { try? await Task.sleep(for: .seconds(4)) }
             guard !Task.isCancelled else { return }
-            if automatic { show(.syncingSubtitles, for: 4) }
+            let key = "\(session.url.absoluteString)|\(audioTrack ?? -1)"
+            let known = heardSpeech?.key == key ? heardSpeech?.map : nil
+            if known == nil { show(.syncingSubtitles, for: 4) }
             let cues = await cues(for: url)
-            let speech = await detector.speech(from: start, length: length, audioTrack: audioTrack)
+            var speech = known
+            if speech == nil {
+                speech = await detector.speech(from: start, length: length, audioTrack: audioTrack)
+                if let speech, !Task.isCancelled { heardSpeech = (key, speech) }
+            }
             guard !Task.isCancelled, selectedSubtitleURL == url else {
                 if dialogueSync == .listening { dialogueSync = .idle }
                 return
@@ -751,7 +766,7 @@ final class PlayerViewModel {
             if delay == 0 {
                 show(.subtitlesAlreadyInSync)
             } else {
-                setSubtitleDelay(delay)
+                applySubtitleDelay(delay)
                 show(.subtitlesSynced)
             }
         }
