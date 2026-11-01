@@ -14,6 +14,8 @@ final class PlayerViewModel {
     private(set) var isPaused = false
     private(set) var isBuffering = true
     private(set) var hasLoaded = false
+    /// The first frames are playing (the loading picture can dissolve away).
+    private(set) var hasStartedPicture = false
     private(set) var errorMessage: String?
     private(set) var audioTracks: [PlayerTrack] = []
     private(set) var subtitleTracks: [PlayerTrack] = []
@@ -259,6 +261,7 @@ final class PlayerViewModel {
 
     private func load(_ session: PlaybackSession) {
         hasLoaded = false
+        hasStartedPicture = false
         isBuffering = true
         subtitlesDecided = false
         userPickedSubtitle = false
@@ -295,6 +298,8 @@ final class PlayerViewModel {
     /// (and engine) when the new link needs the other one.
     private func start(_ session: PlaybackSession) {
         self.session = session
+        // The next episode or another link: the loading picture starts its slow zoom again.
+        PlaybackLoadingView.startedAt = .now
         if session.engine != engineKind {
             engine?.destroy()
             engine = nil
@@ -474,6 +479,9 @@ final class PlayerViewModel {
     private func process(_ event: PlayerEvent) {
         switch event {
         case .position(let value):
+            if hasLoaded && !isBuffering && !hasStartedPicture && abs(value - session.startPosition) > 0.05 {
+                hasStartedPicture = true
+            }
             precisePosition = value
             if overlayCues != nil {
                 subtitleClock = value
