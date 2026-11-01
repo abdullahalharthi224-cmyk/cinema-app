@@ -54,6 +54,8 @@ struct WidgetSnapshot: Codable, Sendable {
     var rightToLeft: Bool
     var labels: Labels
     var updatedAt: Date
+    /// The watching profile's picture, as in the app (a file in `WidgetShared.imagesURL`).
+    var avatarFile: String? = nil
 
     static func load() -> WidgetSnapshot? {
         guard let url = WidgetShared.snapshotURL, let data = try? Data(contentsOf: url) else { return nil }

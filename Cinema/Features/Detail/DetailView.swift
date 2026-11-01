@@ -435,6 +435,7 @@ struct DetailView: View {
             type: model.route.type, videoID: video.id, title: model.name, subtitle: episodeLabel(video), history: history
         )
         request.overview = model.episodeOverview(video) ?? model.description
+        request.still = model.episodeImages(video).first
         // Everything after this episode, for the "Next Episode" countdown.
         var following: [NextEpisode] = []
         var cursor = video
@@ -734,6 +735,8 @@ struct StreamRequest: Identifiable {
     var next: NextEpisode? = nil
     /// The synopsis, shown on the player's pause screen.
     var overview: String? = nil
+    /// The episode's still, for the loading screen (films use their backdrop).
+    var still: URL? = nil
     /// The episodes after `next`, so autoplay can carry on.
     var upcoming: [NextEpisode] = []
 

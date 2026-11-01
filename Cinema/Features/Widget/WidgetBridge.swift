@@ -1,4 +1,6 @@
 import Foundation
+import SwiftData
+import SwiftUI
 import UIKit
 import WidgetKit
 
@@ -15,13 +17,16 @@ enum WidgetBridge {
     static func update(history: [WatchHistoryItem], newToday: [TasteModel.EpisodeEntry]) async {
         guard let imagesURL = WidgetShared.imagesURL else { return }
         let recent = Array(history.prefix(3))
+        let profile = activeProfile()
         let signature = (recent.map { "\($0.key)|\(Int($0.progress * 20))" } + newToday.map(\.id)).joined(separator: ",")
-            + "|\(Appearance.shared.language.rawValue)"
+            + "|\(Appearance.shared.language.rawValue)|\(profile.map { "\($0.id)\($0.symbol)\($0.colorHex)" } ?? "")"
         guard signature != lastSignature else { return }
         lastSignature = signature
 
         try? FileManager.default.createDirectory(at: imagesURL, withIntermediateDirectories: true)
         var used = Set<String>()
+        let avatar = profile.flatMap { saveAvatar($0, into: imagesURL) }
+        if let avatar { used.insert(avatar) }
         var items: [WidgetSnapshot.Item] = []
         for item in recent {
             let localized = await localizedTitle(id: item.metaID, name: item.name)
@@ -66,7 +71,8 @@ enum WidgetBridge {
                 newToday: localized("New Today"),
                 startWatching: localized("Start Watching")
             ),
-            updatedAt: .now
+            updatedAt: .now,
+            avatarFile: avatar
         )
         try? snapshot.save()
         removeUnused(in: imagesURL, keeping: used)
@@ -101,6 +107,21 @@ enum WidgetBridge {
             return name
         }
         return nil
+    }
+
+    private static func activeProfile() -> Profile? {
+        let profiles = ProfileStore.all(in: CinemaStore.container.mainContext)
+        return profiles.first { $0.id == ProfileSession.shared.activeID } ?? profiles.first
+    }
+
+    /// The profile's picture drawn exactly as in the app, saved for the widget.
+    private static func saveAvatar(_ profile: Profile, into folder: URL) -> String? {
+        let renderer = ImageRenderer(content: ProfileAvatar(profile: profile, size: 60).padding(6))
+        renderer.scale = 3
+        guard let data = renderer.uiImage?.pngData() else { return nil }
+        let name = "avatar-\(abs("\(profile.id)\(profile.symbol)\(profile.colorHex)".hashValue)).png"
+        try? data.write(to: folder.appendingPathComponent(name), options: .atomic)
+        return name
     }
 
     private static func removeUnused(in folder: URL, keeping used: Set<String>) {

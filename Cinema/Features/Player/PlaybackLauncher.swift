@@ -86,11 +86,13 @@ final class PlaybackLauncher {
         if let item = DownloadManager.shared.completedItem(videoID: request.videoID),
            let local = localSession(for: item, request: request, context: context) {
             if let history = request.history { WatchHistoryItem.record(history, in: context) }
+            PlaybackLoadingView.startedAt = .now
             session = local
             return
         }
 
         loadingRequest = request
+        PlaybackLoadingView.startedAt = .now
         showsLoading = true
         var request = request
         if request.prefetched == nil {
@@ -138,6 +140,7 @@ final class PlaybackLauncher {
         generation += 1
         let run = generation
         loadingRequest = request
+        PlaybackLoadingView.startedAt = .now
         Task {
             defer { if run == generation { isResolving = false; showsLoading = false } }
             // Subtitles load while the stream list closes, so the loading screen never covers it mid-animation.
@@ -399,5 +402,8 @@ private struct PlaybackCover: View {
             }
         }
         .animation(.easeInOut(duration: 0.35), value: launcher.session?.id)
+        // Sideways from the first moment, so the screen doesn't jump when the video starts.
+        .onAppear { OrientationController.lock(.landscape) }
+        .onDisappear { OrientationController.lock(.portrait) }
     }
 }

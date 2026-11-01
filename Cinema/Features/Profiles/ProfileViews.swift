@@ -1,54 +1,25 @@
+import PhotosUI
 import SwiftData
 import SwiftUI
-
-/// A round, gradient avatar with the profile's symbol.
-struct ProfileAvatar: View {
-    let symbol: String
-    let colorHex: String
-    var size: CGFloat = 96
-
-    private var color: Color { Color(hex: colorHex) ?? Theme.accent }
-
-    var body: some View {
-        Circle()
-            .fill(
-                LinearGradient(
-                    colors: [color.opacity(0.95), color.opacity(0.55)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .overlay {
-                Image(systemName: symbol)
-                    .font(.system(size: size * 0.42, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
-            }
-            .overlay(Circle().strokeBorder(.white.opacity(0.2), lineWidth: 0.75))
-            .frame(width: size, height: size)
-            .shadow(color: color.opacity(0.35), radius: size * 0.15, y: size * 0.06)
-            .accessibilityHidden(true)
-    }
-}
-
-extension ProfileAvatar {
-    init(profile: Profile, size: CGFloat = 96) {
-        self.init(symbol: profile.symbol, colorHex: profile.colorHex, size: size)
-    }
-}
 
 /// "Who's watching?" — shown at launch when there's more than one profile,
 /// and from the avatar button on Home.
 @MainActor
 struct ProfilePickerView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(AppRouter.self) private var router
     @Environment(\.modelContext) private var context
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \Profile.sortIndex) private var profiles: [Profile]
 
     @State private var session = ProfileSession.shared
     @State private var isEditing = false
     @State private var editing: ProfileEditorTarget?
     @State private var auth: ProfileAuth?
+    /// The profile picked: it lifts to the middle, glowing, then flies to Home's avatar button.
+    @State private var chosen: Profile?
+    @State private var lifted = false
+    @State private var flying = false
+    @State private var tileFrames: [UUID: CGRect] = [:]
 
     /// Opening a profile, editing it, or leaving a kids profile, after the passcode.
     enum ProfileAuth: Identifiable {
@@ -72,13 +43,53 @@ struct ProfilePickerView: View {
     private let columns = [GridItem(.adaptive(minimum: 120), spacing: Theme.Spacing.xl)]
 
     var body: some View {
+        ZStack {
+            picker
+                .opacity(flying ? 0 : 1)
+            flightLayer
+        }
+        .sensoryFeedback(.impact(weight: .medium), trigger: chosen?.id)
+    }
+
+    /// The chosen avatar on its way: from its tile to the middle, then to Home's profile button.
+    private var flightLayer: some View {
+        GeometryReader { proxy in
+            if let chosen, let from = tileFrames[chosen.id] {
+                let size: CGFloat = 104
+                let middle = CGPoint(x: proxy.size.width / 2, y: proxy.size.height * 0.42)
+                let target = router.profileButtonFrame
+                let landsOnHome = router.selectedTab == .home && target.width > 0
+                let position = flying
+                    ? (landsOnHome ? CGPoint(x: target.midX, y: target.midY) : middle)
+                    : (lifted ? middle : CGPoint(x: from.midX, y: from.midY))
+                let scale = flying ? (landsOnHome ? target.width / size : 0.6) : (lifted ? 1.3 : 1)
+                ProfileAvatar(profile: chosen, size: size)
+                    .background {
+                        Circle()
+                            .fill(SplashArt.goldTop.opacity(lifted && !flying ? 0.55 : 0))
+                            .blur(radius: 30)
+                            .scaleEffect(1.5)
+                    }
+                    .scaleEffect(scale)
+                    .position(position)
+                    .opacity(flying && !landsOnHome ? 0 : 1)
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+
+    private var picker: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.Spacing.xxl) {
-                    Text(isEditing ? LocalizedStringKey("Edit Profiles") : "Who's Watching?")
-                        .font(.display(.largeTitle))
-                        .padding(.top, Theme.Spacing.xxl)
-                        .contentTransition(.opacity)
+                    VStack(spacing: Theme.Spacing.m) {
+                        CinemaBadge()
+                        Text(isEditing ? LocalizedStringKey("Edit Profiles") : "Who's Watching?")
+                            .font(.display(.largeTitle))
+                            .contentTransition(.opacity)
+                    }
+                    .padding(.top, Theme.Spacing.l)
 
                     LazyVGrid(columns: columns, spacing: Theme.Spacing.xl) {
                         ForEach(profiles) { profile in
@@ -117,7 +128,7 @@ struct ProfilePickerView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        dismiss()
+                        close()
                     } label: {
                         Image(systemName: "xmark")
                     }
@@ -142,10 +153,22 @@ struct ProfilePickerView: View {
         .sensoryFeedback(.selection, trigger: session.activeID)
     }
 
+    /// Closes without choosing.
+    private func close() {
+        withAnimation(.easeOut(duration: 0.3)) {
+            router.homeBehindPicker = false
+            router.showsProfilePicker = false
+        }
+    }
+
     private func profileTile(_ profile: Profile) -> some View {
         let isActive = profile.id == session.activeID
+        let isChosen = chosen?.id == profile.id
+        let isOther = chosen != nil && !isChosen
         return VStack(spacing: Theme.Spacing.m) {
             ProfileAvatar(profile: profile, size: 104)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { tileFrames[profile.id] = $0 }
+                .opacity(isChosen ? 0 : 1)
                 .overlay {
                     if isEditing {
                         Circle()
@@ -178,7 +201,10 @@ struct ProfilePickerView: View {
                 .font(.headline)
                 .foregroundStyle(isActive ? .primary : .secondary)
                 .lineLimit(1)
+                .opacity(chosen == nil ? 1 : 0)
         }
+        .opacity(isOther ? 0 : 1)
+        .scaleEffect(isOther ? 0.85 : 1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: profile.name))
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
@@ -201,10 +227,11 @@ struct ProfilePickerView: View {
     }
 
     private func select(_ profile: Profile) {
+        guard chosen == nil else { return }
         let kidsScope = session.activeID.flatMap { Passcode.scope(for: $0) }
         let profileScope = Passcode.scope(for: profile.id)
         if profile.id == session.activeID {
-            dismiss()
+            activate(profile)
         } else if session.isKids && !profile.isKids, let kidsScope {
             // Leaving a kids profile always takes its own passcode, never Face ID.
             auth = .leaveKids(profile, kidsScope)
@@ -215,9 +242,29 @@ struct ProfilePickerView: View {
         }
     }
 
+    /// Switches profile under the picker, then plays the transition: the others fade away, the
+    /// chosen avatar glows in the middle and flies to Home's avatar while Home grows back in.
     private func activate(_ profile: Profile) {
-        withAnimation(Theme.Motion.spring) { session.activate(profile) }
-        dismiss()
+        if profile.id != session.activeID { session.activate(profile) }
+        guard !reduceMotion else {
+            close()
+            return
+        }
+        router.isProfileFlightActive = true
+        chosen = profile
+        Task {
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.78)) {
+                lifted = true
+            }
+            try? await Task.sleep(for: .milliseconds(320))
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                flying = true
+                router.homeBehindPicker = false
+            }
+            try? await Task.sleep(for: .milliseconds(430))
+            router.isProfileFlightActive = false
+            router.showsProfilePicker = false
+        }
     }
 
     private func beginEditing(_ profile: Profile) {
@@ -264,6 +311,22 @@ struct ProfilePickerView: View {
     }
 }
 
+/// The small Cinema mark and name, at the top of "Who's watching?".
+struct CinemaBadge: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            Canvas { context, size in SplashArt.draw(in: &context, size: size, t: 10) }
+                .frame(width: 34, height: 34)
+            Text(verbatim: "Cinema")
+                .font(.system(.title3, weight: .heavy))
+                .foregroundStyle(LinearGradient(colors: [SplashArt.goldTop, SplashArt.goldBottom], startPoint: .top, endPoint: .bottom))
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "Cinema"))
+    }
+}
+
 enum ProfileEditorTarget: Identifiable {
     case new
     case edit(Profile)
@@ -286,12 +349,17 @@ struct ProfileEditorView: View {
     @Query private var profiles: [Profile]
 
     @State private var name = ""
-    @State private var symbol = Profile.symbols[0]
-    @State private var colorHex = Profile.colors[0]
+    @State private var symbol = AvatarKind.emoji(AvatarKind.characters[0]).raw
+    @State private var colorHex = AvatarBackground.choices[0]
+    /// A picture chosen from the album, cropped, waiting to be saved with the profile.
+    @State private var newPhoto: UIImage?
+    @State private var photoItem: PhotosPickerItem?
+    @State private var photoToCrop: CroppingPhoto?
     @State private var isConfirmingDelete = false
     @State private var isKids = false
     @State private var kidsMaxAge = 7
     @State private var isLocked = false
+    @State private var isDefault = false
     /// Set while a new passcode is being created for the lock or the kids profile.
     @State private var pendingPasscode: PendingPasscode?
     /// A new profile's ID, chosen up front so its passcode can be saved before the profile is.
@@ -316,6 +384,17 @@ struct ProfileEditorView: View {
 
     private let symbolColumns = [GridItem(.adaptive(minimum: 52), spacing: Theme.Spacing.m)]
 
+    struct CroppingPhoto: Identifiable {
+        let id = UUID()
+        let image: UIImage
+    }
+
+    /// The picture shown in the preview: a new crop, else the saved one.
+    private var previewPhoto: UIImage? {
+        guard AvatarKind(symbol) == .photo else { return nil }
+        return newPhoto ?? editedProfile.flatMap { AvatarStore.image(for: $0.id) }
+    }
+
     private var editedProfile: Profile? {
         if case .edit(let profile) = target { return profile }
         return nil
@@ -328,7 +407,7 @@ struct ProfileEditorView: View {
             Form {
                 Section {
                     VStack(spacing: Theme.Spacing.l) {
-                        ProfileAvatar(symbol: symbol, colorHex: colorHex, size: 112)
+                        ProfileAvatar(symbol: symbol, colorHex: colorHex, size: 112, photo: previewPhoto)
                             .animation(Theme.Motion.spring, value: symbol)
                             .animation(Theme.Motion.spring, value: colorHex)
                         TextField("Name", text: $name)
@@ -342,15 +421,45 @@ struct ProfileEditorView: View {
                 }
                 .listRowBackground(Color.clear)
 
-                Section("Color") {
+                Section("Character") {
+                    LazyVGrid(columns: symbolColumns, spacing: Theme.Spacing.m) {
+                        ForEach(AvatarKind.characters, id: \.self) { emoji in
+                            let raw = AvatarKind.emoji(emoji).raw
+                            Button {
+                                symbol = raw
+                            } label: {
+                                Text(verbatim: emoji)
+                                    .font(.system(size: 30))
+                                    .frame(width: 52, height: 52)
+                                    .background(
+                                        raw == symbol
+                                            ? AnyShapeStyle(LinearGradient(colors: AvatarBackground.colors(for: colorHex), startPoint: .topLeading, endPoint: .bottomTrailing))
+                                            : AnyShapeStyle(Theme.surface),
+                                        in: Circle()
+                                    )
+                                    .overlay(Circle().strokeBorder(Color.primary, lineWidth: raw == symbol ? 2 : 0).padding(-3))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text(verbatim: emoji))
+                            .accessibilityAddTraits(raw == symbol ? .isSelected : [])
+                        }
+                    }
+                    .padding(.vertical, Theme.Spacing.xs)
+
+                    PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
+                        Label("Photo from Album", systemImage: "photo.on.rectangle.angled")
+                    }
+                }
+
+                Section("Background") {
                     ScrollView(.horizontal) {
                         HStack(spacing: Theme.Spacing.m) {
-                            ForEach(Profile.colors, id: \.self) { hex in
+                            ForEach(AvatarBackground.choices, id: \.self) { hex in
                                 Button {
                                     colorHex = hex
                                 } label: {
                                     Circle()
-                                        .fill((Color(hex: hex) ?? .gray).gradient)
+                                        .fill(LinearGradient(colors: AvatarBackground.colors(for: hex), startPoint: .topLeading, endPoint: .bottomTrailing))
                                         .frame(width: 36, height: 36)
                                         .overlay {
                                             Circle()
@@ -364,27 +473,6 @@ struct ProfileEditorView: View {
                         .padding(6)
                     }
                     .scrollIndicators(.hidden)
-                }
-
-                Section("Avatar") {
-                    LazyVGrid(columns: symbolColumns, spacing: Theme.Spacing.m) {
-                        ForEach(Profile.symbols, id: \.self) { item in
-                            Button {
-                                symbol = item
-                            } label: {
-                                Image(systemName: item)
-                                    .font(.system(size: 22, weight: .semibold))
-                                    .frame(width: 52, height: 52)
-                                    .foregroundStyle(item == symbol ? Color.black : Color.primary)
-                                    .background(
-                                        item == symbol ? AnyShapeStyle(Color(hex: colorHex) ?? .white) : AnyShapeStyle(Theme.surface),
-                                        in: Circle()
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.vertical, Theme.Spacing.xs)
                 }
 
                 Section {
@@ -420,6 +508,13 @@ struct ProfileEditorView: View {
                     .settingsFooter()
                 }
 
+                Section {
+                    Toggle("Open Cinema with This Profile", isOn: $isDefault)
+                } footer: {
+                    Text("Cinema skips “Who's Watching?” and opens straight to this profile. Its passcode, if it has one, is still asked.")
+                        .settingsFooter()
+                }
+
                 if editedProfile != nil, profiles.count > 1 {
                     Section {
                         Button("Delete Profile", role: .destructive) {
@@ -452,6 +547,24 @@ struct ProfileEditorView: View {
                     dismiss()
                 }
             }
+            .sheet(item: $photoToCrop) { pending in
+                CircularCropView(image: pending.image) { cropped in
+                    newPhoto = cropped
+                    symbol = AvatarKind.photoTag
+                    photoToCrop = nil
+                } onCancel: {
+                    photoToCrop = nil
+                }
+            }
+            .onChange(of: photoItem) { _, item in
+                guard let item else { return }
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) {
+                        photoToCrop = CroppingPhoto(image: CircularCropView.prepared(image))
+                    }
+                    photoItem = nil
+                }
+            }
             .sensoryFeedback(.selection, trigger: symbol)
             .sensoryFeedback(.selection, trigger: colorHex)
             .sheet(item: $pendingPasscode) { pending in
@@ -460,7 +573,9 @@ struct ProfileEditorView: View {
                     hasOwnPasscode = true
                     withAnimation(Theme.Motion.spring) {
                         switch pending {
-                        case .kids: isKids = true
+                        case .kids:
+                            isKids = true
+                            giveKidsCharacter()
                         case .lock: isLocked = true
                         case .change: break
                         }
@@ -477,17 +592,24 @@ struct ProfileEditorView: View {
                 isKids = editedProfile.isKids
                 kidsMaxAge = editedProfile.kidsMaxAge
                 isLocked = editedProfile.isLocked
+                isDefault = ProfileSession.shared.defaultID == editedProfile.id
                 hasOwnPasscode = Passcode.isSet(.profile(editedProfile.id))
             } else {
-                // Suggest a colour and avatar not already taken.
-                colorHex = Profile.colors.first { hex in !profiles.contains { $0.colorHex == hex } } ?? Profile.colors[0]
-                symbol = Profile.symbols.first { item in !profiles.contains { $0.symbol == item } } ?? Profile.symbols[0]
+                // Suggest a background and character not already taken.
+                colorHex = AvatarBackground.choices.first { hex in !profiles.contains { $0.colorHex == hex } } ?? AvatarBackground.choices[0]
+                let character = AvatarKind.characters.first { emoji in !profiles.contains { $0.symbol == AvatarKind.emoji(emoji).raw } }
+                symbol = AvatarKind.emoji(character ?? AvatarKind.characters[0]).raw
             }
         }
     }
 
     private func save() {
         guard !trimmedName.isEmpty else { return }
+        if AvatarKind(symbol) == .photo, let newPhoto {
+            AvatarStore.save(newPhoto, for: profileID)
+        } else if AvatarKind(symbol) != .photo {
+            AvatarStore.remove(for: profileID)
+        }
         if let editedProfile {
             editedProfile.name = trimmedName
             editedProfile.symbol = symbol
@@ -499,6 +621,11 @@ struct ProfileEditorView: View {
             profile.id = draftID
             apply(to: profile)
             try? context.save()
+        }
+        if isDefault {
+            ProfileSession.shared.defaultID = profileID
+        } else if ProfileSession.shared.defaultID == profileID {
+            ProfileSession.shared.defaultID = nil
         }
         // A profile that's neither locked nor for kids no longer needs its code.
         if !isKids && !isLocked { Passcode.remove(passcodeScope) }
@@ -518,6 +645,17 @@ struct ProfileEditorView: View {
             pendingPasscode = .kids
         } else {
             withAnimation(Theme.Motion.spring) { isKids = on }
+            if on { giveKidsCharacter() }
+        }
+    }
+
+    /// A kids profile starts with a playful character (unless it already has one or a photo).
+    private func giveKidsCharacter() {
+        let kind = AvatarKind(symbol)
+        let isSymbol: Bool = { if case .symbol = kind { return true } else { return false } }()
+        if isSymbol || (editedProfile == nil && kind != .photo) {
+            symbol = AvatarKind.emoji(AvatarKind.kidsCharacters.randomElement() ?? "🦄").raw
+            colorHex = ["#FFD86F", "#84FAB0", "#FBC2EB", "#F7B267"].randomElement() ?? colorHex
         }
     }
 
@@ -529,15 +667,15 @@ struct ProfileEditorView: View {
 
 /// The small avatar button on Home that opens the profile picker.
 struct ProfileButton: View {
+    @Environment(AppRouter.self) private var router
     @Query(sort: \Profile.sortIndex) private var profiles: [Profile]
     @State private var session = ProfileSession.shared
-    @State private var isPicking = false
 
     private var active: Profile? { profiles.first { $0.id == session.activeID } ?? profiles.first }
 
     var body: some View {
         Button {
-            isPicking = true
+            router.presentProfilePicker()
         } label: {
             if let active {
                 ProfileAvatar(profile: active, size: 38)
@@ -548,8 +686,8 @@ struct ProfileButton: View {
         }
         .buttonStyle(.cardPress)
         .accessibilityLabel("Switch Profile")
-        .fullScreenCover(isPresented: $isPicking) {
-            ProfilePickerView()
-        }
+        // Where a profile chosen in "Who's watching?" lands; hidden while it flies here.
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { router.profileButtonFrame = $0 }
+        .opacity(router.isProfileFlightActive ? 0 : 1)
     }
 }

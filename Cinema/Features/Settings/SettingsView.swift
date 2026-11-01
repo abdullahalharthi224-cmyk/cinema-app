@@ -6,7 +6,6 @@ struct SettingsView: View {
     @Query private var addons: [InstalledAddon]
     @AppStorage(StremioDefaults.emailKey) private var stremioEmail = ""
     @Query(sort: \Profile.sortIndex) private var profiles: [Profile]
-    @State private var isPickingProfile = false
     @State private var versionTaps = 0
     @State private var cacheSize: Int64?
     @State private var isClearingCache = false
@@ -40,7 +39,7 @@ struct SettingsView: View {
 
                 Section {
                     Button {
-                        isPickingProfile = true
+                        router.presentProfilePicker()
                     } label: {
                         LabeledContent {
                             Text(verbatim: activeProfile?.name ?? "")
@@ -297,9 +296,6 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .task { cacheSize = await CacheMaintenance.sizes().total }
-            .fullScreenCover(isPresented: $isPickingProfile) {
-                ProfilePickerView()
-            }
             .navigationDestination(for: SettingsRoute.self) { route in
                 switch route {
                 case .addons:

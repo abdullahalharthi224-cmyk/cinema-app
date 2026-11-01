@@ -9,7 +9,7 @@ final class Profile {
 
     @Attribute(.unique) var id: UUID
     var name: String
-    /// An SF Symbol used as the avatar.
+    /// The avatar: a character ("emoji:🦁"), "photo" for a picture from the album, or an SF Symbol (see `AvatarKind`).
     var symbol: String
     var colorHex: String
     var sortIndex: Int
@@ -62,6 +62,14 @@ final class ProfileSession {
 
     var isKids: Bool { kidsMaxAge != nil }
 
+    private static let defaultKey = "profile.defaultID"
+
+    /// The profile Cinema opens with, skipping "Who's watching?".
+    var defaultID: UUID? {
+        get { UserDefaults.standard.string(forKey: Self.defaultKey).flatMap(UUID.init(uuidString:)) }
+        set { UserDefaults.standard.set(newValue?.uuidString, forKey: Self.defaultKey) }
+    }
+
     private init() {
         let defaults = UserDefaults.standard
         activeID = defaults.string(forKey: Self.key).flatMap(UUID.init(uuidString:))
@@ -97,7 +105,7 @@ enum ProfileStore {
         var profiles = all(in: context)
         if profiles.isEmpty {
             let first = Profile(
-                name: localized("Me"), symbol: Profile.symbols[0], colorHex: Profile.colors[0], sortIndex: 0
+                name: localized("Me"), symbol: AvatarKind.emoji("🦁").raw, colorHex: "#C9A962", sortIndex: 0
             )
             context.insert(first)
             profiles = [first]
@@ -107,6 +115,13 @@ enum ProfileStore {
             ProfileSession.shared.activeID = active.id
         }
         ProfileSession.shared.sync(active)
+
+        // Kids profiles from before characters existed get a playful one.
+        for profile in profiles where profile.isKids {
+            if case .symbol = AvatarKind(profile.symbol) {
+                profile.symbol = AvatarKind.emoji(AvatarKind.kidsCharacters[0]).raw
+            }
+        }
 
         // Adopt history recorded before profiles existed.
         let orphans = (try? context.fetch(FetchDescriptor<WatchHistoryItem>(predicate: #Predicate { $0.profileID == nil }))) ?? []
@@ -181,6 +196,8 @@ enum ProfileStore {
         }
         ProfileSettings.forget(id)
         Passcode.remove(.profile(id))
+        AvatarStore.remove(for: id)
+        if ProfileSession.shared.defaultID == id { ProfileSession.shared.defaultID = nil }
         try? context.save()
     }
 }

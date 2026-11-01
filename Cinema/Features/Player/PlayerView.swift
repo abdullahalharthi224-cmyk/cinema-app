@@ -109,9 +109,10 @@ struct PlayerView: View {
                 .allowsHitTesting(false)
             }
 
-            if !model.hasLoaded && model.errorMessage == nil {
+            // The loading picture stays until the video is really moving, then dissolves into it.
+            if !model.hasStartedPicture && model.errorMessage == nil {
                 LoadingCurtain(session: model.session)
-                    .transition(.opacity)
+                    .transition(.opacity.animation(.easeInOut(duration: 0.7)))
             } else if model.isBuffering {
                 ProgressView()
                     .controlSize(.large)
@@ -716,7 +717,7 @@ private struct LoadingCurtain: View {
         PlaybackLoadingView(
             info: .init(
                 title: session.title, subtitle: session.subtitle,
-                background: session.artwork,
+                image: session.request.still ?? session.artwork,
                 logo: session.request.history.flatMap { Artwork.logo(id: $0.metaID, provided: $0.logo) }
             ),
             stage: .starting

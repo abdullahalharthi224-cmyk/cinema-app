@@ -4,7 +4,6 @@ struct RootView: View {
     @Environment(AppRouter.self) private var router
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
-    @State private var isPickingProfile = false
     @State private var didCheckProfiles = false
     @State private var showsBackupReminder = false
 
@@ -39,6 +38,9 @@ struct RootView: View {
         }
         // The side menu, over everything (the tab bar included).
         .overlay { SideMenu() }
+        // Behind "Who's watching?", Home waits a little smaller and grows back as a profile is chosen.
+        .scaleEffect(router.homeBehindPicker ? 0.96 : 1)
+        .opacity(router.homeBehindPicker ? 0 : 1)
         .onChange(of: router.selectedTab) { _, _ in router.showsMenu = false }
         .onChange(of: ProfileSession.shared.isKids) { _, isKids in
             if isKids && router.selectedTab == .settings { router.selectedTab = .home }
@@ -58,6 +60,17 @@ struct RootView: View {
         .environment(\.locale, language.locale)
         .environment(\.layoutDirection, language.isRightToLeft ? .rightToLeft : .leftToRight)
         .id(language)
+        // Outside the language rebuild, so switching to a profile in another language
+        // doesn't interrupt the avatar's flight.
+        .overlay {
+            if router.showsProfilePicker {
+                ProfilePickerView()
+                    .environment(\.locale, language.locale)
+                    .environment(\.layoutDirection, language.isRightToLeft ? .rightToLeft : .leftToRight)
+                    .preferredColorScheme(Appearance.shared.theme.colorScheme)
+                    .transition(.opacity)
+            }
+        }
         .task {
             // No connection at launch: open straight on the downloads.
             if !(await NetworkMonitor.shared.currentStatus()), !DownloadManager.shared.downloadedVideoIDs.isEmpty {
@@ -69,14 +82,23 @@ struct RootView: View {
                 ProfileStore.ensureActiveProfile(in: context)
                 ProfileStore.migrateToProfilePasscodes(in: context)
                 ViewingLogStore.seedIfNeeded(in: context)
+                // A profile saved as the default opens straight away (its lock, if any, still applies).
+                let profiles = ProfileStore.all(in: context)
+                let defaultProfile = ProfileSession.shared.defaultID.flatMap { id in profiles.first { $0.id == id } }
+                if let defaultProfile, defaultProfile.id != ProfileSession.shared.activeID {
+                    ProfileSession.shared.activate(defaultProfile)
+                }
                 LockGate.shared.lockIfNeeded()
-                if ProfileStore.all(in: context).count > 1 {
+                if profiles.count > 1 && defaultProfile == nil {
                     // Let the launch animation finish (and the lock open) first.
                     while LaunchState.shared.isShowingSplash || LockGate.shared.isLocked {
                         try? await Task.sleep(for: .milliseconds(100))
                     }
                     // Opened from the widget to resume a title: go straight to it.
-                    if router.continueKey == nil { isPickingProfile = true }
+                    if router.continueKey == nil {
+                        router.homeBehindPicker = true
+                        router.showsProfilePicker = true
+                    }
                 }
             }
             // Every two weeks, a gentle nudge to back up (after the launch animation).
@@ -90,9 +112,6 @@ struct RootView: View {
             // Housekeeping waits until the launch has settled, and runs at most once a day.
             try? await Task.sleep(for: .seconds(8))
             CacheMaintenance.trimIfDue()
-        }
-        .fullScreenCover(isPresented: $isPickingProfile) {
-            ProfilePickerView()
         }
         .alert("Time for a Backup?", isPresented: $showsBackupReminder) {
             Button("Back Up Now") {
