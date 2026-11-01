@@ -91,7 +91,7 @@ private struct LockScreenView: View {
             Group {
                 if let profile {
                     VStack(spacing: Theme.Spacing.s) {
-                        ProfileAvatar(symbol: profile.symbol, colorHex: profile.colorHex, size: 64)
+                        ProfileAvatar(profile: profile, size: 64)
                         Text(verbatim: profile.name).font(.headline)
                     }
                 } else {

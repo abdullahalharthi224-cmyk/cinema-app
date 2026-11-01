@@ -9,7 +9,7 @@ final class Profile {
 
     @Attribute(.unique) var id: UUID
     var name: String
-    /// An SF Symbol used as the avatar.
+    /// The avatar: a character ("emoji:🦁"), "photo" for a picture from the album, or an SF Symbol (see `AvatarKind`).
     var symbol: String
     var colorHex: String
     var sortIndex: Int
@@ -97,7 +97,7 @@ enum ProfileStore {
         var profiles = all(in: context)
         if profiles.isEmpty {
             let first = Profile(
-                name: localized("Me"), symbol: Profile.symbols[0], colorHex: Profile.colors[0], sortIndex: 0
+                name: localized("Me"), symbol: AvatarKind.emoji("🦁").raw, colorHex: "#C9A962", sortIndex: 0
             )
             context.insert(first)
             profiles = [first]
@@ -107,6 +107,13 @@ enum ProfileStore {
             ProfileSession.shared.activeID = active.id
         }
         ProfileSession.shared.sync(active)
+
+        // Kids profiles from before characters existed get a playful one.
+        for profile in profiles where profile.isKids {
+            if case .symbol = AvatarKind(profile.symbol) {
+                profile.symbol = AvatarKind.emoji(AvatarKind.kidsCharacters[0]).raw
+            }
+        }
 
         // Adopt history recorded before profiles existed.
         let orphans = (try? context.fetch(FetchDescriptor<WatchHistoryItem>(predicate: #Predicate { $0.profileID == nil }))) ?? []
@@ -181,6 +188,7 @@ enum ProfileStore {
         }
         ProfileSettings.forget(id)
         Passcode.remove(.profile(id))
+        AvatarStore.remove(for: id)
         try? context.save()
     }
 }

@@ -117,14 +117,29 @@ struct ContinueWidgetView: View {
         }
     }
 
+    /// "Continue Watching" with the watching profile's picture, as in the app.
+    private func header(_ snapshot: WidgetSnapshot, fontSize: CGFloat, avatar: CGFloat) -> some View {
+        HStack(spacing: 6) {
+            Text(verbatim: snapshot.labels.continueWatching)
+                .font(.system(size: fontSize, weight: .semibold))
+                .foregroundStyle(ink.opacity(0.75))
+                .textCase(.uppercase)
+            Spacer(minLength: 0)
+            if let file = snapshot.avatarFile, let folder = WidgetShared.imagesURL,
+               let image = UIImage(contentsOfFile: folder.appendingPathComponent(file).path) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: avatar * 1.2, height: avatar * 1.2)
+            }
+        }
+    }
+
     // Medium: the wide artwork, the title at the bottom, the next two titles in the corner.
     private func medium(_ snapshot: WidgetSnapshot, _ item: WidgetSnapshot.Item) -> some View {
         HStack(alignment: .bottom, spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(verbatim: snapshot.labels.continueWatching)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(ink.opacity(0.75))
-                    .textCase(.uppercase)
+                header(snapshot, fontSize: 11, avatar: 22)
                 Spacer(minLength: 0)
                 caption(item, titleFont: .system(size: 17, weight: .bold), lines: 1)
             }
@@ -149,10 +164,7 @@ struct ContinueWidgetView: View {
     // Large: the wide artwork fills it; the title, then the next titles and today's new episodes.
     private func large(_ snapshot: WidgetSnapshot, _ item: WidgetSnapshot.Item) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(verbatim: snapshot.labels.continueWatching)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(ink.opacity(0.75))
-                .textCase(.uppercase)
+            header(snapshot, fontSize: 12, avatar: 26)
             Spacer(minLength: 0)
             caption(item, titleFont: .system(size: 22, weight: .heavy), lines: 2)
 

@@ -1,41 +1,6 @@
+import PhotosUI
 import SwiftData
 import SwiftUI
-
-/// A round, gradient avatar with the profile's symbol.
-struct ProfileAvatar: View {
-    let symbol: String
-    let colorHex: String
-    var size: CGFloat = 96
-
-    private var color: Color { Color(hex: colorHex) ?? Theme.accent }
-
-    var body: some View {
-        Circle()
-            .fill(
-                LinearGradient(
-                    colors: [color.opacity(0.95), color.opacity(0.55)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .overlay {
-                Image(systemName: symbol)
-                    .font(.system(size: size * 0.42, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
-            }
-            .overlay(Circle().strokeBorder(.white.opacity(0.2), lineWidth: 0.75))
-            .frame(width: size, height: size)
-            .shadow(color: color.opacity(0.35), radius: size * 0.15, y: size * 0.06)
-            .accessibilityHidden(true)
-    }
-}
-
-extension ProfileAvatar {
-    init(profile: Profile, size: CGFloat = 96) {
-        self.init(symbol: profile.symbol, colorHex: profile.colorHex, size: size)
-    }
-}
 
 /// "Who's watching?" — shown at launch when there's more than one profile,
 /// and from the avatar button on Home.
@@ -286,8 +251,12 @@ struct ProfileEditorView: View {
     @Query private var profiles: [Profile]
 
     @State private var name = ""
-    @State private var symbol = Profile.symbols[0]
-    @State private var colorHex = Profile.colors[0]
+    @State private var symbol = AvatarKind.emoji(AvatarKind.characters[0]).raw
+    @State private var colorHex = AvatarBackground.choices[0]
+    /// A picture chosen from the album, cropped, waiting to be saved with the profile.
+    @State private var newPhoto: UIImage?
+    @State private var photoItem: PhotosPickerItem?
+    @State private var photoToCrop: CroppingPhoto?
     @State private var isConfirmingDelete = false
     @State private var isKids = false
     @State private var kidsMaxAge = 7
@@ -316,6 +285,17 @@ struct ProfileEditorView: View {
 
     private let symbolColumns = [GridItem(.adaptive(minimum: 52), spacing: Theme.Spacing.m)]
 
+    struct CroppingPhoto: Identifiable {
+        let id = UUID()
+        let image: UIImage
+    }
+
+    /// The picture shown in the preview: a new crop, else the saved one.
+    private var previewPhoto: UIImage? {
+        guard AvatarKind(symbol) == .photo else { return nil }
+        return newPhoto ?? editedProfile.flatMap { AvatarStore.image(for: $0.id) }
+    }
+
     private var editedProfile: Profile? {
         if case .edit(let profile) = target { return profile }
         return nil
@@ -328,7 +308,7 @@ struct ProfileEditorView: View {
             Form {
                 Section {
                     VStack(spacing: Theme.Spacing.l) {
-                        ProfileAvatar(symbol: symbol, colorHex: colorHex, size: 112)
+                        ProfileAvatar(symbol: symbol, colorHex: colorHex, size: 112, photo: previewPhoto)
                             .animation(Theme.Motion.spring, value: symbol)
                             .animation(Theme.Motion.spring, value: colorHex)
                         TextField("Name", text: $name)
@@ -342,15 +322,45 @@ struct ProfileEditorView: View {
                 }
                 .listRowBackground(Color.clear)
 
-                Section("Color") {
+                Section("Character") {
+                    LazyVGrid(columns: symbolColumns, spacing: Theme.Spacing.m) {
+                        ForEach(AvatarKind.characters, id: \.self) { emoji in
+                            let raw = AvatarKind.emoji(emoji).raw
+                            Button {
+                                symbol = raw
+                            } label: {
+                                Text(verbatim: emoji)
+                                    .font(.system(size: 30))
+                                    .frame(width: 52, height: 52)
+                                    .background(
+                                        raw == symbol
+                                            ? AnyShapeStyle(LinearGradient(colors: AvatarBackground.colors(for: colorHex), startPoint: .topLeading, endPoint: .bottomTrailing))
+                                            : AnyShapeStyle(Theme.surface),
+                                        in: Circle()
+                                    )
+                                    .overlay(Circle().strokeBorder(Color.primary, lineWidth: raw == symbol ? 2 : 0).padding(-3))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text(verbatim: emoji))
+                            .accessibilityAddTraits(raw == symbol ? .isSelected : [])
+                        }
+                    }
+                    .padding(.vertical, Theme.Spacing.xs)
+
+                    PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
+                        Label("Photo from Album", systemImage: "photo.on.rectangle.angled")
+                    }
+                }
+
+                Section("Background") {
                     ScrollView(.horizontal) {
                         HStack(spacing: Theme.Spacing.m) {
-                            ForEach(Profile.colors, id: \.self) { hex in
+                            ForEach(AvatarBackground.choices, id: \.self) { hex in
                                 Button {
                                     colorHex = hex
                                 } label: {
                                     Circle()
-                                        .fill((Color(hex: hex) ?? .gray).gradient)
+                                        .fill(LinearGradient(colors: AvatarBackground.colors(for: hex), startPoint: .topLeading, endPoint: .bottomTrailing))
                                         .frame(width: 36, height: 36)
                                         .overlay {
                                             Circle()
@@ -364,27 +374,6 @@ struct ProfileEditorView: View {
                         .padding(6)
                     }
                     .scrollIndicators(.hidden)
-                }
-
-                Section("Avatar") {
-                    LazyVGrid(columns: symbolColumns, spacing: Theme.Spacing.m) {
-                        ForEach(Profile.symbols, id: \.self) { item in
-                            Button {
-                                symbol = item
-                            } label: {
-                                Image(systemName: item)
-                                    .font(.system(size: 22, weight: .semibold))
-                                    .frame(width: 52, height: 52)
-                                    .foregroundStyle(item == symbol ? Color.black : Color.primary)
-                                    .background(
-                                        item == symbol ? AnyShapeStyle(Color(hex: colorHex) ?? .white) : AnyShapeStyle(Theme.surface),
-                                        in: Circle()
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.vertical, Theme.Spacing.xs)
                 }
 
                 Section {
@@ -452,6 +441,24 @@ struct ProfileEditorView: View {
                     dismiss()
                 }
             }
+            .sheet(item: $photoToCrop) { pending in
+                CircularCropView(image: pending.image) { cropped in
+                    newPhoto = cropped
+                    symbol = AvatarKind.photoTag
+                    photoToCrop = nil
+                } onCancel: {
+                    photoToCrop = nil
+                }
+            }
+            .onChange(of: photoItem) { _, item in
+                guard let item else { return }
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) {
+                        photoToCrop = CroppingPhoto(image: CircularCropView.prepared(image))
+                    }
+                    photoItem = nil
+                }
+            }
             .sensoryFeedback(.selection, trigger: symbol)
             .sensoryFeedback(.selection, trigger: colorHex)
             .sheet(item: $pendingPasscode) { pending in
@@ -460,7 +467,9 @@ struct ProfileEditorView: View {
                     hasOwnPasscode = true
                     withAnimation(Theme.Motion.spring) {
                         switch pending {
-                        case .kids: isKids = true
+                        case .kids:
+                            isKids = true
+                            giveKidsCharacter()
                         case .lock: isLocked = true
                         case .change: break
                         }
@@ -479,15 +488,21 @@ struct ProfileEditorView: View {
                 isLocked = editedProfile.isLocked
                 hasOwnPasscode = Passcode.isSet(.profile(editedProfile.id))
             } else {
-                // Suggest a colour and avatar not already taken.
-                colorHex = Profile.colors.first { hex in !profiles.contains { $0.colorHex == hex } } ?? Profile.colors[0]
-                symbol = Profile.symbols.first { item in !profiles.contains { $0.symbol == item } } ?? Profile.symbols[0]
+                // Suggest a background and character not already taken.
+                colorHex = AvatarBackground.choices.first { hex in !profiles.contains { $0.colorHex == hex } } ?? AvatarBackground.choices[0]
+                let character = AvatarKind.characters.first { emoji in !profiles.contains { $0.symbol == AvatarKind.emoji(emoji).raw } }
+                symbol = AvatarKind.emoji(character ?? AvatarKind.characters[0]).raw
             }
         }
     }
 
     private func save() {
         guard !trimmedName.isEmpty else { return }
+        if AvatarKind(symbol) == .photo, let newPhoto {
+            AvatarStore.save(newPhoto, for: profileID)
+        } else if AvatarKind(symbol) != .photo {
+            AvatarStore.remove(for: profileID)
+        }
         if let editedProfile {
             editedProfile.name = trimmedName
             editedProfile.symbol = symbol
@@ -518,6 +533,17 @@ struct ProfileEditorView: View {
             pendingPasscode = .kids
         } else {
             withAnimation(Theme.Motion.spring) { isKids = on }
+            if on { giveKidsCharacter() }
+        }
+    }
+
+    /// A kids profile starts with a playful character (unless it already has one or a photo).
+    private func giveKidsCharacter() {
+        let kind = AvatarKind(symbol)
+        let isSymbol: Bool = { if case .symbol = kind { return true } else { return false } }()
+        if isSymbol || (editedProfile == nil && kind != .photo) {
+            symbol = AvatarKind.emoji(AvatarKind.kidsCharacters.randomElement() ?? "🦄").raw
+            colorHex = ["#FFD86F", "#84FAB0", "#FBC2EB", "#F7B267"].randomElement() ?? colorHex
         }
     }
 
