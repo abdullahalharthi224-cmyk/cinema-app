@@ -123,18 +123,17 @@ struct StreamPickerView: View {
                     addonSection(addon)
                 }
 
+                // Skeleton cards while addons answer: a full list at first, a couple once some are in.
                 if !loadingSources.isEmpty {
                     Section {
-                        ForEach(loadingSources) { addon in
-                            HStack(spacing: Theme.Spacing.m) {
-                                ProgressView()
-                                Text(verbatim: addon.name)
-                                    .foregroundStyle(.secondary)
-                            }
+                        ForEach(0..<(sourcesWithStreams.isEmpty ? 5 : 2), id: \.self) { _ in
+                            SkeletonStreamRow()
                         }
                     } header: {
-                        Text("Looking for streams…")
+                        Text(verbatim: loadingSources.map(\.name).formatted(.list(type: .and).locale(AppLanguage.current.locale)))
+                            .lineLimit(1)
                     }
+                    .transition(.opacity)
                 }
 
                 if !sourcesWithoutStreams.isEmpty {
@@ -232,8 +231,7 @@ struct StreamPickerView: View {
                 title
                     .lineLimit(1)
                 if isLoading {
-                    ProgressView()
-                        .controlSize(.mini)
+                    SkeletonBar(width: 18, height: 12)
                 } else if let count {
                     Text(count, format: .number)
                         .font(.rounded(.caption, weight: .bold))
@@ -283,10 +281,8 @@ struct StreamPickerView: View {
     private func groupContent(for addon: AddonSource) -> some View {
         switch results[addon.id]?.result {
         case nil:
-            HStack(spacing: Theme.Spacing.m) {
-                ProgressView()
-                Text("Looking for streams…")
-                    .foregroundStyle(.secondary)
+            ForEach(0..<4, id: \.self) { _ in
+                SkeletonStreamRow()
             }
 
         case .success(let streams)?:
@@ -479,6 +475,30 @@ extension StreamSort {
         case .size: return "Size"
         case .seeders: return "Sources"
         }
+    }
+}
+
+/// A grey, glowing card the shape of a stream row, shown until an addon's streams arrive.
+private struct SkeletonStreamRow: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.m) {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.primary.opacity(0.07))
+                .frame(width: 52, height: 40)
+                .shimmering()
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 5) {
+                    SkeletonBar(width: 56, height: 16)
+                    SkeletonBar(width: 40, height: 16)
+                }
+                SkeletonBar(height: 11)
+                SkeletonBar(width: 140, height: 11)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 4)
+        .accessibilityHidden(true)
     }
 }
 
