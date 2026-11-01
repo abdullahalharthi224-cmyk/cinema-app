@@ -38,6 +38,23 @@ final class AppRouter {
     /// The side menu (the three lines at the top of Home) is open.
     var showsMenu = false
 
+    /// "Who's watching?", over everything.
+    var showsProfilePicker = false
+    /// Home is hidden (slightly shrunk) behind the profile picker, and grows back as it leaves.
+    var homeBehindPicker = false
+    /// Home's profile button, in window coordinates: where a chosen avatar flies to.
+    var profileButtonFrame: CGRect = .zero
+    /// While an avatar flies to Home, the button itself waits hidden underneath it.
+    var isProfileFlightActive = false
+
+    func presentProfilePicker() {
+        showsMenu = false
+        withAnimation(.easeInOut(duration: 0.3)) {
+            homeBehindPicker = true
+            showsProfilePicker = true
+        }
+    }
+
     /// Opens a page from the side menu on Home, from Home's top.
     func openFromMenu(_ route: some Hashable) {
         showsMenu = false

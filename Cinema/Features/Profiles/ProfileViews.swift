@@ -6,14 +6,20 @@ import SwiftUI
 /// and from the avatar button on Home.
 @MainActor
 struct ProfilePickerView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(AppRouter.self) private var router
     @Environment(\.modelContext) private var context
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \Profile.sortIndex) private var profiles: [Profile]
 
     @State private var session = ProfileSession.shared
     @State private var isEditing = false
     @State private var editing: ProfileEditorTarget?
     @State private var auth: ProfileAuth?
+    /// The profile picked: it lifts to the middle, glowing, then flies to Home's avatar button.
+    @State private var chosen: Profile?
+    @State private var lifted = false
+    @State private var flying = false
+    @State private var tileFrames: [UUID: CGRect] = [:]
 
     /// Opening a profile, editing it, or leaving a kids profile, after the passcode.
     enum ProfileAuth: Identifiable {
@@ -37,6 +43,43 @@ struct ProfilePickerView: View {
     private let columns = [GridItem(.adaptive(minimum: 120), spacing: Theme.Spacing.xl)]
 
     var body: some View {
+        ZStack {
+            picker
+                .opacity(flying ? 0 : 1)
+            flightLayer
+        }
+        .sensoryFeedback(.impact(weight: .medium), trigger: chosen?.id)
+    }
+
+    /// The chosen avatar on its way: from its tile to the middle, then to Home's profile button.
+    private var flightLayer: some View {
+        GeometryReader { proxy in
+            if let chosen, let from = tileFrames[chosen.id] {
+                let size: CGFloat = 104
+                let middle = CGPoint(x: proxy.size.width / 2, y: proxy.size.height * 0.42)
+                let target = router.profileButtonFrame
+                let landsOnHome = router.selectedTab == .home && target.width > 0
+                let position = flying
+                    ? (landsOnHome ? CGPoint(x: target.midX, y: target.midY) : middle)
+                    : (lifted ? middle : CGPoint(x: from.midX, y: from.midY))
+                let scale = flying ? (landsOnHome ? target.width / size : 0.6) : (lifted ? 1.3 : 1)
+                ProfileAvatar(profile: chosen, size: size)
+                    .background {
+                        Circle()
+                            .fill(SplashArt.goldTop.opacity(lifted && !flying ? 0.55 : 0))
+                            .blur(radius: 30)
+                            .scaleEffect(1.5)
+                    }
+                    .scaleEffect(scale)
+                    .position(position)
+                    .opacity(flying && !landsOnHome ? 0 : 1)
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+
+    private var picker: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.Spacing.xxl) {
@@ -85,7 +128,7 @@ struct ProfilePickerView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        dismiss()
+                        close()
                     } label: {
                         Image(systemName: "xmark")
                     }
@@ -110,10 +153,22 @@ struct ProfilePickerView: View {
         .sensoryFeedback(.selection, trigger: session.activeID)
     }
 
+    /// Closes without choosing.
+    private func close() {
+        withAnimation(.easeOut(duration: 0.3)) {
+            router.homeBehindPicker = false
+            router.showsProfilePicker = false
+        }
+    }
+
     private func profileTile(_ profile: Profile) -> some View {
         let isActive = profile.id == session.activeID
+        let isChosen = chosen?.id == profile.id
+        let isOther = chosen != nil && !isChosen
         return VStack(spacing: Theme.Spacing.m) {
             ProfileAvatar(profile: profile, size: 104)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { tileFrames[profile.id] = $0 }
+                .opacity(isChosen ? 0 : 1)
                 .overlay {
                     if isEditing {
                         Circle()
@@ -146,7 +201,10 @@ struct ProfilePickerView: View {
                 .font(.headline)
                 .foregroundStyle(isActive ? .primary : .secondary)
                 .lineLimit(1)
+                .opacity(chosen == nil ? 1 : 0)
         }
+        .opacity(isOther ? 0 : 1)
+        .scaleEffect(isOther ? 0.85 : 1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: profile.name))
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
@@ -169,10 +227,11 @@ struct ProfilePickerView: View {
     }
 
     private func select(_ profile: Profile) {
+        guard chosen == nil else { return }
         let kidsScope = session.activeID.flatMap { Passcode.scope(for: $0) }
         let profileScope = Passcode.scope(for: profile.id)
         if profile.id == session.activeID {
-            dismiss()
+            activate(profile)
         } else if session.isKids && !profile.isKids, let kidsScope {
             // Leaving a kids profile always takes its own passcode, never Face ID.
             auth = .leaveKids(profile, kidsScope)
@@ -183,9 +242,29 @@ struct ProfilePickerView: View {
         }
     }
 
+    /// Switches profile under the picker, then plays the transition: the others fade away, the
+    /// chosen avatar glows in the middle and flies to Home's avatar while Home grows back in.
     private func activate(_ profile: Profile) {
-        withAnimation(Theme.Motion.spring) { session.activate(profile) }
-        dismiss()
+        if profile.id != session.activeID { session.activate(profile) }
+        guard !reduceMotion else {
+            close()
+            return
+        }
+        router.isProfileFlightActive = true
+        chosen = profile
+        Task {
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.78)) {
+                lifted = true
+            }
+            try? await Task.sleep(for: .milliseconds(320))
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                flying = true
+                router.homeBehindPicker = false
+            }
+            try? await Task.sleep(for: .milliseconds(430))
+            router.isProfileFlightActive = false
+            router.showsProfilePicker = false
+        }
     }
 
     private func beginEditing(_ profile: Profile) {
@@ -588,15 +667,15 @@ struct ProfileEditorView: View {
 
 /// The small avatar button on Home that opens the profile picker.
 struct ProfileButton: View {
+    @Environment(AppRouter.self) private var router
     @Query(sort: \Profile.sortIndex) private var profiles: [Profile]
     @State private var session = ProfileSession.shared
-    @State private var isPicking = false
 
     private var active: Profile? { profiles.first { $0.id == session.activeID } ?? profiles.first }
 
     var body: some View {
         Button {
-            isPicking = true
+            router.presentProfilePicker()
         } label: {
             if let active {
                 ProfileAvatar(profile: active, size: 38)
@@ -607,8 +686,8 @@ struct ProfileButton: View {
         }
         .buttonStyle(.cardPress)
         .accessibilityLabel("Switch Profile")
-        .fullScreenCover(isPresented: $isPicking) {
-            ProfilePickerView()
-        }
+        // Where a profile chosen in "Who's watching?" lands; hidden while it flies here.
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { router.profileButtonFrame = $0 }
+        .opacity(router.isProfileFlightActive ? 0 : 1)
     }
 }
