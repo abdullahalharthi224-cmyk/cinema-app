@@ -69,8 +69,14 @@ struct RootView: View {
                 ProfileStore.ensureActiveProfile(in: context)
                 ProfileStore.migrateToProfilePasscodes(in: context)
                 ViewingLogStore.seedIfNeeded(in: context)
+                // A profile saved as the default opens straight away (its lock, if any, still applies).
+                let profiles = ProfileStore.all(in: context)
+                let defaultProfile = ProfileSession.shared.defaultID.flatMap { id in profiles.first { $0.id == id } }
+                if let defaultProfile, defaultProfile.id != ProfileSession.shared.activeID {
+                    ProfileSession.shared.activate(defaultProfile)
+                }
                 LockGate.shared.lockIfNeeded()
-                if ProfileStore.all(in: context).count > 1 {
+                if profiles.count > 1 && defaultProfile == nil {
                     // Let the launch animation finish (and the lock open) first.
                     while LaunchState.shared.isShowingSplash || LockGate.shared.isLocked {
                         try? await Task.sleep(for: .milliseconds(100))

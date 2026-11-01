@@ -62,6 +62,14 @@ final class ProfileSession {
 
     var isKids: Bool { kidsMaxAge != nil }
 
+    private static let defaultKey = "profile.defaultID"
+
+    /// The profile Cinema opens with, skipping "Who's watching?".
+    var defaultID: UUID? {
+        get { UserDefaults.standard.string(forKey: Self.defaultKey).flatMap(UUID.init(uuidString:)) }
+        set { UserDefaults.standard.set(newValue?.uuidString, forKey: Self.defaultKey) }
+    }
+
     private init() {
         let defaults = UserDefaults.standard
         activeID = defaults.string(forKey: Self.key).flatMap(UUID.init(uuidString:))
@@ -189,6 +197,7 @@ enum ProfileStore {
         ProfileSettings.forget(id)
         Passcode.remove(.profile(id))
         AvatarStore.remove(for: id)
+        if ProfileSession.shared.defaultID == id { ProfileSession.shared.defaultID = nil }
         try? context.save()
     }
 }

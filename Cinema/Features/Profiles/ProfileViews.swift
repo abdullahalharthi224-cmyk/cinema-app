@@ -40,10 +40,13 @@ struct ProfilePickerView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.Spacing.xxl) {
-                    Text(isEditing ? LocalizedStringKey("Edit Profiles") : "Who's Watching?")
-                        .font(.display(.largeTitle))
-                        .padding(.top, Theme.Spacing.xxl)
-                        .contentTransition(.opacity)
+                    VStack(spacing: Theme.Spacing.m) {
+                        CinemaBadge()
+                        Text(isEditing ? LocalizedStringKey("Edit Profiles") : "Who's Watching?")
+                            .font(.display(.largeTitle))
+                            .contentTransition(.opacity)
+                    }
+                    .padding(.top, Theme.Spacing.l)
 
                     LazyVGrid(columns: columns, spacing: Theme.Spacing.xl) {
                         ForEach(profiles) { profile in
@@ -229,6 +232,22 @@ struct ProfilePickerView: View {
     }
 }
 
+/// The small Cinema mark and name, at the top of "Who's watching?".
+struct CinemaBadge: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            Canvas { context, size in SplashArt.draw(in: &context, size: size, t: 10) }
+                .frame(width: 34, height: 34)
+            Text(verbatim: "Cinema")
+                .font(.system(.title3, weight: .heavy))
+                .foregroundStyle(LinearGradient(colors: [SplashArt.goldTop, SplashArt.goldBottom], startPoint: .top, endPoint: .bottom))
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "Cinema"))
+    }
+}
+
 enum ProfileEditorTarget: Identifiable {
     case new
     case edit(Profile)
@@ -261,6 +280,7 @@ struct ProfileEditorView: View {
     @State private var isKids = false
     @State private var kidsMaxAge = 7
     @State private var isLocked = false
+    @State private var isDefault = false
     /// Set while a new passcode is being created for the lock or the kids profile.
     @State private var pendingPasscode: PendingPasscode?
     /// A new profile's ID, chosen up front so its passcode can be saved before the profile is.
@@ -409,6 +429,13 @@ struct ProfileEditorView: View {
                     .settingsFooter()
                 }
 
+                Section {
+                    Toggle("Open Cinema with This Profile", isOn: $isDefault)
+                } footer: {
+                    Text("Cinema skips “Who's Watching?” and opens straight to this profile. Its passcode, if it has one, is still asked.")
+                        .settingsFooter()
+                }
+
                 if editedProfile != nil, profiles.count > 1 {
                     Section {
                         Button("Delete Profile", role: .destructive) {
@@ -486,6 +513,7 @@ struct ProfileEditorView: View {
                 isKids = editedProfile.isKids
                 kidsMaxAge = editedProfile.kidsMaxAge
                 isLocked = editedProfile.isLocked
+                isDefault = ProfileSession.shared.defaultID == editedProfile.id
                 hasOwnPasscode = Passcode.isSet(.profile(editedProfile.id))
             } else {
                 // Suggest a background and character not already taken.
@@ -514,6 +542,11 @@ struct ProfileEditorView: View {
             profile.id = draftID
             apply(to: profile)
             try? context.save()
+        }
+        if isDefault {
+            ProfileSession.shared.defaultID = profileID
+        } else if ProfileSession.shared.defaultID == profileID {
+            ProfileSession.shared.defaultID = nil
         }
         // A profile that's neither locked nor for kids no longer needs its code.
         if !isKids && !isLocked { Passcode.remove(passcodeScope) }

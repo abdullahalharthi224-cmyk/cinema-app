@@ -10,12 +10,86 @@ final class LaunchState {
     private init() {}
 }
 
+/// The launch: the full animation the first time after installing or updating Cinema,
+/// otherwise a quick glow of the mark (under a second) that any tap skips.
+struct SplashView: View {
+    var onFinished: () -> Void
+
+    @State private var isFull = SplashView.claimFullAnimation()
+
+    private static let playedKey = "splash.fullAnimationVersion"
+
+    /// True once per installed version; remembers that it was shown.
+    static func claimFullAnimation(defaults: UserDefaults = .standard, version: String = currentVersion) -> Bool {
+        guard defaults.string(forKey: playedKey) != version else { return false }
+        defaults.set(version, forKey: playedKey)
+        return true
+    }
+
+    static var currentVersion: String {
+        let info = Bundle.main.infoDictionary
+        return "\(info?["CFBundleShortVersionString"] as? String ?? "")(\(info?["CFBundleVersion"] as? String ?? ""))"
+    }
+
+    var body: some View {
+        if isFull {
+            FullSplash(onFinished: onFinished)
+        } else {
+            QuickSplash(onFinished: onFinished)
+        }
+    }
+}
+
+/// The everyday launch: the mark fades in with a soft glow and fades out, in about 0.85 s.
+/// A tap anywhere goes straight in.
+private struct QuickSplash: View {
+    var onFinished: () -> Void
+
+    @State private var shown = false
+    @State private var leaving = false
+    @State private var finished = false
+
+    var body: some View {
+        ZStack {
+            Color(red: 3 / 255, green: 3 / 255, blue: 4 / 255)
+            RadialGradient(colors: [SplashArt.goldTop.opacity(shown ? 0.16 : 0), .clear], center: .center, startRadius: 0, endRadius: 320)
+            Canvas { context, size in SplashArt.draw(in: &context, size: size, t: 10) }
+                .frame(width: 180, height: 180)
+                .shadow(color: SplashArt.goldTop.opacity(shown ? 0.5 : 0), radius: 26)
+                .scaleEffect(leaving ? 1.08 : (shown ? 1 : 0.9))
+                .opacity(shown ? 1 : 0)
+        }
+        .ignoresSafeArea()
+        .opacity(leaving ? 0 : 1)
+        .contentShape(Rectangle())
+        .onTapGesture { leave() }
+        .allowsHitTesting(!leaving)
+        .accessibilityHidden(true)
+        .task {
+            withAnimation(.easeOut(duration: 0.3)) { shown = true }
+            try? await Task.sleep(for: .milliseconds(600))
+            leave()
+        }
+    }
+
+    private func leave() {
+        guard !leaving else { return }
+        withAnimation(.easeIn(duration: 0.25)) { leaving = true }
+        Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !finished else { return }
+            finished = true
+            onFinished()
+        }
+    }
+}
+
 /// The launch animation, in the style of the film, and something to play with:
 /// a spark of golden light traces the "C" of the app icon, the play button bursts in with
 /// a shockwave, "Cinema" rises underneath, and the mark keeps glowing with sparks circling it.
 /// A finger pushes the projector dust aside, leaves a trail of light, sets off a burst where it
 /// lands and tilts the mark towards it; holding keeps the screen up, letting go enters the app.
-struct SplashView: View {
+private struct FullSplash: View {
     var onFinished: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
