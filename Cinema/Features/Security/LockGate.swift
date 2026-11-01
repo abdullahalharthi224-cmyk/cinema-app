@@ -62,7 +62,7 @@ final class LockGate {
     private func present(scope: PasscodeScope) {
         guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else { return }
         let appearance = Appearance.shared
-        let profile = scope == .app ? nil : activeProfile.map { (name: $0.name, symbol: $0.symbol, colorHex: $0.colorHex) }
+        let profile = scope == .app ? nil : activeProfile.map { (name: $0.name, symbol: $0.symbol, colorHex: $0.colorHex, photo: AvatarStore.image(for: $0.id)) }
         let root = LockScreenView(profile: profile, scope: scope) { [weak self] in
             self?.unlock(scope)
         }
@@ -82,7 +82,7 @@ final class LockGate {
 
 /// What the lock window shows: the app's icon (or the profile's avatar) over the passcode pad.
 private struct LockScreenView: View {
-    let profile: (name: String, symbol: String, colorHex: String)?
+    let profile: (name: String, symbol: String, colorHex: String, photo: UIImage?)?
     let scope: PasscodeScope
     var onUnlock: () -> Void
 
@@ -91,7 +91,7 @@ private struct LockScreenView: View {
             Group {
                 if let profile {
                     VStack(spacing: Theme.Spacing.s) {
-                        ProfileAvatar(profile: profile, size: 64)
+                        ProfileAvatar(symbol: profile.symbol, colorHex: profile.colorHex, size: 64, photo: profile.photo)
                         Text(verbatim: profile.name).font(.headline)
                     }
                 } else {
