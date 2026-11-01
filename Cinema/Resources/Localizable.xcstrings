@@ -7968,6 +7968,96 @@
           }
         }
       }
+    },
+    "Getting subtitles ready…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نجهّز الترجمة…"
+          }
+        }
+      }
+    },
+    "Starting…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يبدأ العرض…"
+          }
+        }
+      }
+    },
+    "Loading": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ التحميل"
+          }
+        }
+      }
+    },
+    "Move and Scale": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحريك وتكبير"
+          }
+        }
+      }
+    },
+    "Choose": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختيار"
+          }
+        }
+      }
+    },
+    "Character": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الشخصية"
+          }
+        }
+      }
+    },
+    "Photo from Album": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صورة من الألبوم"
+          }
+        }
+      }
+    },
+    "Open Cinema with This Profile": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "افتح ⁨Cinema⁩ بهذا الملف"
+          }
+        }
+      }
+    },
+    "Cinema skips “Who's Watching?” and opens straight to this profile. Its passcode, if it has one, is still asked.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يتخطى ⁨Cinema⁩ شاشة «من يشاهد؟» ويفتح مباشرة على هذا الملف، ويُطلب رمزه إن كان له رمز."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
