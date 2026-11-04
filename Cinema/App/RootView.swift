@@ -42,6 +42,13 @@ struct RootView: View {
         .scaleEffect(router.homeBehindPicker ? 0.96 : 1)
         .opacity(router.homeBehindPicker ? 0 : 1)
         .onChange(of: router.selectedTab) { _, _ in router.showsMenu = false }
+        // Opened from the widget while "Who's watching?" waited under the launch animation: resume instead.
+        .onChange(of: router.continueKey) { _, key in
+            if key != nil && LaunchState.shared.isShowingSplash && router.showsProfilePicker {
+                router.homeBehindPicker = false
+                router.showsProfilePicker = false
+            }
+        }
         .onChange(of: ProfileSession.shared.isKids) { _, isKids in
             if isKids && router.selectedTab == .settings { router.selectedTab = .home }
         }
@@ -72,10 +79,6 @@ struct RootView: View {
             }
         }
         .task {
-            // No connection at launch: open straight on the downloads.
-            if !(await NetworkMonitor.shared.currentStatus()), !DownloadManager.shared.downloadedVideoIDs.isEmpty {
-                router.openDownloads()
-            }
             // Ask "Who's watching?" once per launch when several people share the app.
             if !didCheckProfiles {
                 didCheckProfiles = true
@@ -89,17 +92,17 @@ struct RootView: View {
                     ProfileSession.shared.activate(defaultProfile)
                 }
                 LockGate.shared.lockIfNeeded()
-                if profiles.count > 1 && defaultProfile == nil {
-                    // Let the launch animation finish (and the lock open) first.
-                    while LaunchState.shared.isShowingSplash || LockGate.shared.isLocked {
-                        try? await Task.sleep(for: .milliseconds(100))
-                    }
-                    // Opened from the widget to resume a title: go straight to it.
-                    if router.continueKey == nil {
-                        router.homeBehindPicker = true
-                        router.showsProfilePicker = true
-                    }
+                // "Who's watching?" goes up straight away, underneath the launch animation, so the
+                // order is logo → profiles → Home: Home loads hidden behind it and is ready when a
+                // profile is chosen. (Opened from the widget to resume a title: straight to it.)
+                if profiles.count > 1 && defaultProfile == nil && router.continueKey == nil {
+                    router.homeBehindPicker = true
+                    router.showsProfilePicker = true
                 }
+            }
+            // No connection at launch: open straight on the downloads.
+            if !(await NetworkMonitor.shared.currentStatus()), !DownloadManager.shared.downloadedVideoIDs.isEmpty {
+                router.openDownloads()
             }
             // Every two weeks, a gentle nudge to back up (after the launch animation).
             if !ProfileSession.shared.isKids, BackupService.shouldRemind(context: context) {

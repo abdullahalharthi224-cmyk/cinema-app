@@ -76,6 +76,9 @@ struct ProfilePickerView: View {
             }
         }
         .ignoresSafeArea()
+        // Positions are in window coordinates (from the left, whatever the language), so the
+        // flight is laid out left to right and lands on Home's button in Arabic and English alike.
+        .environment(\.layoutDirection, .leftToRight)
         .allowsHitTesting(false)
     }
 
@@ -167,7 +170,7 @@ struct ProfilePickerView: View {
         let isOther = chosen != nil && !isChosen
         return VStack(spacing: Theme.Spacing.m) {
             ProfileAvatar(profile: profile, size: 104, isSelected: isActive && !isEditing)
-                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { tileFrames[profile.id] = $0 }
+                .onWindowFrameChange { tileFrames[profile.id] = $0 }
                 .opacity(isChosen ? 0 : 1)
                 .overlay {
                     if isEditing {
@@ -656,7 +659,7 @@ struct ProfileButton: View {
         .buttonStyle(.cardPress)
         .accessibilityLabel("Switch Profile")
         // Where a profile chosen in "Who's watching?" lands; hidden while it flies here.
-        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { router.profileButtonFrame = $0 }
+        .onWindowFrameChange { router.profileButtonFrame = $0 }
         .opacity(router.isProfileFlightActive ? 0 : 1)
     }
 }
