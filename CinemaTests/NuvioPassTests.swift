@@ -61,6 +61,19 @@ final class BrandTests: XCTestCase {
         XCTAssertEqual(Appearance.defaultAccentHex, Brand.violetHex)
     }
 
+    /// Every icon style, the original included, is an alternate icon iOS can switch to,
+    /// so choosing the original is a real change the home screen shows.
+    func testEveryIconStyleIsAnAlternateIcon() {
+        let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any]
+        let alternates = icons?["CFBundleAlternateIcons"] as? [String: Any] ?? [:]
+        for style in AppIconStyle.allCases {
+            XCTAssertNotNil(alternates[style.iconName], style.iconName)
+        }
+        XCTAssertEqual(AppIconStyle(iconName: nil), .original)
+        XCTAssertEqual(AppIconStyle(iconName: "AppIcon-Original"), .original)
+        XCTAssertEqual(AppIconStyle(iconName: "AppIcon-Dark"), .dark)
+    }
+
     func testInAppLogoAndIconPreviewsExist() {
         XCTAssertNotNil(UIImage(named: SplashArt.logoName))
         for style in AppIconStyle.allCases {

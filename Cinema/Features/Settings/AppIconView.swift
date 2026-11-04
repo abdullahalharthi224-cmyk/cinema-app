@@ -7,9 +7,11 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// The alternate icon's name in the asset catalog (nil for the main icon).
-    var iconName: String? {
-        self == .original ? nil : "AppIcon-" + previewSuffix
+    /// The alternate icon's name in the asset catalog. The original has its own copy
+    /// ("AppIcon-Original"): going back to it is then a real icon change, which iOS always
+    /// shows. Resetting to the main icon (`nil`) sometimes left the home screen unchanged.
+    var iconName: String {
+        "AppIcon-" + previewSuffix
     }
 
     var previewImage: String { "IconPreview-" + previewSuffix }
@@ -53,6 +55,7 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         }
     }
 
+    /// The style iOS is showing: no alternate icon (the main icon) is the original too.
     init(iconName: String?) {
         self = Self.allCases.first { $0.iconName == iconName } ?? .original
     }
@@ -67,11 +70,11 @@ enum AppIconStore {
         AppIconStyle(iconName: UIApplication.shared.alternateIconName)
     }
 
+    /// Switches the home screen icon. Choosing the style that's already showing sets it again,
+    /// which mends a home screen that didn't update the first time.
     static func apply(_ style: AppIconStyle) async throws {
         guard UIApplication.shared.supportsAlternateIcons else { return }
-        if UIApplication.shared.alternateIconName != style.iconName {
-            try await UIApplication.shared.setAlternateIconName(style.iconName)
-        }
+        try await UIApplication.shared.setAlternateIconName(style.iconName)
         UserDefaults.standard.set(style.rawValue, forKey: key)
     }
 
@@ -146,7 +149,6 @@ struct AppIconView: View {
     }
 
     private func choose(_ style: AppIconStyle) {
-        guard style != selected else { return }
         let previous = selected
         withAnimation(Theme.Motion.spring) { selected = style }
         Task {
