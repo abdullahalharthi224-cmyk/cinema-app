@@ -104,7 +104,7 @@ enum Brand {
 
 extension View {
     /// A soft crystal sheen across the top of a prominent element, like the logo's glass.
-    func crystalSheen<S: Shape>(in shape: S, strength: Double = 1) -> some View {
+    func crystalSheen<S: InsettableShape>(in shape: S, strength: Double = 1) -> some View {
         overlay {
             shape
                 .fill(LinearGradient(
