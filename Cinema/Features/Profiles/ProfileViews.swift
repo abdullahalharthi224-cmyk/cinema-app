@@ -63,10 +63,10 @@ struct ProfilePickerView: View {
                     ? (landsOnHome ? CGPoint(x: target.midX, y: target.midY) : middle)
                     : (lifted ? middle : CGPoint(x: from.midX, y: from.midY))
                 let scale = flying ? (landsOnHome ? target.width / size : 0.6) : (lifted ? 1.3 : 1)
-                ProfileAvatar(profile: chosen, size: size)
+                ProfileAvatar(profile: chosen, size: size, isSelected: true)
                     .background {
                         Circle()
-                            .fill(SplashArt.goldTop.opacity(lifted && !flying ? 0.55 : 0))
+                            .fill(Theme.accent.opacity(lifted && !flying ? 0.6 : 0))
                             .blur(radius: 30)
                             .scaleEffect(1.5)
                     }
@@ -76,6 +76,9 @@ struct ProfilePickerView: View {
             }
         }
         .ignoresSafeArea()
+        // Positions are in window coordinates (from the left, whatever the language), so the
+        // flight is laid out left to right and lands on Home's button in Arabic and English alike.
+        .environment(\.layoutDirection, .leftToRight)
         .allowsHitTesting(false)
     }
 
@@ -166,8 +169,8 @@ struct ProfilePickerView: View {
         let isChosen = chosen?.id == profile.id
         let isOther = chosen != nil && !isChosen
         return VStack(spacing: Theme.Spacing.m) {
-            ProfileAvatar(profile: profile, size: 104)
-                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { tileFrames[profile.id] = $0 }
+            ProfileAvatar(profile: profile, size: 104, isSelected: isActive && !isEditing)
+                .onWindowFrameChange { tileFrames[profile.id] = $0 }
                 .opacity(isChosen ? 0 : 1)
                 .overlay {
                     if isEditing {
@@ -180,11 +183,6 @@ struct ProfilePickerView: View {
                             }
                             .transition(.opacity)
                     }
-                }
-                .overlay {
-                    Circle()
-                        .strokeBorder(Color.primary, lineWidth: isActive && !isEditing ? 3 : 0)
-                        .padding(-6)
                 }
             .overlay(alignment: .bottomTrailing) {
                 if profile.isKids || (profile.isLocked && Passcode.scope(for: profile.id) != nil) {
@@ -315,11 +313,13 @@ struct ProfilePickerView: View {
 struct CinemaBadge: View {
     var body: some View {
         HStack(spacing: 8) {
-            Canvas { context, size in SplashArt.draw(in: &context, size: size, t: 10) }
-                .frame(width: 34, height: 34)
+            Image(SplashArt.logoName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 38, height: 38)
             Text(verbatim: "Cinema")
                 .font(.system(.title3, weight: .heavy))
-                .foregroundStyle(LinearGradient(colors: [SplashArt.goldTop, SplashArt.goldBottom], startPoint: .top, endPoint: .bottom))
+                .foregroundStyle(LinearGradient(colors: [Brand.glow, Brand.violet, Brand.blue], startPoint: .topLeading, endPoint: .bottomTrailing))
         }
         .environment(\.layoutDirection, .leftToRight)
         .accessibilityElement(children: .ignore)
@@ -349,7 +349,7 @@ struct ProfileEditorView: View {
     @Query private var profiles: [Profile]
 
     @State private var name = ""
-    @State private var symbol = AvatarKind.emoji(AvatarKind.characters[0]).raw
+    @State private var symbol = AvatarKind.character(AvatarKind.characters[0]).raw
     @State private var colorHex = AvatarBackground.choices[0]
     /// A picture chosen from the album, cropped, waiting to be saved with the profile.
     @State private var newPhoto: UIImage?
@@ -382,7 +382,7 @@ struct ProfileEditorView: View {
         isKids || profiles.contains { !$0.isKids && $0.id != editedProfile?.id }
     }
 
-    private let symbolColumns = [GridItem(.adaptive(minimum: 52), spacing: Theme.Spacing.m)]
+    private let characterColumns = [GridItem(.adaptive(minimum: 72), spacing: Theme.Spacing.m)]
 
     struct CroppingPhoto: Identifiable {
         let id = UUID()
@@ -407,9 +407,11 @@ struct ProfileEditorView: View {
             Form {
                 Section {
                     VStack(spacing: Theme.Spacing.l) {
-                        ProfileAvatar(symbol: symbol, colorHex: colorHex, size: 112, photo: previewPhoto)
+                        // A large preview of the chosen character or photo.
+                        ProfileAvatar(symbol: symbol, colorHex: colorHex, size: 150, photo: previewPhoto)
+                            .id(symbol)
+                            .transition(.scale(scale: 0.9).combined(with: .opacity))
                             .animation(Theme.Motion.spring, value: symbol)
-                            .animation(Theme.Motion.spring, value: colorHex)
                         TextField("Name", text: $name)
                             .font(.title3.weight(.semibold))
                             .multilineTextAlignment(.center)
@@ -421,58 +423,29 @@ struct ProfileEditorView: View {
                 }
                 .listRowBackground(Color.clear)
 
-                Section("Character") {
-                    LazyVGrid(columns: symbolColumns, spacing: Theme.Spacing.m) {
-                        ForEach(AvatarKind.characters, id: \.self) { emoji in
-                            let raw = AvatarKind.emoji(emoji).raw
+                Section {
+                    LazyVGrid(columns: characterColumns, spacing: Theme.Spacing.l) {
+                        ForEach(AvatarKind.characters, id: \.self) { character in
+                            let raw = AvatarKind.character(character).raw
                             Button {
-                                symbol = raw
+                                withAnimation(Theme.Motion.snappy) { symbol = raw }
                             } label: {
-                                Text(verbatim: emoji)
-                                    .font(.system(size: 30))
-                                    .frame(width: 52, height: 52)
-                                    .background(
-                                        raw == symbol
-                                            ? AnyShapeStyle(LinearGradient(colors: AvatarBackground.colors(for: colorHex), startPoint: .topLeading, endPoint: .bottomTrailing))
-                                            : AnyShapeStyle(Theme.surface),
-                                        in: Circle()
-                                    )
-                                    .overlay(Circle().strokeBorder(Color.primary, lineWidth: raw == symbol ? 2 : 0).padding(-3))
+                                ProfileAvatar(symbol: raw, colorHex: colorHex, size: 64, isSelected: raw == symbol)
+                                    .scaleEffect(raw == symbol ? 1.06 : 1)
+                                    .padding(4)
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel(Text(verbatim: emoji))
+                            .accessibilityLabel(Text(LocalizedStringKey(character.capitalized)))
                             .accessibilityAddTraits(raw == symbol ? .isSelected : [])
                         }
                     }
-                    .padding(.vertical, Theme.Spacing.xs)
+                    .padding(.vertical, Theme.Spacing.s)
 
                     PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
                         Label("Photo from Album", systemImage: "photo.on.rectangle.angled")
                     }
-                }
-
-                Section("Background") {
-                    ScrollView(.horizontal) {
-                        HStack(spacing: Theme.Spacing.m) {
-                            ForEach(AvatarBackground.choices, id: \.self) { hex in
-                                Button {
-                                    colorHex = hex
-                                } label: {
-                                    Circle()
-                                        .fill(LinearGradient(colors: AvatarBackground.colors(for: hex), startPoint: .topLeading, endPoint: .bottomTrailing))
-                                        .frame(width: 36, height: 36)
-                                        .overlay {
-                                            Circle()
-                                                .strokeBorder(Color.primary, lineWidth: hex == colorHex ? 2.5 : 0)
-                                                .padding(-4)
-                                        }
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(6)
-                    }
-                    .scrollIndicators(.hidden)
+                } header: {
+                    Text("Character")
                 }
 
                 Section {
@@ -597,8 +570,8 @@ struct ProfileEditorView: View {
             } else {
                 // Suggest a background and character not already taken.
                 colorHex = AvatarBackground.choices.first { hex in !profiles.contains { $0.colorHex == hex } } ?? AvatarBackground.choices[0]
-                let character = AvatarKind.characters.first { emoji in !profiles.contains { $0.symbol == AvatarKind.emoji(emoji).raw } }
-                symbol = AvatarKind.emoji(character ?? AvatarKind.characters[0]).raw
+                let character = AvatarKind.characters.first { name in !profiles.contains { $0.symbol == AvatarKind.character(name).raw } }
+                symbol = AvatarKind.character(character ?? AvatarKind.characters[0]).raw
             }
         }
     }
@@ -649,13 +622,12 @@ struct ProfileEditorView: View {
         }
     }
 
-    /// A kids profile starts with a playful character (unless it already has one or a photo).
+    /// A kids profile starts with the robot (unless it's an existing profile with its own picture).
     private func giveKidsCharacter() {
         let kind = AvatarKind(symbol)
-        let isSymbol: Bool = { if case .symbol = kind { return true } else { return false } }()
-        if isSymbol || (editedProfile == nil && kind != .photo) {
-            symbol = AvatarKind.emoji(AvatarKind.kidsCharacters.randomElement() ?? "🦄").raw
-            colorHex = ["#FFD86F", "#84FAB0", "#FBC2EB", "#F7B267"].randomElement() ?? colorHex
+        let isOldStyle: Bool = { if case .character = kind { return false } else { return kind != .photo } }()
+        if isOldStyle || (editedProfile == nil && kind != .photo) {
+            symbol = AvatarKind.character(AvatarKind.kidsCharacter).raw
         }
     }
 
@@ -678,7 +650,7 @@ struct ProfileButton: View {
             router.presentProfilePicker()
         } label: {
             if let active {
-                ProfileAvatar(profile: active, size: 38)
+                ProfileAvatar(profile: active, size: 38, isSelected: true)
             } else {
                 Image(systemName: "person.crop.circle.fill")
                     .font(.system(size: 34))
@@ -687,7 +659,7 @@ struct ProfileButton: View {
         .buttonStyle(.cardPress)
         .accessibilityLabel("Switch Profile")
         // Where a profile chosen in "Who's watching?" lands; hidden while it flies here.
-        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { router.profileButtonFrame = $0 }
+        .onWindowFrameChange { router.profileButtonFrame = $0 }
         .opacity(router.isProfileFlightActive ? 0 : 1)
     }
 }

@@ -49,7 +49,7 @@ struct SettingsView: View {
                                     .foregroundStyle(.primary)
                             } icon: {
                                 if let activeProfile {
-                                    ProfileAvatar(profile: activeProfile, size: 30)
+                                    ProfileAvatar(profile: activeProfile, size: 30, isSelected: true)
                                 } else {
                                     SettingsIcon(systemName: "person.2.fill", color: .orange)
                                 }

@@ -105,7 +105,7 @@ enum ProfileStore {
         var profiles = all(in: context)
         if profiles.isEmpty {
             let first = Profile(
-                name: localized("Me"), symbol: AvatarKind.emoji("🦁").raw, colorHex: "#C9A962", sortIndex: 0
+                name: localized("Me"), symbol: AvatarKind.character("lion").raw, colorHex: Brand.violetHex, sortIndex: 0
             )
             context.insert(first)
             profiles = [first]
@@ -116,10 +116,16 @@ enum ProfileStore {
         }
         ProfileSession.shared.sync(active)
 
-        // Kids profiles from before characters existed get a playful one.
-        for profile in profiles where profile.isKids {
-            if case .symbol = AvatarKind(profile.symbol) {
-                profile.symbol = AvatarKind.emoji(AvatarKind.kidsCharacters[0]).raw
+        // Emoji pictures from an earlier version become the matching crystal character,
+        // and kids profiles that still have a plain symbol get the robot.
+        for profile in profiles {
+            switch AvatarKind(profile.symbol) {
+            case .emoji(let emoji):
+                profile.symbol = AvatarKind.character(AvatarKind.character(forEmoji: emoji)).raw
+            case .symbol where profile.isKids:
+                profile.symbol = AvatarKind.character(AvatarKind.kidsCharacter).raw
+            default:
+                break
             }
         }
 

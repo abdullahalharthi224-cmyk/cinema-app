@@ -322,7 +322,7 @@ private struct ContinueWatchingCard: View {
                     GeometryReader { proxy in
                         ZStack(alignment: .leading) {
                             Capsule().fill(.white.opacity(0.25))
-                            Capsule().fill(Theme.accent)
+                            Capsule().fill(Theme.accentGradient)
                                 .frame(width: proxy.size.width * min(item.progress, 1))
                         }
                     }

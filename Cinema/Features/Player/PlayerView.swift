@@ -820,8 +820,9 @@ private struct Scrubber: View {
             let fraction = model.duration > 0 ? min(max(model.displayedPosition / model.duration, 0), 1) : 0
             ZStack(alignment: .leading) {
                 Capsule().fill(.white.opacity(0.25))
-                Capsule().fill(.white)
+                Capsule().fill(Theme.accentGradient)
                     .frame(width: proxy.size.width * fraction)
+                    .shadow(color: Theme.accent.opacity(0.6), radius: 4)
             }
             .frame(height: model.isScrubbing ? 9 : 5)
             .frame(maxHeight: .infinity)

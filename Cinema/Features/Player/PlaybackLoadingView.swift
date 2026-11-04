@@ -170,7 +170,7 @@ struct PlaybackLoadingView: View {
     }
 }
 
-/// A thin gold line across the bottom that fills as loading goes on, with a soft glow at its tip.
+/// A thin accent line (violet into blue) across the bottom that fills as loading goes on, with a soft glow at its tip.
 private struct GoldLine: View {
     let progress: CGFloat
 
@@ -179,9 +179,9 @@ private struct GoldLine: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(.white.opacity(0.14))
                 Capsule()
-                    .fill(LinearGradient(colors: [SplashArt.goldBottom, SplashArt.goldTop], startPoint: .leading, endPoint: .trailing))
+                    .fill(Theme.accentGradient)
                     .frame(width: proxy.size.width * min(1, max(0, progress)))
-                    .shadow(color: SplashArt.goldTop.opacity(0.7), radius: 5)
+                    .shadow(color: Theme.accent.opacity(0.7), radius: 5)
             }
         }
         .environment(\.layoutDirection, AppLanguage.current.isRightToLeft ? .rightToLeft : .leftToRight)

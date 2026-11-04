@@ -109,7 +109,7 @@ struct DownloadedBadge: View {
         Image(systemName: "arrow.down.circle.fill")
             .font(.system(size: 15, weight: .semibold))
             .symbolRenderingMode(.palette)
-            .foregroundStyle(.black, Theme.accent)
+            .foregroundStyle(Theme.onAccent, Theme.accent)
             .background(Circle().fill(.black.opacity(0.35)).padding(1))
             .shadow(color: .black.opacity(0.4), radius: 3)
             .accessibilityLabel("Downloaded")

@@ -24,12 +24,20 @@ concurrency:
 jobs:
   build:
     name: Test & build unsigned IPA
-    runs-on: macos-latest
+    # macOS 15 machines: GitHub reported "capacity constraints" for macOS 26 and
+    # cancelled queued builds after 15 minutes. The newest Xcode there is picked below.
+    runs-on: macos-15
     timeout-minutes: 60
 
     steps:
       - name: Check out
         uses: actions/checkout@v4
+
+      - name: Pick the newest Xcode
+        run: |
+          NEWEST=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Using $NEWEST"
+          sudo xcode-select -s "$NEWEST"
 
       - name: Show Xcode version
         run: xcodebuild -version
