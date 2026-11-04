@@ -2,19 +2,24 @@ import PhotosUI
 import SwiftUI
 import UIKit
 
-/// What a profile's picture is. Stored in `Profile.symbol` so older profiles (SF Symbols) keep working:
-/// "emoji:🦁" is a character, "photo" a picture from the album, anything else an SF Symbol.
+/// What a profile's picture is. Stored in `Profile.symbol` so older profiles keep working:
+/// "avatar:lion" is one of the crystal characters, "photo" a picture from the album,
+/// "emoji:🦁" an earlier emoji (moved to a character at launch), anything else an SF Symbol.
 enum AvatarKind: Equatable {
+    case character(String)
     case symbol(String)
     case emoji(String)
     case photo
 
     static let photoTag = "photo"
     private static let emojiPrefix = "emoji:"
+    private static let characterPrefix = "avatar:"
 
     init(_ raw: String) {
         if raw == Self.photoTag {
             self = .photo
+        } else if raw.hasPrefix(Self.characterPrefix) {
+            self = .character(String(raw.dropFirst(Self.characterPrefix.count)))
         } else if raw.hasPrefix(Self.emojiPrefix) {
             self = .emoji(String(raw.dropFirst(Self.emojiPrefix.count)))
         } else {
@@ -24,20 +29,29 @@ enum AvatarKind: Equatable {
 
     var raw: String {
         switch self {
+        case .character(let name): return Self.characterPrefix + name
         case .symbol(let name): return name
         case .emoji(let emoji): return Self.emojiPrefix + emoji
         case .photo: return Self.photoTag
         }
     }
 
-    /// The characters to pick from: Apple's emoji, drawn large.
-    static let characters = [
-        "🦁", "🐼", "🦊", "🐯", "🐨", "🐸", "🐵", "🦄", "🐙", "🐧", "🐶", "🐱",
-        "🐰", "🐻", "🐲", "🦖", "🐳", "🦉", "🐝", "🦋", "👾", "🤖", "👻", "🍿",
-    ]
+    /// The crystal characters, in the asset catalog as "Avatar-<name>".
+    static let characters = ["lion", "tiger", "fox", "owl", "bear", "wolf", "falcon", "cat", "panda", "rabbit", "horse", "robot"]
 
-    /// Playful characters a kids profile starts with.
-    static let kidsCharacters = ["🦄", "🐼", "🐸", "🐵", "🐙", "🦖"]
+    /// The character a kids profile starts with.
+    static let kidsCharacter = "robot"
+
+    static func imageName(_ character: String) -> String { "Avatar-" + character }
+
+    /// The crystal character closest to an emoji chosen in an earlier version.
+    static func character(forEmoji emoji: String) -> String {
+        let map = [
+            "🦁": "lion", "🐯": "tiger", "🦊": "fox", "🦉": "owl", "🐻": "bear", "🐨": "bear", "🐶": "wolf",
+            "🐱": "cat", "🐼": "panda", "🐰": "rabbit", "🦄": "horse", "🤖": "robot", "🐧": "owl", "🐲": "falcon",
+        ]
+        return map[emoji] ?? "robot"
+    }
 }
 
 /// Two-colour backgrounds for avatars, named by their first colour (kept in `Profile.colorHex`).
@@ -93,38 +107,63 @@ enum AvatarStore {
     }
 }
 
-/// A profile's picture: a character, a photo or a symbol, on its gradient. The same everywhere
-/// (Home, Settings, the profile picker, the lock screen and the widget).
+/// A profile's picture in a circle: a crystal character, a photo or (for older profiles) a symbol
+/// on its gradient. The same everywhere (Home, Settings, the profile picker, the lock screen and,
+/// drawn as an image, the widget). The chosen profile gets a thin ring in the app's colour.
 struct ProfileAvatar: View {
     let symbol: String
     let colorHex: String
     var size: CGFloat = 96
     /// The album picture, for `AvatarKind.photo`.
     var photo: UIImage? = nil
+    /// The profile that's watching (or the one being picked): a thin accent ring around it.
+    var isSelected = false
 
     private var kind: AvatarKind { AvatarKind(symbol) }
     private var colors: [Color] { AvatarBackground.colors(for: colorHex) }
+    private var isArtwork: Bool {
+        switch kind {
+        case .character, .photo: return true
+        case .symbol, .emoji: return false
+        }
+    }
 
     var body: some View {
         Circle()
-            .fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
+            .fill(isArtwork
+                  ? AnyShapeStyle(Color(red: 0.05, green: 0.04, blue: 0.09))
+                  : AnyShapeStyle(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)))
             .overlay {
-                // A soft highlight across the top, like glass.
-                Circle()
-                    .fill(LinearGradient(colors: [.white.opacity(0.28), .clear], startPoint: .top, endPoint: .center))
-                    .padding(size * 0.04)
+                if !isArtwork {
+                    // A soft highlight across the top, like glass.
+                    Circle()
+                        .fill(LinearGradient(colors: [.white.opacity(0.28), .clear], startPoint: .top, endPoint: .center))
+                        .padding(size * 0.04)
+                }
             }
             .overlay { content }
             .clipShape(Circle())
-            .overlay(Circle().strokeBorder(.white.opacity(0.22), lineWidth: max(0.75, size / 120)))
+            .overlay(Circle().strokeBorder(.white.opacity(isArtwork ? 0.14 : 0.22), lineWidth: max(0.75, size / 120)))
+            .overlay {
+                if isSelected {
+                    Circle()
+                        .strokeBorder(Theme.accent, lineWidth: max(1.5, size / 45))
+                        .padding(-max(2.5, size / 28))
+                }
+            }
             .frame(width: size, height: size)
-            .shadow(color: colors[0].opacity(0.35), radius: size * 0.15, y: size * 0.06)
+            .shadow(color: (isArtwork ? Theme.accent : colors[0]).opacity(0.3), radius: size * 0.14, y: size * 0.05)
             .accessibilityHidden(true)
     }
 
     @ViewBuilder
     private var content: some View {
         switch kind {
+        case .character(let name):
+            Image(AvatarKind.imageName(name))
+                .resizable()
+                .interpolation(.high)
+                .scaledToFill()
         case .emoji(let emoji):
             Text(verbatim: emoji)
                 .font(.system(size: size * 0.58))
@@ -153,9 +192,9 @@ struct ProfileAvatar: View {
 
 extension ProfileAvatar {
     @MainActor
-    init(profile: Profile, size: CGFloat = 96) {
+    init(profile: Profile, size: CGFloat = 96, isSelected: Bool = false) {
         let photo = AvatarKind(profile.symbol) == .photo ? AvatarStore.image(for: profile.id) : nil
-        self.init(symbol: profile.symbol, colorHex: profile.colorHex, size: size, photo: photo)
+        self.init(symbol: profile.symbol, colorHex: profile.colorHex, size: size, photo: photo, isSelected: isSelected)
     }
 }
 
