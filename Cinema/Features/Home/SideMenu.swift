@@ -109,13 +109,14 @@ struct SideMenu: View {
 
     private var header: some View {
         HStack(spacing: Theme.Spacing.m) {
-            Canvas { context, size in SplashArt.draw(in: &context, size: size, t: 10) }
+            Image(SplashArt.logoName)
+                .resizable()
+                .scaledToFit()
                 .frame(width: 44, height: 44)
-                .background(Color(red: 0.08, green: 0.08, blue: 0.1), in: .continuous(10))
                 .accessibilityHidden(true)
             Text(verbatim: "Cinema")
                 .font(.system(.title2, weight: .heavy))
-                .foregroundStyle(LinearGradient(colors: [SplashArt.goldTop, SplashArt.goldBottom], startPoint: .top, endPoint: .bottom))
+                .foregroundStyle(LinearGradient(colors: [Brand.glow, Brand.violet, Brand.blue], startPoint: .topLeading, endPoint: .bottomTrailing))
             Spacer()
             Button { close() } label: { Image(systemName: "xmark") }
                 .buttonStyle(.glassCircle)

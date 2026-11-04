@@ -40,7 +40,7 @@ struct SplashView: View {
     }
 }
 
-/// The everyday launch: the mark fades in with a soft glow and fades out, in about 0.85 s.
+/// The everyday launch: the logo fades in with a soft glow and fades out, in about 0.85 s.
 /// A tap anywhere goes straight in.
 private struct QuickSplash: View {
     var onFinished: () -> Void
@@ -52,10 +52,12 @@ private struct QuickSplash: View {
     var body: some View {
         ZStack {
             Color(red: 3 / 255, green: 3 / 255, blue: 4 / 255)
-            RadialGradient(colors: [SplashArt.goldTop.opacity(shown ? 0.16 : 0), .clear], center: .center, startRadius: 0, endRadius: 320)
-            Canvas { context, size in SplashArt.draw(in: &context, size: size, t: 10) }
-                .frame(width: 180, height: 180)
-                .shadow(color: SplashArt.goldTop.opacity(shown ? 0.5 : 0), radius: 26)
+            RadialGradient(colors: [Brand.violet.opacity(shown ? 0.2 : 0), Brand.blue.opacity(shown ? 0.06 : 0), .clear], center: .center, startRadius: 0, endRadius: 320)
+            Image(SplashArt.logoName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 200, height: 200)
+                .shadow(color: Brand.violet.opacity(shown ? 0.6 : 0), radius: 26)
                 .scaleEffect(leaving ? 1.08 : (shown ? 1 : 0.9))
                 .opacity(shown ? 1 : 0)
         }
@@ -85,7 +87,7 @@ private struct QuickSplash: View {
 }
 
 /// The launch animation, in the style of the film, and something to play with:
-/// a spark of golden light traces the "C" of the app icon, the play button bursts in with
+/// a spark of light traces the "C" of the CINEMA logo, the play button bursts in with
 /// a shockwave, "Cinema" rises underneath, and the mark keeps glowing with sparks circling it.
 /// A finger pushes the projector dust aside, leaves a trail of light, sets off a burst where it
 /// lands and tilts the mark towards it; holding keeps the screen up, letting go enters the app.
@@ -211,7 +213,7 @@ private struct SplashMark: View {
         Canvas { context, size in
             SplashArt.draw(in: &context, size: size, t: t)
         }
-        .frame(width: 210, height: 210)
+        .frame(width: 230, height: 230)
         .rotation3DEffect(.degrees(tilt.degrees), axis: axis, perspective: 0.55)
         .scaleEffect(scale)
     }
@@ -267,7 +269,7 @@ final class SplashTouch {
     }
 }
 
-/// "Cinema" in gold, rising in under the mark, with a sweep of light that comes back while waiting.
+/// "Cinema" in the logo's violet and blue, rising in under the mark, with a sweep of light that comes back while waiting.
 private struct Wordmark: View {
     let t: Double
 
@@ -278,7 +280,7 @@ private struct Wordmark: View {
         Text(verbatim: "Cinema")
             .font(.system(size: 40, weight: .heavy, design: .default))
             .tracking(6 * (1 - appear) + 0.5)
-            .foregroundStyle(LinearGradient(colors: [SplashArt.goldTop, SplashArt.goldBottom], startPoint: .top, endPoint: .bottom))
+            .foregroundStyle(LinearGradient(colors: [Brand.glow, Brand.violet, Brand.blue], startPoint: .topLeading, endPoint: .bottomTrailing))
             .overlay {
                 // the sweep of light, clipped to the letters
                 GeometryReader { proxy in
@@ -289,7 +291,7 @@ private struct Wordmark: View {
                 }
                 .mask(Text(verbatim: "Cinema").font(.system(size: 40, weight: .heavy)).tracking(6 * (1 - appear) + 0.5))
             }
-            .shadow(color: SplashArt.goldTop.opacity(0.45 * appear), radius: 14)
+            .shadow(color: Brand.violet.opacity(0.5 * appear), radius: 14)
             .opacity(appear)
             .blur(radius: 6 * (1 - appear))
             .offset(y: 18 * (1 - appear))
@@ -305,7 +307,7 @@ enum SplashBackdrop {
         center c: CGPoint, touch: SplashTouch, now: Date, lite: Bool
     ) {
         typealias A = SplashArt
-        let gold = A.goldTop
+        let gold = Brand.glow
         let reach = max(size.width, size.height)
         let fadeIn = A.progress(t, 0, 0.5)
 
@@ -313,7 +315,7 @@ enum SplashBackdrop {
         let breathe = t > 1.6 ? 0.04 * sin((t - 1.6) * 2.2) : 0
         let warm: Double = A.progress(t, 0.2, 1.3) * (0.17 + breathe) + 0.08 * touch.press
         context.fill(Path(CGRect(origin: .zero, size: size)),
-                     with: .radialGradient(Gradient(colors: [gold.opacity(warm), .clear]), center: c, startRadius: 0, endRadius: reach * 0.55))
+                     with: .radialGradient(Gradient(colors: [Brand.violet.opacity(warm * 1.3), Brand.blue.opacity(warm * 0.4), .clear]), center: c, startRadius: 0, endRadius: reach * 0.55))
 
         // the projector beam from above, flickering like film
         let beam = A.progress(t, 0.1, 0.9) * (1 - exit)
@@ -376,7 +378,9 @@ enum SplashBackdrop {
         if wave > 0 && wave < 1 {
             let r = 60 + reach * 0.75 * A.ease(wave)
             context.stroke(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)),
-                           with: .color(gold.opacity(0.45 * (1 - wave))), lineWidth: 2.5 * (1 - wave) + 0.5)
+                           with: .linearGradient(Gradient(colors: [Brand.violet.opacity(0.6 * (1 - wave)), Brand.blue.opacity(0.5 * (1 - wave))]),
+                                                 startPoint: CGPoint(x: c.x - r, y: c.y), endPoint: CGPoint(x: c.x + r, y: c.y)),
+                           lineWidth: 2.5 * (1 - wave) + 0.5)
         }
 
         // sparks circling the mark while the app gets ready
@@ -409,7 +413,7 @@ enum SplashBackdrop {
                 segment.move(to: a.point)
                 segment.addLine(to: b.point)
                 glowLayer.stroke(segment, with: .color(gold.opacity(0.6 * f)), style: StrokeStyle(lineWidth: 10 * f, lineCap: .round))
-                context.stroke(segment, with: .color(Color(red: 1, green: 0.95, blue: 0.82).opacity(0.95 * f)),
+                context.stroke(segment, with: .color(Color(red: 0.93, green: 0.9, blue: 1).opacity(0.95 * f)),
                                style: StrokeStyle(lineWidth: 3.2 * f + 0.4, lineCap: .round))
             }
         }
@@ -448,13 +452,12 @@ enum SplashBackdrop {
     private static func frac(_ x: Double) -> Double { x - x.rounded(.down) }
 }
 
-/// The drawing itself: the icon's ring (the same geometry as the app icon), traced by a comet.
-/// Only the mark: the light around it is drawn over the whole screen (`SplashBackdrop`),
-/// so no square edge shows around the mark.
+/// The mark itself: the CINEMA crystal logo (the fixed in-app logo, whatever the app icon),
+/// revealed along its "C" by a comet of light, then landing with a small spring and a burst
+/// of sparks. Only the mark: the light around it is drawn over the whole screen (`SplashBackdrop`).
 enum SplashArt {
-    static let goldTop = Color(red: 0.96, green: 0.87, blue: 0.63)
-    static let goldBottom = Color(red: 0.69, green: 0.54, blue: 0.29)
-    static let cream = Color(red: 0.96, green: 0.95, blue: 0.91)
+    /// The supplied transparent logo in the asset catalog.
+    static let logoName = "CinemaLogo"
 
     static func progress(_ t: Double, _ a: Double, _ b: Double) -> Double { min(1, max(0, (t - a) / (b - a))) }
     static func ease(_ u: Double) -> Double { u < 0.5 ? 4 * u * u * u : 1 - pow(-2 * u + 2, 3) / 2 }
@@ -462,79 +465,89 @@ enum SplashArt {
 
     static func draw(in context: inout GraphicsContext, size: CGSize, t: Double) {
         let side = min(size.width, size.height)
-        let c = CGPoint(x: size.width / 2, y: size.height / 2)
-        let r = side * 0.2925, lw = side * 0.075            // as tools/AppIcons/make_variants.py draws it
+        let frame = CGRect(x: (size.width - side) / 2, y: (size.height - side) / 2, width: side, height: side)
+        // The C's middle line in the logo artwork: centred a little left of and below the middle.
+        let c = CGPoint(x: frame.minX + side * 0.493, y: frame.minY + side * 0.505)
+        let r = side * 0.265
         let ringStart = 310.0, ringEnd = 50.0               // traced from the top end, round the left, to the bottom
+        let logo = context.resolve(Image(logoName))
 
-        // Built from points (from angle a0 to a1, either direction), so the sweep is unambiguous.
-        func arc(_ a0: Double, _ a1: Double) -> Path {
+        func point(_ a: Double) -> CGPoint { CGPoint(x: c.x + r * cos(a * .pi / 180), y: c.y + r * sin(a * .pi / 180)) }
+        /// The slice of the logo between two angles (built from points, so the direction is unambiguous).
+        func wedge(_ a0: Double, _ a1: Double) -> Path {
             Path { p in
-                let n = max(2, Int(abs(a1 - a0) / 2))
+                p.move(to: c)
+                let n = max(2, Int(abs(a1 - a0) / 3))
                 for k in 0...n {
                     let a = (a0 + (a1 - a0) * Double(k) / Double(n)) * .pi / 180
-                    let q = CGPoint(x: c.x + r * cos(a), y: c.y + r * sin(a))
-                    if k == 0 { p.move(to: q) } else { p.addLine(to: q) }
+                    p.addLine(to: CGPoint(x: c.x + side * cos(a), y: c.y + side * sin(a)))
                 }
+                p.closeSubpath()
             }
         }
-        func point(_ a: Double) -> CGPoint { CGPoint(x: c.x + r * cos(a * .pi / 180), y: c.y + r * sin(a * .pi / 180)) }
 
-        // the ring, drawn behind the comet
         let trace = ease(progress(t, 0.2, 0.95))
         let headAngle = ringStart - (ringStart - ringEnd) * trace
-        if trace > 0 {
-            let gold = GraphicsContext.Shading.linearGradient(Gradient(colors: [goldTop, goldBottom]),
-                                                             startPoint: CGPoint(x: c.x, y: c.y - r), endPoint: CGPoint(x: c.x, y: c.y + r))
+        let landed = progress(t, 0.95, 1.55)
+
+        if landed > 0 {
+            // The whole logo, the play button arriving with a small spring.
+            let pop = 0.94 + 0.06 * spring(landed)
+            let rect = frame.insetBy(dx: side * (1 - pop) / 2, dy: side * (1 - pop) / 2)
             var glow = context
-            glow.addFilter(.blur(radius: lw * 0.9))
-            glow.stroke(arc(ringStart, headAngle), with: .color(goldTop.opacity(0.5)), style: StrokeStyle(lineWidth: lw, lineCap: .round))
-            context.stroke(arc(ringStart, headAngle), with: gold, style: StrokeStyle(lineWidth: lw, lineCap: .round))
+            glow.addFilter(.blur(radius: side * 0.05))
+            glow.opacity = 0.45 * (1 - landed * 0.4)
+            glow.draw(logo, in: rect)
+            context.draw(logo, in: rect)
+        } else if trace > 0 {
+            // The C appears as the comet passes.
+            var revealed = context
+            revealed.clip(to: wedge(headAngle, ringStart))
+            var glow = revealed
+            glow.addFilter(.blur(radius: side * 0.04))
+            glow.opacity = 0.5
+            glow.draw(logo, in: frame)
+            revealed.draw(logo, in: frame)
         }
-        // the comet: a hot head with a fading tail, then it settles into the ring's end
+
+        // the comet: a hot head with a fading tail, then it settles into the C's end
         let cometAlpha = t < 0.2 ? progress(t, 0.0, 0.2) : 1 - progress(t, 0.95, 1.25)
         if cometAlpha > 0 {
             let hp = point(headAngle)
+            let lw = side * 0.06
             for k in 0..<18 {
                 let a1 = headAngle + Double(k) * 2.4, a0 = headAngle + Double(k + 1) * 2.4
                 guard a1 <= ringStart else { break }
                 let f = 1 - Double(k) / 18
-                context.stroke(arc(a1, a0), with: .color(Color(red: 1, green: 0.95, blue: 0.8).opacity(0.8 * f * f * cometAlpha)),
+                var tail = Path()
+                tail.move(to: point(a1))
+                tail.addLine(to: point(a0))
+                context.stroke(tail, with: .color(Brand.glow.opacity(0.8 * f * f * cometAlpha)),
                                style: StrokeStyle(lineWidth: lw * 0.55, lineCap: .round))
             }
             var bloom = context
             bloom.addFilter(.blur(radius: lw * 1.4))
-            bloom.fill(Path(ellipseIn: CGRect(x: hp.x - lw * 1.3, y: hp.y - lw * 1.3, width: lw * 2.6, height: lw * 2.6)), with: .color(goldTop.opacity(cometAlpha)))
+            bloom.fill(Path(ellipseIn: CGRect(x: hp.x - lw * 1.3, y: hp.y - lw * 1.3, width: lw * 2.6, height: lw * 2.6)), with: .color(Brand.violet.opacity(cometAlpha)))
             context.fill(Path(ellipseIn: CGRect(x: hp.x - lw * 0.3, y: hp.y - lw * 0.3, width: lw * 0.6, height: lw * 0.6)), with: .color(.white.opacity(cometAlpha)))
             // a thin anamorphic flare through the head
             var flare = context
             flare.addFilter(.blur(radius: 2))
-            flare.fill(Path(CGRect(x: hp.x - side * 0.22, y: hp.y - 0.8, width: side * 0.44, height: 1.6)), with: .color(goldTop.opacity(0.55 * cometAlpha)))
+            flare.fill(Path(CGRect(x: hp.x - side * 0.22, y: hp.y - 0.8, width: side * 0.44, height: 1.6)), with: .color(Brand.glow.opacity(0.55 * cometAlpha)))
         }
 
         // sparks as the play button arrives
         let burst = progress(t, 0.95, 1.6)
         if burst > 0 && burst < 1 {
+            let center = CGPoint(x: frame.midX, y: frame.midY)
             for i in 0..<16 {
                 let s = Double(i) * 3.17
                 let a = frac(sin(s) * 4375) * 2 * .pi, speed = 0.55 + 0.6 * frac(sin(s * 1.9) * 913)
                 let d0 = side * (0.12 + speed * 0.5 * ease(burst)), d1 = d0 - side * 0.05 * (1 - burst)
                 var p = Path()
-                p.move(to: CGPoint(x: c.x + cos(a) * d1, y: c.y + sin(a) * d1))
-                p.addLine(to: CGPoint(x: c.x + cos(a) * d0, y: c.y + sin(a) * d0))
-                context.stroke(p, with: .color(goldTop.opacity(0.9 * (1 - burst))), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+                p.move(to: CGPoint(x: center.x + cos(a) * d1, y: center.y + sin(a) * d1))
+                p.addLine(to: CGPoint(x: center.x + cos(a) * d0, y: center.y + sin(a) * d0))
+                context.stroke(p, with: .color((i % 2 == 0 ? Brand.glow : Brand.blue).opacity(0.9 * (1 - burst))), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
             }
-        }
-        // the play button springs in
-        let pop = spring(progress(t, 0.95, 1.55))
-        if pop > 0.01 {
-            let h = side * 0.27 * pop, w = h * sqrt(3) / 2, x0 = c.x + side * 0.01 - w * 0.42
-            var tri = Path()
-            tri.move(to: CGPoint(x: x0, y: c.y - h / 2)); tri.addLine(to: CGPoint(x: x0 + w, y: c.y)); tri.addLine(to: CGPoint(x: x0, y: c.y + h / 2)); tri.closeSubpath()
-            var glow = context
-            glow.addFilter(.blur(radius: 10))
-            glow.fill(tri, with: .color(cream.opacity(0.35)))
-            context.fill(tri, with: .color(cream))
-            context.stroke(tri, with: .color(cream), style: StrokeStyle(lineWidth: side * 0.02, lineJoin: .round))
         }
     }
 

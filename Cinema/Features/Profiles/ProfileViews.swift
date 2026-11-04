@@ -66,7 +66,7 @@ struct ProfilePickerView: View {
                 ProfileAvatar(profile: chosen, size: size)
                     .background {
                         Circle()
-                            .fill(SplashArt.goldTop.opacity(lifted && !flying ? 0.55 : 0))
+                            .fill(Theme.accent.opacity(lifted && !flying ? 0.6 : 0))
                             .blur(radius: 30)
                             .scaleEffect(1.5)
                     }
@@ -315,11 +315,13 @@ struct ProfilePickerView: View {
 struct CinemaBadge: View {
     var body: some View {
         HStack(spacing: 8) {
-            Canvas { context, size in SplashArt.draw(in: &context, size: size, t: 10) }
-                .frame(width: 34, height: 34)
+            Image(SplashArt.logoName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 38, height: 38)
             Text(verbatim: "Cinema")
                 .font(.system(.title3, weight: .heavy))
-                .foregroundStyle(LinearGradient(colors: [SplashArt.goldTop, SplashArt.goldBottom], startPoint: .top, endPoint: .bottom))
+                .foregroundStyle(LinearGradient(colors: [Brand.glow, Brand.violet, Brand.blue], startPoint: .topLeading, endPoint: .bottomTrailing))
         }
         .environment(\.layoutDirection, .leftToRight)
         .accessibilityElement(children: .ignore)

@@ -4,9 +4,33 @@ import UIKit
 
 /// Design tokens shared across the app.
 enum Theme {
-    /// The single signature colour, chosen by the user (calm gold by default).
+    /// The single signature colour, chosen by the user (the logo's crystal violet by default).
+    /// On Light Glass it is deepened where needed so it stays readable (4.5:1) on the light page.
     /// Reading it inside a view's `body` re-renders the view when it changes.
-    static var accent: Color { Appearance.shared.accent }
+    static var accent: Color {
+        let appearance = Appearance.shared
+        let chosen = appearance.accent
+        guard appearance.theme == .light else { return chosen }
+        return contrastRatio(chosen, appearance.theme.background) >= 4.5 ? chosen : chosen.mixed(with: .black, by: 0.18)
+    }
+
+    /// Text and symbols drawn on an accent-filled surface: whichever of white or black reads better.
+    static var onAccent: Color {
+        contrastRatio(.white, accent) >= contrastRatio(.black, accent) ? .white : .black
+    }
+
+    /// The accent as a gradient, for the few elements that lead (the Play button, progress lines):
+    /// violet into blue for the default crystal colour, otherwise the chosen colour into a deeper shade.
+    static var accentGradient: LinearGradient {
+        LinearGradient(colors: accentGradientColors, startPoint: .leading, endPoint: .trailing)
+    }
+
+    static var accentGradientColors: [Color] {
+        if Appearance.shared.accentHex.caseInsensitiveCompare(Brand.violetHex) == .orderedSame {
+            return [accent, Brand.blue]
+        }
+        return [accent, accent.mixed(with: .black, by: 0.25)]
+    }
 
     enum Spacing {
         static let xs: CGFloat = 4
@@ -60,6 +84,44 @@ enum Theme {
         static let spring = Animation.spring(duration: 0.5, bounce: 0.18)
         static let snappy = Animation.spring(duration: 0.32, bounce: 0.22)
         static let gentle = Animation.spring(duration: 0.8, bounce: 0.1)
+    }
+}
+
+// MARK: - Brand
+
+/// The colours of the CINEMA crystal logo: violet flowing into blue, with a pale lavender light.
+enum Brand {
+    static let violetHex = "#8D4DFB"
+    static let violet = Color(hex: violetHex)!
+    static let blue = Color(hex: "#4F6BFA")!
+    /// The bright highlights on the crystal, for glows and sparks.
+    static let glow = Color(hex: "#C7B5FF")!
+
+    static var gradient: LinearGradient {
+        LinearGradient(colors: [violet, blue], startPoint: .leading, endPoint: .trailing)
+    }
+}
+
+extension View {
+    /// A soft crystal sheen across the top of a prominent element, like the logo's glass.
+    func crystalSheen<S: Shape>(in shape: S, strength: Double = 1) -> some View {
+        overlay {
+            shape
+                .fill(LinearGradient(
+                    stops: [
+                        .init(color: .white.opacity(0.32 * strength), location: 0),
+                        .init(color: .white.opacity(0.08 * strength), location: 0.45),
+                        .init(color: .clear, location: 0.55),
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                ))
+                .allowsHitTesting(false)
+        }
+        .overlay {
+            shape
+                .strokeBorder(LinearGradient(colors: [.white.opacity(0.45 * strength), .white.opacity(0.05)], startPoint: .top, endPoint: .bottom), lineWidth: 0.75)
+                .allowsHitTesting(false)
+        }
     }
 }
 
@@ -132,7 +194,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
 final class Appearance {
     static let shared = Appearance()
 
-    static let defaultAccentHex = "#C9A962"
+    static let defaultAccentHex = Brand.violetHex
     private static let accentKey = "appearance.accentHex"
     private static let themeKey = "appearance.theme"
 
@@ -144,7 +206,8 @@ final class Appearance {
     }
 
     static let presets: [Preset] = [
-        Preset(name: "Gold", hex: defaultAccentHex),
+        Preset(name: "Crystal", hex: Brand.violetHex),
+        Preset(name: "Gold", hex: "#C9A962"),
         Preset(name: "Champagne", hex: "#E3CBA0"),
         Preset(name: "Silver", hex: "#C7CCD6"),
         Preset(name: "Crimson", hex: "#E0474C"),
@@ -198,6 +261,16 @@ extension Color {
             green: Double((value >> 8) & 0xFF) / 255,
             blue: Double(value & 0xFF) / 255
         )
+    }
+
+    /// This colour moved towards `other` by `amount` (0…1).
+    func mixed(with other: Color, by amount: Double) -> Color {
+        var r1: CGFloat = 0, g1: CGFloat = 0, b1: CGFloat = 0, a1: CGFloat = 0
+        var r2: CGFloat = 0, g2: CGFloat = 0, b2: CGFloat = 0, a2: CGFloat = 0
+        UIColor(self).getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
+        UIColor(other).getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
+        let k = CGFloat(min(max(amount, 0), 1))
+        return Color(red: Double(r1 + (r2 - r1) * k), green: Double(g1 + (g2 - g1) * k), blue: Double(b1 + (b2 - b1) * k))
     }
 
     /// `#RRGGBB` for this colour, in sRGB.
