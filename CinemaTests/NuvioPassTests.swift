@@ -17,10 +17,22 @@ final class AvatarTests: XCTestCase {
         XCTAssertEqual(AvatarBackground.colors(for: "#123456").count, 2, "Unknown colours still get a gradient")
     }
 
-    func testKidsCharactersArePickable() {
-        for emoji in AvatarKind.kidsCharacters {
-            XCTAssertTrue(AvatarKind.characters.contains(emoji), emoji)
+    func testCrystalCharacters() {
+        XCTAssertEqual(AvatarKind.characters.count, 12)
+        XCTAssertEqual(AvatarKind("avatar:lion"), .character("lion"))
+        XCTAssertEqual(AvatarKind(AvatarKind.character("robot").raw), .character("robot"))
+        XCTAssertTrue(AvatarKind.characters.contains(AvatarKind.kidsCharacter))
+        XCTAssertEqual(AvatarKind.kidsCharacter, "robot")
+        for name in AvatarKind.characters {
+            XCTAssertNotNil(UIImage(named: AvatarKind.imageName(name)), name)
         }
+    }
+
+    /// Emoji chosen in the previous version become the matching crystal character.
+    func testEmojiMoveToCharacters() {
+        XCTAssertEqual(AvatarKind.character(forEmoji: "🦁"), "lion")
+        XCTAssertEqual(AvatarKind.character(forEmoji: "🐼"), "panda")
+        XCTAssertTrue(AvatarKind.characters.contains(AvatarKind.character(forEmoji: "🍿")))
     }
 
     /// The circle always stays covered by the picture.
@@ -37,6 +49,23 @@ final class AvatarTests: XCTestCase {
         }
         let cropped = CircularCropView.crop(image, side: 300, scale: 0.5, offset: .zero)
         XCTAssertEqual(cropped.size.width, cropped.size.height)
+    }
+}
+
+final class BrandTests: XCTestCase {
+    /// The crystal violet reads on the dark themes, and white reads on it.
+    func testBrandContrast() {
+        XCTAssertGreaterThanOrEqual(Theme.contrastRatio(Brand.violet, AppTheme.cinematic.background), 4.5)
+        XCTAssertGreaterThanOrEqual(Theme.contrastRatio(.white, Brand.violet), 4.5)
+        XCTAssertGreaterThanOrEqual(Theme.contrastRatio(Brand.violet.mixed(with: .black, by: 0.18), AppTheme.light.background), 4.5)
+        XCTAssertEqual(Appearance.defaultAccentHex, Brand.violetHex)
+    }
+
+    func testInAppLogoAndIconPreviewsExist() {
+        XCTAssertNotNil(UIImage(named: SplashArt.logoName))
+        for style in AppIconStyle.allCases {
+            XCTAssertNotNil(UIImage(named: style.previewImage), style.rawValue)
+        }
     }
 }
 
