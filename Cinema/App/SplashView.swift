@@ -475,15 +475,18 @@ enum SplashArt {
         func point(_ a: Double) -> CGPoint { CGPoint(x: c.x + r * cos(a * .pi / 180), y: c.y + r * sin(a * .pi / 180)) }
         /// The slice of the logo between two angles (built from points, so the direction is unambiguous).
         func wedge(_ a0: Double, _ a1: Double) -> Path {
-            Path { p in
-                p.move(to: c)
-                let n = max(2, Int(abs(a1 - a0) / 3))
-                for k in 0...n {
-                    let a = (a0 + (a1 - a0) * Double(k) / Double(n)) * .pi / 180
-                    p.addLine(to: CGPoint(x: c.x + side * cos(a), y: c.y + side * sin(a)))
-                }
-                p.closeSubpath()
+            var p = Path()
+            p.move(to: c)
+            let n: Int = max(2, Int(abs(a1 - a0) / 3))
+            for k in 0...n {
+                let fraction: Double = Double(k) / Double(n)
+                let a: Double = (a0 + (a1 - a0) * fraction) * .pi / 180
+                let x: Double = c.x + side * cos(a)
+                let y: Double = c.y + side * sin(a)
+                p.addLine(to: CGPoint(x: x, y: y))
             }
+            p.closeSubpath()
+            return p
         }
 
         let trace = ease(progress(t, 0.2, 0.95))
@@ -546,7 +549,9 @@ enum SplashArt {
                 var p = Path()
                 p.move(to: CGPoint(x: center.x + cos(a) * d1, y: center.y + sin(a) * d1))
                 p.addLine(to: CGPoint(x: center.x + cos(a) * d0, y: center.y + sin(a) * d0))
-                context.stroke(p, with: .color((i % 2 == 0 ? Brand.glow : Brand.blue).opacity(0.9 * (1 - burst))), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+                let tint: Color = i % 2 == 0 ? Brand.glow : Brand.blue
+                let fade: Double = 0.9 * (1 - burst)
+                context.stroke(p, with: .color(tint.opacity(fade)), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
             }
         }
     }
