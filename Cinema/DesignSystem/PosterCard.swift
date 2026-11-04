@@ -196,12 +196,15 @@ struct GlassButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline)
-            .foregroundStyle(prominent ? Color.black : Color.white)
+            .foregroundStyle(prominent ? Theme.onAccent : Color.white)
             .padding(.horizontal, Theme.Spacing.xl)
             .padding(.vertical, 13)
             .background {
                 if prominent {
-                    Capsule().fill(.white)
+                    // The main action (Play): the accent gradient under a soft crystal sheen.
+                    Capsule().fill(Theme.accentGradient)
+                        .crystalSheen(in: Capsule())
+                        .shadow(color: Theme.accent.opacity(configuration.isPressed ? 0.25 : 0.45), radius: 14, y: 4)
                 } else {
                     Capsule().fill(.adaptiveMaterial)
                         .overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
@@ -254,7 +257,7 @@ struct QualityCapsule: View {
         Text(verbatim: text)
             .font(.rounded(.caption2, weight: .heavy))
             .tracking(0.4)
-            .foregroundStyle(highlighted ? Color.black : Color.primary.opacity(0.9))
+            .foregroundStyle(highlighted ? Theme.onAccent : Color.primary.opacity(0.9))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background {

@@ -784,7 +784,7 @@ private struct EpisodeCard: View {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.title3)
                             .symbolRenderingMode(.palette)
-                            .foregroundStyle(.black, Theme.accent)
+                            .foregroundStyle(Theme.onAccent, Theme.accent)
                             .padding(Theme.Spacing.s)
                             .accessibilityLabel("Watched")
                     }
@@ -795,7 +795,7 @@ private struct EpisodeCard: View {
                         GeometryReader { proxy in
                             ZStack(alignment: .leading) {
                                 Capsule().fill(.white.opacity(0.3))
-                                Capsule().fill(Theme.accent)
+                                Capsule().fill(Theme.accentGradient)
                                     .frame(width: proxy.size.width * progress.fraction)
                             }
                         }

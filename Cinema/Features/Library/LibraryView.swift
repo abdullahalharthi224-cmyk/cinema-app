@@ -271,7 +271,7 @@ struct LibraryCard: View {
                         GeometryReader { proxy in
                             ZStack(alignment: .leading) {
                                 Capsule().fill(.black.opacity(0.45))
-                                Capsule().fill(Theme.accent)
+                                Capsule().fill(Theme.accentGradient)
                                     .frame(width: proxy.size.width * progress)
                             }
                         }
@@ -292,7 +292,7 @@ struct LibraryCard: View {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.title3)
                             .symbolRenderingMode(.palette)
-                            .foregroundStyle(.black, Theme.accent)
+                            .foregroundStyle(Theme.onAccent, Theme.accent)
                             .padding(6)
                     }
                 }

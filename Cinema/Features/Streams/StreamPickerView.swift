@@ -526,7 +526,7 @@ private struct StreamRow: View {
                         if info.hasArabic {
                             Text("Arabic")
                                 .font(.rounded(.caption2, weight: .heavy))
-                                .foregroundStyle(.black)
+                                .foregroundStyle(Theme.onAccent)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(Theme.accent.gradient, in: Capsule())
@@ -601,14 +601,15 @@ private struct StreamRow: View {
             }
         }
             .font(.rounded(.subheadline, weight: .heavy))
-            .foregroundStyle(isPremium ? Color.black : Color.primary)
+            .foregroundStyle(isPremium ? Theme.onAccent : Color.primary)
             .lineLimit(1)
             .fixedSize()
             .padding(.horizontal, 10)
             .frame(minWidth: 62, minHeight: 34)
             .background {
                 if isPremium {
-                    Capsule().fill(Theme.accent.gradient)
+                    Capsule().fill(Theme.accentGradient)
+                        .crystalSheen(in: Capsule(), strength: 0.7)
                 } else {
                     Capsule().fill(Color.primary.opacity(0.08))
                         .overlay(Capsule().strokeBorder(Color.primary.opacity(0.22), lineWidth: 0.75))

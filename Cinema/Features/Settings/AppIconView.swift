@@ -42,14 +42,14 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
 
     var subtitle: LocalizedStringKey {
         switch self {
-        case .original: return "Gold on black, the classic look"
-        case .light: return "Simple and bright"
-        case .dark: return "Simple and dark"
-        case .gold: return "Brushed gold, black lacquer"
-        case .neon: return "Pink and orange glow on black"
-        case .terminal: return "Green on black, faint lines of code"
-        case .retro: return "Purple and pink, sunset grid"
-        case .aqua: return "Glossy glass and water blue"
+        case .original: return "Violet crystal on deep night"
+        case .light: return "Clear crystal, silver light"
+        case .dark: return "Blue crystal on midnight blue"
+        case .gold: return "Golden crystal, warm glow"
+        case .neon: return "Magenta crystal, neon glow"
+        case .terminal: return "Green crystal, faint lines of code"
+        case .retro: return "Pink crystal, sunset glow"
+        case .aqua: return "Aqua crystal with bubbles"
         }
     }
 

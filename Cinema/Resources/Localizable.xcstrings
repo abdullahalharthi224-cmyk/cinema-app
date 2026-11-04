@@ -882,7 +882,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "زجاج الأكوا"
+            "value": "زجاج الماء"
           }
         }
       }
@@ -1133,16 +1133,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "تصفّح حسب منصة البث"
-          }
-        }
-      }
-    },
-    "Brushed gold, black lacquer": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ذهب مصقول بلمسة سوداء لامعة"
           }
         }
       }
@@ -2597,16 +2587,6 @@
         }
       }
     },
-    "Glossy glass and water blue": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "زجاج لامع بلون الماء"
-          }
-        }
-      }
-    },
     "Go to Downloads": {
       "localizations": {
         "ar": {
@@ -2627,32 +2607,12 @@
         }
       }
     },
-    "Gold on black, the classic look": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ذهبي على أسود، الشكل الكلاسيكي"
-          }
-        }
-      }
-    },
     "Green Code": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الشيفرة الخضراء"
-          }
-        }
-      }
-    },
-    "Green on black, faint lines of code": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أخضر على أسود مع سطور كود خفيفة"
           }
         }
       }
@@ -4298,7 +4258,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "الأصلي"
+            "value": "الكريستال الأصلي"
           }
         }
       }
@@ -4409,16 +4369,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "الصورة داخل الصورة"
-          }
-        }
-      }
-    },
-    "Pink and orange glow on black": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "توهّج وردي وبرتقالي على أسود"
           }
         }
       }
@@ -4719,16 +4669,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "الملفات الشخصية"
-          }
-        }
-      }
-    },
-    "Purple and pink, sunset grid": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "بنفسجي ووردي مع شبكة الغروب"
           }
         }
       }
@@ -5068,7 +5008,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "غروب الثمانينات"
+            "value": "غروب ريترو"
           }
         }
       }
@@ -5128,7 +5068,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "ذهب ملكي"
+            "value": "الذهب الملكي"
           }
         }
       }
@@ -5419,26 +5359,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "فضي"
-          }
-        }
-      }
-    },
-    "Simple and bright": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "بسيط وفاتح"
-          }
-        }
-      }
-    },
-    "Simple and dark": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "بسيط وداكن"
           }
         }
       }
@@ -8055,6 +7975,216 @@
           "stringUnit": {
             "state": "translated",
             "value": "يتخطى ⁨Cinema⁩ شاشة «من يشاهد؟» ويفتح مباشرة على هذا الملف، ويُطلب رمزه إن كان له رمز."
+          }
+        }
+      }
+    },
+    "Violet crystal on deep night": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كريستال بنفسجي على ليلٍ عميق"
+          }
+        }
+      }
+    },
+    "Clear crystal, silver light": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كريستال صافٍ بضوء فضي"
+          }
+        }
+      }
+    },
+    "Blue crystal on midnight blue": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كريستال أزرق على كحلي الليل"
+          }
+        }
+      }
+    },
+    "Golden crystal, warm glow": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كريستال ذهبي بتوهج دافئ"
+          }
+        }
+      }
+    },
+    "Magenta crystal, neon glow": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كريستال أرجواني بوهج النيون"
+          }
+        }
+      }
+    },
+    "Green crystal, faint lines of code": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كريستال أخضر وخطوط شيفرة خافتة"
+          }
+        }
+      }
+    },
+    "Pink crystal, sunset glow": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كريستال وردي بوهج الغروب"
+          }
+        }
+      }
+    },
+    "Aqua crystal with bubbles": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كريستال مائي تحيط به الفقاعات"
+          }
+        }
+      }
+    },
+    "Lion": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أسد"
+          }
+        }
+      }
+    },
+    "Tiger": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نمر"
+          }
+        }
+      }
+    },
+    "Fox": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ثعلب"
+          }
+        }
+      }
+    },
+    "Owl": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بومة"
+          }
+        }
+      }
+    },
+    "Bear": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "دب"
+          }
+        }
+      }
+    },
+    "Wolf": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ذئب"
+          }
+        }
+      }
+    },
+    "Falcon": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صقر"
+          }
+        }
+      }
+    },
+    "Cat": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قطة"
+          }
+        }
+      }
+    },
+    "Panda": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "باندا"
+          }
+        }
+      }
+    },
+    "Rabbit": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أرنب"
+          }
+        }
+      }
+    },
+    "Horse": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حصان"
+          }
+        }
+      }
+    },
+    "Robot": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "روبوت"
+          }
+        }
+      }
+    },
+    "Crystal": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كريستال"
           }
         }
       }

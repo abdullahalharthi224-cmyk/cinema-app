@@ -324,9 +324,9 @@ private struct EpisodeScheduleCard: View {
             }
         }
         .font(.caption2.weight(.heavy))
-        .foregroundStyle(.black)
+        .foregroundStyle(Theme.onAccent)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Theme.accent, in: Capsule())
+        .background(Theme.accentGradient, in: Capsule())
     }
 }
