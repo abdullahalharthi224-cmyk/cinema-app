@@ -24,7 +24,9 @@ concurrency:
 jobs:
   build:
     name: Test & build unsigned IPA
-    runs-on: macos-latest
+    # The image the builds use (macOS 26, Xcode 26), named directly rather than as
+    # "macos-latest", whose queue sometimes gives no machine for a long time.
+    runs-on: macos-26
     timeout-minutes: 60
 
     steps:
